@@ -15,6 +15,7 @@ export type Database = {
           id: string
           is_lp_token: boolean | null
           last_updated: string
+          lp_details: string | null
           platform: string | null
           token_address: string | null
           token_name: string | null
@@ -27,6 +28,7 @@ export type Database = {
           id?: string
           is_lp_token?: boolean | null
           last_updated?: string
+          lp_details?: string | null
           platform?: string | null
           token_address?: string | null
           token_name?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           id?: string
           is_lp_token?: boolean | null
           last_updated?: string
+          lp_details?: string | null
           platform?: string | null
           token_address?: string | null
           token_name?: string | null
