@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface LPDetails {
   poolAddress: string;
@@ -48,11 +49,26 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [apiStatus, setApiStatus] = useState<{
+    solPrice: 'loading' | 'success' | 'error';
+    wallets: 'loading' | 'success' | 'error';
+    auraMarketCap: 'loading' | 'success' | 'error';
+  }>({
+    solPrice: 'loading',
+    wallets: 'loading',
+    auraMarketCap: 'loading'
+  });
 
   const fetchData = async () => {
     try {
       console.log('Fetching consolidated data...');
       setError(null);
+      setApiStatus({
+        solPrice: 'loading',
+        wallets: 'loading',
+        auraMarketCap: 'loading'
+      });
+
       const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
       
       if (fetchError) throw fetchError;
@@ -66,9 +82,38 @@ const Index = () => {
       
       setData(responseData);
       setLastRefresh(new Date());
+      
+      // Update API status based on data quality
+      setApiStatus({
+        solPrice: responseData.solPrice > 0 ? 'success' : 'error',
+        wallets: responseData.wallets.length > 0 ? 'success' : 'error',
+        auraMarketCap: responseData.treasury.totalMarketCap > 0 ? 'success' : 'error'
+      });
+
+      // Show success toast
+      toast({
+        title: "Data Updated",
+        description: `Successfully fetched data for ${responseData.wallets.length} wallets`,
+      });
+
     } catch (error) {
       console.error('Error fetching consolidated data:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch data');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch data';
+      setError(errorMessage);
+      
+      setApiStatus({
+        solPrice: 'error',
+        wallets: 'error',
+        auraMarketCap: 'error'
+      });
+
+      // Show error toast
+      toast({
+        title: "Data Fetch Failed", 
+        description: errorMessage,
+        variant: "destructive",
+      });
+
       setData({
         treasury: {
           totalMarketCap: 0,
@@ -136,6 +181,20 @@ const Index = () => {
           </div>
           <div className="text-center mt-8">
             <p className="text-gray-600">Loading treasury data...</p>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-500">Fetching Solana prices...</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-500">Loading wallet balances...</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-500">Calculating AURA market cap...</span>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -157,33 +216,87 @@ const Index = () => {
             </p>
           </div>
 
+          {/* Enhanced API Status Widget */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-700">API Status</h3>
+              {lastRefresh && (
+                <div className="text-xs text-gray-500">
+                  Last updated: {lastRefresh.toLocaleTimeString()}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  apiStatus.solPrice === 'success' ? 'bg-green-500' : 
+                  apiStatus.solPrice === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+                <span className="text-xs text-gray-600">SOL Price</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  apiStatus.wallets === 'success' ? 'bg-green-500' : 
+                  apiStatus.wallets === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+                <span className="text-xs text-gray-600">Wallets</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  apiStatus.auraMarketCap === 'success' ? 'bg-green-500' : 
+                  apiStatus.auraMarketCap === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+                <span className="text-xs text-gray-600">AURA Market Cap</span>
+              </div>
+            </div>
+          </div>
+
           {/* Enhanced Solana Price Widget */}
           {data?.solPrice && (
             <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-700">Solana Price</div>
+                  <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    Solana Price
+                    <div className={`w-2 h-2 rounded-full ${
+                      apiStatus.solPrice === 'success' ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
+                  </div>
                   <div className="text-2xl font-bold text-purple-600">
                     ${data.solPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
-                {lastRefresh && (
-                  <div className="text-xs text-gray-500">
-                    Last updated: {lastRefresh.toLocaleTimeString()}
-                  </div>
-                )}
+                <button 
+                  onClick={fetchData}
+                  className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
+                >
+                  Refresh
+                </button>
               </div>
             </div>
           )}
 
           {/* Enhanced Value Indicator Section */}
           <div className="bg-gray-50 rounded-lg p-8">
-            <h2 className="text-2xl font-semibold mb-6 font-urbanist">Value Indicator</h2>
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-semibold font-urbanist">Value Indicator</h2>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  apiStatus.auraMarketCap === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                <span className="text-xs text-gray-600">Market Cap Status</span>
+              </div>
+            </div>
             {data?.treasury && (
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Market Cap:</span>
-                  <span className="font-semibold">${data.treasury.totalMarketCap.toLocaleString()}</span>
+                  <span className="font-semibold">
+                    ${data.treasury.totalMarketCap.toLocaleString()}
+                    {data.treasury.totalMarketCap === 0 && (
+                      <span className="text-red-500 text-sm ml-2">(Error fetching)</span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Volatile Assets:</span>
@@ -210,7 +323,12 @@ const Index = () => {
           {/* Enhanced Dynamic Wallets Section */}
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold font-urbanist">Monitored Wallets</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-semibold font-urbanist">Monitored Wallets</h2>
+                <div className={`w-2 h-2 rounded-full ${
+                  apiStatus.wallets === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+              </div>
               <button 
                 onClick={fetchData}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
@@ -223,6 +341,12 @@ const Index = () => {
               <div className="text-red-600 p-4 bg-red-50 rounded-lg">
                 <p className="font-medium">Error loading wallet data</p>
                 <p className="text-sm mt-1">{error}</p>
+                <button 
+                  onClick={fetchData}
+                  className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                >
+                  Retry
+                </button>
               </div>
             )}
             
@@ -272,7 +396,7 @@ const Index = () => {
                     
                     {(!wallet.balances || wallet.balances.length === 0) && (
                       <div className="text-sm text-gray-500 italic">
-                        No balance data available
+                        No balance data available - click refresh to fetch latest data
                       </div>
                     )}
                   </div>

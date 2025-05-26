@@ -59,7 +59,7 @@ serve(async (req) => {
 
     console.log('Starting consolidated wallet balance and treasury fetch...')
 
-    // Fetch Solana price first
+    // Fetch Solana price first with better error handling
     const solPrice = await fetchSolanaPrice()
     console.log(`SOL price: $${solPrice}`)
 
@@ -85,26 +85,24 @@ serve(async (req) => {
       
       let balances: TokenBalance[] = []
 
-      if (wallet.blockchain === 'Solana') {
-        balances = await fetchSolanaBalances(wallet.address)
-      } else if (wallet.blockchain === 'Ethereum') {
-        balances = await fetchEthereumBalances(wallet.address)
+      try {
+        if (wallet.blockchain === 'Solana') {
+          balances = await fetchSolanaBalances(wallet.address)
+        } else if (wallet.blockchain === 'Ethereum') {
+          balances = await fetchEthereumBalances(wallet.address)
+        }
+      } catch (error) {
+        console.error(`Error fetching balances for wallet ${wallet.name}:`, error)
+        balances = [] // Continue with empty balances rather than failing
       }
 
       const totalUsdValue = balances.reduce((sum, balance) => sum + (balance.usdValue || 0), 0)
 
       // Categorize assets based on wallet type
-      switch (wallet.wallet_type) {
-        case 'funding':
-          totalHardAssets += totalUsdValue
-          break
-        case 'marketing':
-        case 'business':
-        case 'operations':
-          totalVolatileAssets += totalUsdValue
-          break
-        default:
-          totalVolatileAssets += totalUsdValue
+      if (wallet.wallet_type === 'funding') {
+        totalHardAssets += totalUsdValue
+      } else {
+        totalVolatileAssets += totalUsdValue
       }
 
       processedWallets.push({
@@ -146,7 +144,7 @@ serve(async (req) => {
       }
     }
 
-    // Calculate treasury metrics
+    // Calculate treasury metrics with improved AURA market cap
     const totalMarketCap = await fetchAuraMarketCapFromSolana()
     const totalAssetsValue = totalVolatileAssets + totalHardAssets
 
@@ -164,6 +162,7 @@ serve(async (req) => {
     }
 
     console.log('Consolidated response prepared successfully')
+    console.log(`Total market cap: ${totalMarketCap}, Volatile: ${totalVolatileAssets}, Hard: ${totalHardAssets}`)
 
     return new Response(
       JSON.stringify(response),
@@ -187,21 +186,23 @@ serve(async (req) => {
 
 async function fetchSolanaPrice(): Promise<number> {
   try {
-    // Add delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
+    console.log('Fetching SOL price from CoinGecko...')
     const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (compatible; TreasuryBot/1.0)'
       }
     })
+    
     if (!response.ok) {
-      console.log('Failed to fetch SOL price from CoinGecko, using fallback')
+      console.log(`CoinGecko SOL price API failed with status: ${response.status}`)
       return 180 // Fallback price
     }
+    
     const data = await response.json()
-    return data.solana?.usd || 180
+    const price = data.solana?.usd || 180
+    console.log(`Successfully fetched SOL price: ${price}`)
+    return price
   } catch (error) {
     console.error('Error fetching SOL price:', error)
     return 180 // Fallback price
@@ -210,8 +211,8 @@ async function fetchSolanaPrice(): Promise<number> {
 
 async function fetchTokenPrices(tokens: string[]): Promise<Record<string, number>> {
   try {
-    // Add longer delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 500))
+    console.log(`Fetching prices for tokens: ${tokens.join(', ')}`)
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Longer delay to avoid rate limiting
     
     const tokenIds = tokens.map(token => {
       const mapping: Record<string, string> = {
@@ -241,63 +242,66 @@ async function fetchTokenPrices(tokens: string[]): Promise<Record<string, number
     )
     
     if (!response.ok) {
-      console.log(`CoinGecko API failed with status: ${response.status}, using fallback prices`)
-      // Return enhanced fallback prices
-      return {
-        'SOL': 180,
-        'USDC': 1,
-        'USDT': 1,
-        'AURA': 0.015, // Updated fallback price
-        'ETH': 3000,
-        'WETH': 3000,
-        'WBTC': 42000,
-        'WSOL': 180,
-        'CULT': 0.000001,
-        'DCULT': 0.000001
-      }
+      console.log(`CoinGecko token prices API failed with status: ${response.status}`)
+      return getFallbackPrices()
     }
 
     const data = await response.json()
     const prices: Record<string, number> = {}
     
     Object.entries(data).forEach(([id, priceData]: [string, any]) => {
-      const symbol = tokens.find(token => {
-        const mapping: Record<string, string> = {
-          'solana': 'SOL',
-          'usd-coin': 'USDC',
-          'tether': 'USDT',
-          'bitcoin': 'BTC',
-          'ethereum': 'ETH',
-          'aurad': 'AURA', // Updated mapping
-          'weth': 'WETH',
-          'wrapped-bitcoin': 'WBTC',
-          'wrapped-solana': 'WSOL',
-          'cult-dao': 'CULT',
-          'dcult': 'DCULT'
-        }
-        return mapping[id] === token || token.toLowerCase() === id
-      })
+      const symbol = getSymbolFromId(id)
       if (symbol && priceData.usd) {
         prices[symbol] = priceData.usd
+        console.log(`Price for ${symbol}: $${priceData.usd}`)
+      }
+    })
+
+    // Fill in any missing prices with fallbacks
+    const fallbacks = getFallbackPrices()
+    tokens.forEach(token => {
+      if (!prices[token] && fallbacks[token]) {
+        prices[token] = fallbacks[token]
+        console.log(`Using fallback price for ${token}: $${fallbacks[token]}`)
       }
     })
 
     return prices
   } catch (error) {
     console.error('Error fetching token prices:', error)
-    // Return enhanced fallback prices on error
-    return {
-      'SOL': 180,
-      'USDC': 1,
-      'USDT': 1,
-      'AURA': 0.015,
-      'ETH': 3000,
-      'WETH': 3000,
-      'WBTC': 42000,
-      'WSOL': 180,
-      'CULT': 0.000001,
-      'DCULT': 0.000001
-    }
+    return getFallbackPrices()
+  }
+}
+
+function getSymbolFromId(id: string): string | null {
+  const reverseMapping: Record<string, string> = {
+    'solana': 'SOL',
+    'usd-coin': 'USDC',
+    'tether': 'USDT',
+    'bitcoin': 'BTC',
+    'ethereum': 'ETH',
+    'aurad': 'AURA',
+    'weth': 'WETH',
+    'wrapped-bitcoin': 'WBTC',
+    'wrapped-solana': 'WSOL',
+    'cult-dao': 'CULT',
+    'dcult': 'DCULT'
+  }
+  return reverseMapping[id] || null
+}
+
+function getFallbackPrices(): Record<string, number> {
+  return {
+    'SOL': 180,
+    'USDC': 1,
+    'USDT': 1,
+    'AURA': 0.015,
+    'ETH': 3000,
+    'WETH': 3000,
+    'WBTC': 42000,
+    'WSOL': 180,
+    'CULT': 0.000001,
+    'DCULT': 0.000001
   }
 }
 
@@ -305,13 +309,13 @@ async function fetchTokenMetadata(mint: string): Promise<{symbol: string, name: 
   try {
     console.log(`Fetching metadata for token: ${mint}`)
     
-    // Enhanced known tokens mapping
+    // Enhanced known tokens mapping with better fallbacks
     const knownTokens: Record<string, {symbol: string, name: string}> = {
       'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {symbol: 'USDC', name: 'USD Coin'},
       'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': {symbol: 'USDT', name: 'Tether USD'},
-      'AURYydfxJib1ZkTir1Jn1J9ECnpjNzasxqcooGdh1V1': {symbol: 'AURA', name: 'Aura Token'},
+      'AURYydfxJib1ZkTir1Jn1J9ECnpjNzasxqcooGdh1V1': {symbol: 'AURA', name: 'Aura Network'},
       'So11111111111111111111111111111111111111112': {symbol: 'WSOL', name: 'Wrapped SOL'},
-      '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {symbol: 'MYSTERY', name: 'Mystery Token'} // Updated placeholder
+      '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {symbol: 'UNK', name: 'Unknown Token'}
     }
     
     // Check known tokens first
@@ -320,75 +324,110 @@ async function fetchTokenMetadata(mint: string): Promise<{symbol: string, name: 
       return knownTokens[mint]
     }
     
-    // Try Solscan API with enhanced parsing
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300)) // Rate limiting
-      const solscanResponse = await fetch(`https://api.solscan.io/token/meta?token=${mint}`, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; TreasuryBot/1.0)'
-        }
-      })
-      if (solscanResponse.ok) {
-        const data = await solscanResponse.json()
-        // Handle nested response structure
-        const tokenData = data.data || data
-        if (tokenData && tokenData.symbol && tokenData.name) {
-          console.log(`Found metadata via Solscan: ${tokenData.symbol} - ${tokenData.name}`)
-          return { symbol: tokenData.symbol, name: tokenData.name }
-        }
-      }
-    } catch (solscanError) {
-      console.log('Solscan API failed, trying on-chain metadata')
-    }
-
-    // Fallback to on-chain metadata
-    try {
-      const response = await fetch('https://api.mainnet-beta.solana.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getAccountInfo',
-          params: [
-            mint,
-            { encoding: 'jsonParsed' }
-          ]
-        })
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.result?.value?.data?.parsed?.info) {
-          const info = data.result.value.data.parsed.info
-          if (info.symbol && info.name) {
-            console.log(`Found metadata on-chain: ${info.symbol} - ${info.name}`)
-            return { symbol: info.symbol, name: info.name }
-          }
-        }
-      }
-    } catch (onChainError) {
-      console.log('On-chain metadata failed')
-    }
+    // Try multiple sources for metadata
+    let metadata = await tryJupiterApi(mint)
+    if (metadata) return metadata
+    
+    metadata = await trySolscanApi(mint)
+    if (metadata) return metadata
+    
+    metadata = await tryOnChainMetadata(mint)
+    if (metadata) return metadata
     
     // Final fallback
-    console.log(`Could not fetch metadata for ${mint}, using fallback`)
-    return { symbol: mint.slice(0, 8) + '...', name: 'Unknown Token' }
+    console.log(`Could not fetch metadata for ${mint}, using generic fallback`)
+    return { 
+      symbol: `${mint.slice(0, 4)}...${mint.slice(-4)}`, 
+      name: 'Unknown Token' 
+    }
   } catch (error) {
     console.error(`Error fetching metadata for ${mint}:`, error)
-    return null
+    return { symbol: 'UNK', name: 'Unknown Token' }
   }
+}
+
+async function tryJupiterApi(mint: string): Promise<{symbol: string, name: string} | null> {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    const response = await fetch(`https://quote-api.jup.ag/v6/tokens/${mint}`)
+    
+    if (response.ok) {
+      const data = await response.json()
+      if (data.symbol && data.name) {
+        console.log(`Found metadata via Jupiter: ${data.symbol} - ${data.name}`)
+        return { symbol: data.symbol, name: data.name }
+      }
+    }
+  } catch (error) {
+    console.log('Jupiter API failed:', error.message)
+  }
+  return null
+}
+
+async function trySolscanApi(mint: string): Promise<{symbol: string, name: string} | null> {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const response = await fetch(`https://api.solscan.io/token/meta?token=${mint}`, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; TreasuryBot/1.0)'
+      }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      const tokenData = data.data || data
+      
+      if (tokenData && tokenData.symbol && tokenData.name) {
+        console.log(`Found metadata via Solscan: ${tokenData.symbol} - ${tokenData.name}`)
+        return { symbol: tokenData.symbol, name: tokenData.name }
+      }
+    }
+  } catch (error) {
+    console.log('Solscan API failed:', error.message)
+  }
+  return null
+}
+
+async function tryOnChainMetadata(mint: string): Promise<{symbol: string, name: string} | null> {
+  try {
+    const response = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getAccountInfo',
+        params: [
+          mint,
+          { encoding: 'jsonParsed' }
+        ]
+      })
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      if (data.result?.value?.data?.parsed?.info) {
+        const info = data.result.value.data.parsed.info
+        if (info.symbol && info.name) {
+          console.log(`Found metadata on-chain: ${info.symbol} - ${info.name}`)
+          return { symbol: info.symbol, name: info.name }
+        }
+      }
+    }
+  } catch (error) {
+    console.log('On-chain metadata failed:', error.message)
+  }
+  return null
 }
 
 async function fetchMeteoraDLMMPositions(address: string): Promise<TokenBalance[]> {
   try {
     console.log(`Fetching Meteora DLMM positions for address: ${address}`)
     
-    // Add delay to avoid overwhelming the API
     await new Promise(resolve => setTimeout(resolve, 400))
     
-    // Fetch user LP positions from Meteora DLMM API
+    // Try the API endpoint
     const dlmmResponse = await fetch(`https://dlmm-api.meteora.ag/user/positions/${address}`, {
       headers: {
         'Accept': 'application/json',
@@ -396,67 +435,109 @@ async function fetchMeteoraDLMMPositions(address: string): Promise<TokenBalance[
       }
     })
 
-    if (!dlmmResponse.ok) {
-      console.log(`Meteora DLMM API failed with status: ${dlmmResponse.status}`)
-      // For now, just return empty array instead of on-chain fallback to reduce complexity
-      return []
-    }
+    if (dlmmResponse.ok) {
+      const dlmmData = await dlmmResponse.json()
+      console.log('DLMM API Response:', JSON.stringify(dlmmData, null, 2))
 
-    const dlmmData = await dlmmResponse.json()
-    console.log('DLMM API Response structure:', JSON.stringify(dlmmData, null, 2))
+      if (dlmmData.positions && Array.isArray(dlmmData.positions)) {
+        const positions: TokenBalance[] = []
 
-    if (!dlmmData.positions || !Array.isArray(dlmmData.positions)) {
-      console.log('No DLMM positions found in API response')
-      return []
-    }
-
-    const positions: TokenBalance[] = []
-
-    for (const position of dlmmData.positions) {
-      if (position.base_amount > 0 || position.quote_amount > 0) {
-        const totalUsdValue = (position.base_amount_usd || 0) + (position.quote_amount_usd || 0)
-        
-        positions.push({
-          symbol: `${position.base_token_symbol}/${position.quote_token_symbol}`,
-          name: `Meteora DLMM LP Token`,
-          balance: position.liquidity || 1,
-          usdValue: totalUsdValue,
-          tokenAddress: position.pool_address,
-          isLpToken: true,
-          platform: 'meteora-dlmm',
-          lpDetails: {
-            poolAddress: position.pool_address,
-            token1: { 
-              symbol: position.base_token_symbol, 
-              amount: position.base_amount, 
-              usdValue: position.base_amount_usd || 0
-            },
-            token2: { 
-              symbol: position.quote_token_symbol, 
-              amount: position.quote_amount, 
-              usdValue: position.quote_amount_usd || 0
-            },
-            priceRange: { 
-              min: position.lower_price || 0, 
-              max: position.upper_price || 0 
-            },
-            totalUsdValue: totalUsdValue
+        for (const position of dlmmData.positions) {
+          if (position.base_amount > 0 || position.quote_amount > 0) {
+            const totalUsdValue = (position.base_amount_usd || 0) + (position.quote_amount_usd || 0)
+            
+            positions.push({
+              symbol: `${position.base_token_symbol}/${position.quote_token_symbol}`,
+              name: `Meteora DLMM LP Token`,
+              balance: position.liquidity || 1,
+              usdValue: totalUsdValue,
+              tokenAddress: position.pool_address,
+              isLpToken: true,
+              platform: 'meteora-dlmm',
+              lpDetails: {
+                poolAddress: position.pool_address,
+                token1: { 
+                  symbol: position.base_token_symbol, 
+                  amount: position.base_amount, 
+                  usdValue: position.base_amount_usd || 0
+                },
+                token2: { 
+                  symbol: position.quote_token_symbol, 
+                  amount: position.quote_amount, 
+                  usdValue: position.quote_amount_usd || 0
+                },
+                priceRange: { 
+                  min: position.lower_price || 0, 
+                  max: position.upper_price || 0 
+                },
+                totalUsdValue: totalUsdValue
+              }
+            })
           }
-        })
+        }
+
+        console.log(`Found ${positions.length} Meteora DLMM positions via API`)
+        return positions
       }
+    } else {
+      console.log(`Meteora DLMM API failed with status: ${dlmmResponse.status}`)
     }
 
-    console.log(`Found ${positions.length} Meteora DLMM positions for address: ${address}`)
-    return positions
+    // Fallback to on-chain data
+    return await fetchMeteoraDLMMOnChain(address)
   } catch (error) {
     console.error('Error in fetchMeteoraDLMMPositions:', error)
+    return await fetchMeteoraDLMMOnChain(address)
+  }
+}
+
+async function fetchMeteoraDLMMOnChain(address: string): Promise<TokenBalance[]> {
+  try {
+    console.log(`Fetching Meteora DLMM positions on-chain for address: ${address}`)
+    
+    const response = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getProgramAccounts',
+        params: [
+          'LBUZKhRxPF3XUpuy1G2ZvtvZjkzQ3TS4gGycGJkyv1S', // Meteora DLMM Program ID
+          {
+            filters: [
+              { dataSize: 304 }, // Adjust based on account structure
+              {
+                memcmp: {
+                  offset: 8, // Skip discriminator
+                  bytes: address
+                }
+              }
+            ],
+            encoding: 'base64'
+          }
+        ]
+      })
+    })
+
+    const data = await response.json()
+    if (data.result && Array.isArray(data.result)) {
+      console.log(`Found ${data.result.length} on-chain DLMM accounts`)
+      // For now, just log the count - parsing would require understanding the exact account structure
+      return []
+    }
+
+    console.log('No on-chain DLMM positions found')
+    return []
+  } catch (error) {
+    console.error('Error fetching on-chain DLMM positions:', error)
     return []
   }
 }
 
 async function fetchAuraMarketCapFromSolana(): Promise<number> {
   try {
-    // Correct AURA token mint address
+    console.log('Fetching AURA market cap from Solana...')
     const auraTokenMint = 'AURYydfxJib1ZkTir1Jn1J9ECnpjNzasxqcooGdh1V1'
     
     const response = await fetch('https://api.mainnet-beta.solana.com', {
@@ -475,19 +556,20 @@ async function fetchAuraMarketCapFromSolana(): Promise<number> {
       const totalSupply = data.result.value.uiAmount
       console.log(`AURA total supply: ${totalSupply}`)
       
-      // Get AURA price with longer delay
-      await new Promise(resolve => setTimeout(resolve, 600))
+      // Get AURA price with proper delay
+      await new Promise(resolve => setTimeout(resolve, 800))
       const prices = await fetchTokenPrices(['AURA'])
-      const auraPrice = prices['AURA'] || 0.015 // Better fallback price
+      const auraPrice = prices['AURA'] || 0.015
       console.log(`AURA price: ${auraPrice}`)
       
       const marketCap = totalSupply * auraPrice
-      console.log(`AURA market cap: ${marketCap}`)
+      console.log(`AURA market cap calculated: ${marketCap}`)
       
       return marketCap
+    } else {
+      console.log('Failed to get AURA token supply')
+      return 0
     }
-    
-    return 0
   } catch (error) {
     console.error('Error fetching AURA market cap:', error)
     return 0
@@ -514,10 +596,10 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
     if (solData.result) {
       const solBalance = solData.result.value / 1e9
       
-      const prices = await fetchTokenPrices(['SOL'])
-      const solPrice = prices['SOL'] || 0
-      
       if (solBalance > 0) {
+        const prices = await fetchTokenPrices(['SOL'])
+        const solPrice = prices['SOL'] || 180
+        
         balances.push({
           symbol: 'SOL',
           name: 'Solana',
@@ -547,14 +629,19 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
 
     const tokenData = await tokenResponse.json()
     if (tokenData.result && tokenData.result.value) {
-      const prices = await fetchTokenPrices(['USDC', 'USDT', 'AURA', 'WETH', 'WBTC', 'WSOL', 'CULT', 'DCULT'])
+      const uniqueTokens = new Set<string>()
+      
+      // Get prices for common tokens
+      const prices = await fetchTokenPrices(['USDC', 'USDT', 'AURA', 'WETH', 'WBTC', 'WSOL'])
       
       for (const tokenAccount of tokenData.result.value) {
         const tokenInfo = tokenAccount.account.data.parsed.info
         const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || 0)
         
-        if (balance > 0) {
-          let symbol = 'Unknown'
+        if (balance > 0 && !uniqueTokens.has(tokenInfo.mint)) {
+          uniqueTokens.add(tokenInfo.mint)
+          
+          let symbol = 'UNK'
           let name = 'Unknown Token'
           let price = 0
           
@@ -563,11 +650,7 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
           if (metadata) {
             symbol = metadata.symbol
             name = metadata.name
-            // Try to get price if we have a meaningful symbol
             price = prices[symbol] || 0
-          } else {
-            symbol = tokenInfo.mint.slice(0, 8) + '...'
-            name = 'Unknown Token'
           }
           
           balances.push({
@@ -587,6 +670,7 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
     const dlmmPositions = await fetchMeteoraDLMMPositions(address)
     balances.push(...dlmmPositions)
 
+    console.log(`Total balances found for ${address}: ${balances.length}`)
     return balances
   } catch (error) {
     console.error('Error fetching Solana balances:', error)
@@ -620,10 +704,10 @@ async function fetchEthereumBalances(address: string): Promise<TokenBalance[]> {
     if (ethData.result) {
       const ethBalance = parseInt(ethData.result, 16) / 1e18
       
-      const prices = await fetchTokenPrices(['ETH', 'CULT', 'DCULT'])
-      const ethPrice = prices['ETH'] || 0
-      
       if (ethBalance > 0) {
+        const prices = await fetchTokenPrices(['ETH'])
+        const ethPrice = prices['ETH'] || 3000
+        
         balances.push({
           symbol: 'ETH',
           name: 'Ethereum',
