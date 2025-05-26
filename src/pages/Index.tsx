@@ -8,10 +8,19 @@ import CommunityBoard from '../components/CommunityBoard';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white font-urbanist">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+        <div className="space-y-12">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl md:text-5xl font-bold text-black mb-6 font-urbanist leading-tight">
+              Redefining the Art of Unique<br />
+              Short Term Stays
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-urbanist">
+              Aura turns dream stays into community owned assets, everywhere on earth
+            </p>
+          </div>
           <ValueIndicator />
           <MultisigWallet />
           <CommunityBoard />
