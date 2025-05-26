@@ -15,6 +15,13 @@ interface TokenBalance {
   tokenAddress?: string
   isLpToken: boolean
   platform: string
+  lpDetails?: {
+    poolAddress: string
+    token1: { symbol: string, amount: number, usdValue: number }
+    token2: { symbol: string, amount: number, usdValue: number }
+    priceRange: { min: number, max: number }
+    totalUsdValue: number
+  }
 }
 
 serve(async (req) => {
@@ -67,6 +74,7 @@ serve(async (req) => {
           token_address: balance.tokenAddress,
           is_lp_token: balance.isLpToken,
           platform: balance.platform,
+          lp_details: balance.lpDetails ? JSON.stringify(balance.lpDetails) : null,
           last_updated: new Date().toISOString()
         }))
 
@@ -99,6 +107,152 @@ serve(async (req) => {
     )
   }
 })
+
+async function fetchTokenPrices(tokens: string[]): Promise<Record<string, number>> {
+  try {
+    const tokenIds = tokens.map(token => {
+      // Map common token symbols to CoinGecko IDs
+      const mapping: Record<string, string> = {
+        'SOL': 'solana',
+        'USDC': 'usd-coin',
+        'USDT': 'tether',
+        'BTC': 'bitcoin',
+        'ETH': 'ethereum'
+      }
+      return mapping[token] || token.toLowerCase()
+    }).join(',')
+
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds}&vs_currencies=usd`
+    )
+    
+    if (!response.ok) {
+      console.log('Failed to fetch token prices from CoinGecko')
+      return {}
+    }
+
+    const data = await response.json()
+    const prices: Record<string, number> = {}
+    
+    // Map back to original symbols
+    Object.entries(data).forEach(([id, priceData]: [string, any]) => {
+      const symbol = tokens.find(token => {
+        const mapping: Record<string, string> = {
+          'solana': 'SOL',
+          'usd-coin': 'USDC',
+          'tether': 'USDT',
+          'bitcoin': 'BTC',
+          'ethereum': 'ETH'
+        }
+        return mapping[id] === token || token.toLowerCase() === id
+      })
+      if (symbol && priceData.usd) {
+        prices[symbol] = priceData.usd
+      }
+    })
+
+    return prices
+  } catch (error) {
+    console.error('Error fetching token prices:', error)
+    return {}
+  }
+}
+
+async function fetchMeteoraLPPositions(address: string): Promise<TokenBalance[]> {
+  try {
+    const lpPositions: TokenBalance[] = []
+    
+    // Fetch user's token accounts to find LP tokens
+    const tokenAccountsResponse = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTokenAccountsByOwner',
+        params: [
+          address,
+          { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
+          { encoding: 'jsonParsed' }
+        ]
+      })
+    })
+
+    const tokenAccountsData = await tokenAccountsResponse.json()
+    if (!tokenAccountsData.result?.value) return lpPositions
+
+    // Get token prices for common tokens
+    const prices = await fetchTokenPrices(['SOL', 'USDC', 'USDT'])
+
+    // Check each token account for Meteora LP tokens
+    for (const tokenAccount of tokenAccountsData.result.value) {
+      const tokenInfo = tokenAccount.account.data.parsed.info
+      const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || 0)
+      
+      if (balance > 0) {
+        // Try to fetch pool info from Meteora API
+        try {
+          const poolResponse = await fetch(`https://dlmm-api.meteora.ag/pair/${tokenInfo.mint}`)
+          if (poolResponse.ok) {
+            const poolData = await poolResponse.json()
+            
+            if (poolData && poolData.name) {
+              // This is a Meteora LP token
+              const [token1Symbol, token2Symbol] = poolData.name.split('-')
+              
+              // Calculate token amounts (simplified calculation)
+              const token1Price = prices[token1Symbol] || 0
+              const token2Price = prices[token2Symbol] || 0
+              
+              // Estimate token amounts based on pool reserves and LP token balance
+              const totalSupply = poolData.supply || 1
+              const poolValue = poolData.tvl || 0
+              const lpTokenValue = (poolValue * balance) / totalSupply
+              
+              const token1Amount = lpTokenValue / 2 / token1Price
+              const token2Amount = lpTokenValue / 2 / token2Price
+              
+              lpPositions.push({
+                symbol: `${token1Symbol}-${token2Symbol} LP`,
+                name: `Meteora ${poolData.name} LP`,
+                balance: balance,
+                usdValue: lpTokenValue,
+                tokenAddress: tokenInfo.mint,
+                isLpToken: true,
+                platform: 'meteora',
+                lpDetails: {
+                  poolAddress: tokenInfo.mint,
+                  token1: { 
+                    symbol: token1Symbol, 
+                    amount: token1Amount, 
+                    usdValue: token1Amount * token1Price 
+                  },
+                  token2: { 
+                    symbol: token2Symbol, 
+                    amount: token2Amount, 
+                    usdValue: token2Amount * token2Price 
+                  },
+                  priceRange: { 
+                    min: poolData.current_price * 0.9, 
+                    max: poolData.current_price * 1.1 
+                  },
+                  totalUsdValue: lpTokenValue
+                }
+              })
+            }
+          }
+        } catch (error) {
+          console.log(`Could not fetch pool data for ${tokenInfo.mint}:`, error)
+        }
+      }
+    }
+
+    return lpPositions
+  } catch (error) {
+    console.error('Error fetching Meteora LP positions:', error)
+    return []
+  }
+}
 
 async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
   try {
@@ -170,6 +324,10 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
         }
       }
     }
+
+    // Fetch Meteora LP positions
+    const lpPositions = await fetchMeteoraLPPositions(address)
+    balances.push(...lpPositions)
 
     return balances
   } catch (error) {

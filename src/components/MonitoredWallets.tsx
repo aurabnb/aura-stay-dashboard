@@ -4,6 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Wallet, ExternalLink, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface LPDetails {
+  poolAddress: string;
+  token1: { symbol: string; amount: number; usdValue: number };
+  token2: { symbol: string; amount: number; usdValue: number };
+  priceRange: { min: number; max: number };
+  totalUsdValue: number;
+}
+
 interface WalletBalance {
   id: string;
   token_symbol: string;
@@ -14,6 +22,7 @@ interface WalletBalance {
   is_lp_token: boolean;
   platform: string;
   last_updated: string;
+  lp_details?: string;
 }
 
 interface WalletData {
@@ -89,6 +98,10 @@ const MonitoredWallets = () => {
 
   useEffect(() => {
     fetchWallets();
+    
+    // Set up periodic refresh every 5 minutes
+    const interval = setInterval(fetchWallets, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatAddress = (address: string) => {
@@ -107,6 +120,74 @@ const MonitoredWallets = () => {
       newExpanded.add(walletId);
     }
     setExpandedWallets(newExpanded);
+  };
+
+  const parseLPDetails = (lpDetailsString: string | undefined): LPDetails | null => {
+    if (!lpDetailsString) return null;
+    try {
+      return JSON.parse(lpDetailsString);
+    } catch {
+      return null;
+    }
+  };
+
+  const renderLPPositions = (balances: WalletBalance[]) => {
+    const lpPositions = balances.filter(balance => balance.is_lp_token && balance.lp_details);
+    
+    if (lpPositions.length === 0) return null;
+
+    return (
+      <div className="mt-4 border-t pt-4">
+        <h4 className="font-semibold text-gray-900 mb-3">LP Positions</h4>
+        <div className="space-y-3">
+          {lpPositions.map((position, index) => {
+            const lpDetails = parseLPDetails(position.lp_details);
+            if (!lpDetails) return null;
+
+            return (
+              <div key={index} className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-medium text-blue-900">{position.token_symbol}</div>
+                    <div className="text-sm text-blue-700">{position.platform}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-blue-900">
+                      ${lpDetails.totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div className="bg-white p-3 rounded">
+                    <div className="text-sm font-medium text-gray-700">Token 1: {lpDetails.token1.symbol}</div>
+                    <div className="text-sm text-gray-600">
+                      {lpDetails.token1.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
+                      (${lpDetails.token1.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded">
+                    <div className="text-sm font-medium text-gray-700">Token 2: {lpDetails.token2.symbol}</div>
+                    <div className="text-sm text-gray-600">
+                      {lpDetails.token2.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
+                      (${lpDetails.token2.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 bg-white p-3 rounded">
+                  <div className="text-sm font-medium text-gray-700">Price Range</div>
+                  <div className="text-sm text-gray-600">
+                    ${lpDetails.priceRange.min.toFixed(4)} - ${lpDetails.priceRange.max.toFixed(4)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   const totalPortfolioValue = wallets.reduce((sum, wallet) => sum + wallet.totalValue, 0);
@@ -149,7 +230,7 @@ const MonitoredWallets = () => {
           </button>
         </CardTitle>
         <CardDescription>
-          Real-time tracking of Aura Foundation treasury wallets. Total Value: ${totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          Real-time tracking of Aura Foundation treasury wallets including LP positions. Total Value: ${totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -209,13 +290,12 @@ const MonitoredWallets = () => {
               {expandedWallets.has(wallet.id) && wallet.balances.length > 0 && (
                 <div className="mt-4 border-t pt-4">
                   <div className="space-y-2">
-                    {wallet.balances.map((balance, index) => (
+                    {wallet.balances.filter(balance => !balance.is_lp_token).map((balance, index) => (
                       <div key={index} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded">
                         <div>
                           <div className="font-medium">{balance.token_symbol}</div>
                           <div className="text-xs text-gray-500">
                             {balance.token_name} • {balance.platform}
-                            {balance.is_lp_token && ' • LP Token'}
                           </div>
                         </div>
                         <div className="text-right">
@@ -229,6 +309,8 @@ const MonitoredWallets = () => {
                       </div>
                     ))}
                   </div>
+                  
+                  {renderLPPositions(wallet.balances)}
                   
                   {wallet.balances.length > 0 && (
                     <div className="mt-2 text-xs text-gray-400">
