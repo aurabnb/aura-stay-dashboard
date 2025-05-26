@@ -3,6 +3,8 @@ import React from 'react';
 import Header from '../components/Header';
 import ValueIndicator from '../components/ValueIndicator';
 import MonitoredWallets from '../components/MonitoredWallets';
+import ExpenseTracker from '../components/ExpenseTracker';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ValueIndicatorPage = () => {
   return (
@@ -15,11 +17,29 @@ const ValueIndicatorPage = () => {
               Value Indicator Dashboard
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto font-urbanist">
-              Real-time tracking of Aura Foundation's treasury and market value metrics
+              Real-time tracking of Aura Foundation's treasury, market value metrics, and expenses
             </p>
           </div>
-          <ValueIndicator />
-          <MonitoredWallets />
+          
+          <Tabs defaultValue="treasury" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="treasury">Treasury Overview</TabsTrigger>
+              <TabsTrigger value="wallets">Monitored Wallets</TabsTrigger>
+              <TabsTrigger value="expenses">Expense Tracker</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="treasury" className="space-y-12">
+              <ValueIndicator />
+            </TabsContent>
+            
+            <TabsContent value="wallets" className="space-y-12">
+              <MonitoredWallets />
+            </TabsContent>
+            
+            <TabsContent value="expenses" className="space-y-12">
+              <ExpenseTracker />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
