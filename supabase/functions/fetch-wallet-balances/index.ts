@@ -34,8 +34,9 @@ interface WalletBalance {
 
 // Enhanced token cache with fallbacks
 const tokenCache = new Map<string, TokenInfo>();
+const priceCache = new Map<string, { price: number; timestamp: number }>();
 
-// Known token mappings with better identification for funding account tokens
+// Known token mappings with better identification
 const KNOWN_TOKENS: Record<string, TokenInfo> = {
   'So11111111111111111111111111111111111111112': {
     symbol: 'SOL',
@@ -72,75 +73,106 @@ const KNOWN_TOKENS: Record<string, TokenInfo> = {
     name: 'Cult DAO',
     decimals: 18
   },
-  // Adding known funding account tokens
+  // Funding account tokens with better names
   'EX3HCDcPZxGt7eTck1zNwZYgPEu2saHLBACKRo8gzKQS': {
-    symbol: 'UNKNOWN-1',
-    name: 'Unknown Token 1',
+    symbol: 'SPL-1',
+    name: 'SPL Token 1',
     decimals: 9
   },
   'ECYjbXzzMUx7zt4LhtNh9A2zYX3bqhXFPzKm7ksLdJsg': {
-    symbol: 'UNKNOWN-2', 
-    name: 'Unknown Token 2',
+    symbol: 'SPL-2', 
+    name: 'SPL Token 2',
     decimals: 9
   },
   'ByZhHUJMPiqUrS2XQ83FBRePVHzih4bCaW3pXGA1z9kH': {
-    symbol: 'UNKNOWN-3',
-    name: 'Unknown Token 3', 
+    symbol: 'SPL-3',
+    name: 'SPL Token 3', 
     decimals: 9
   },
   '67SMqwVGi2WSi73zVP3BDMBskGzfVvayUonvSeQaRM5y': {
-    symbol: 'UNKNOWN-4',
-    name: 'Unknown Token 4',
+    symbol: 'SPL-4',
+    name: 'SPL Token 4',
     decimals: 9
   }
 };
 
 // Known LP token mints from Meteora with updated pool info
-const METEORA_LP_TOKENS = new Set([
-  'FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5',
-  '8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP', 
-  'GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX',
-  'GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW'
-]);
-
-// Updated pool configurations based on provided info
-const METEORA_POOLS = {
-  'FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5': {
+const METEORA_LP_TOKENS = new Map([
+  ['FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5', {
     token1: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
     token2: '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // WBTC
-    name: 'AURA-WBTC'
-  },
-  '8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP': {
+    name: 'AURA-WBTC',
+    poolUrl: 'https://www.meteora.ag/pools/FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5'
+  }],
+  ['8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP', {
     token1: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
     token2: '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // WBTC
-    name: 'AURA-WBTC'
-  },
-  'GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX': {
+    name: 'AURA-WBTC',
+    poolUrl: 'https://www.meteora.ag/pools/8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP'
+  }],
+  ['GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX', {
     token1: '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // ETH
     token2: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
-    name: 'ETH-AURA'
-  },
-  'GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW': {
+    name: 'ETH-AURA',
+    poolUrl: 'https://www.meteora.ag/pools/GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX'
+  }],
+  ['GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW', {
     token1: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
     token2: '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // ETH
-    name: 'AURA-ETH'
-  }
-};
+    name: 'AURA-ETH',
+    poolUrl: 'https://www.meteora.ag/pools/GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW'
+  }]
+]);
 
-// Rate limiting helper
+// Rate limiting with exponential backoff
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 250; // 250ms between requests
+let requestCount = 0;
+const MAX_REQUESTS_PER_MINUTE = 10;
+const BASE_DELAY = 1000; // 1 second base delay
 
-async function rateLimitedFetch(url: string, options?: RequestInit) {
+async function rateLimitedFetch(url: string, options?: RequestInit, retries = 3): Promise<Response> {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
   
-  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+  // Reset counter every minute
+  if (timeSinceLastRequest > 60000) {
+    requestCount = 0;
+  }
+  
+  // Check if we've exceeded rate limit
+  if (requestCount >= MAX_REQUESTS_PER_MINUTE) {
+    const delay = BASE_DELAY * Math.pow(2, requestCount - MAX_REQUESTS_PER_MINUTE);
+    console.log(`Rate limit reached, waiting ${delay}ms`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  
+  // Ensure minimum delay between requests
+  const minDelay = BASE_DELAY + (requestCount * 200);
+  if (timeSinceLastRequest < minDelay) {
+    await new Promise(resolve => setTimeout(resolve, minDelay - timeSinceLastRequest));
   }
   
   lastRequestTime = Date.now();
-  return fetch(url, options);
+  requestCount++;
+  
+  try {
+    const response = await fetch(url, options);
+    
+    if (response.status === 429 && retries > 0) {
+      console.log(`Rate limited, retrying in ${BASE_DELAY * 2}ms...`);
+      await new Promise(resolve => setTimeout(resolve, BASE_DELAY * 2));
+      return rateLimitedFetch(url, options, retries - 1);
+    }
+    
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Request failed, retrying in ${BASE_DELAY}ms...`);
+      await new Promise(resolve => setTimeout(resolve, BASE_DELAY));
+      return rateLimitedFetch(url, options, retries - 1);
+    }
+    throw error;
+  }
 }
 
 async function getTokenInfo(mint: string): Promise<TokenInfo> {
@@ -157,7 +189,6 @@ async function getTokenInfo(mint: string): Promise<TokenInfo> {
   try {
     console.log(`Fetching token info for: ${mint}`);
     
-    // Try Jupiter Token List API first with rate limiting
     const response = await rateLimitedFetch(`https://tokens.jup.ag/token/${mint}`, {
       headers: { 'Accept': 'application/json' }
     });
@@ -178,7 +209,6 @@ async function getTokenInfo(mint: string): Promise<TokenInfo> {
   } catch (error) {
     console.warn(`Failed to get token info for ${mint}:`, error);
     
-    // Return unknown token info as fallback
     const fallbackInfo: TokenInfo = {
       symbol: 'UNK',
       name: 'Unknown Token',
@@ -217,12 +247,17 @@ async function getSolanaPrice(): Promise<number> {
     return price;
   } catch (error) {
     console.error('Error fetching SOL price:', error);
-    // Return fallback price instead of 0
     return 180; // Reasonable fallback
   }
 }
 
 async function getTokenPrice(tokenAddress: string): Promise<number> {
+  // Check cache first (5 minute cache)
+  const cached = priceCache.get(tokenAddress);
+  if (cached && Date.now() - cached.timestamp < 300000) {
+    return cached.price;
+  }
+
   try {
     // Special handling for DCULT - use CULT price instead
     if (tokenAddress === '2d77b594b9bbaed03221f7c63af8c4307432daf1') {
@@ -242,11 +277,60 @@ async function getTokenPrice(tokenAddress: string): Promise<number> {
         const price = data?.['cult-dao']?.usd;
         if (price && typeof price === 'number') {
           console.log(`CULT price: $${price}`);
+          priceCache.set(tokenAddress, { price, timestamp: Date.now() });
           return price;
         }
       }
     }
     
+    // Special handling for AURA token
+    if (tokenAddress === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') {
+      console.log('Fetching AURA price...');
+      
+      // Try multiple CoinGecko endpoints for AURA
+      const endpoints = [
+        'https://api.coingecko.com/api/v3/simple/price?ids=aurora-ventures&vs_currencies=usd',
+        `https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${tokenAddress}&vs_currencies=usd`
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await rateLimitedFetch(endpoint, {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Aura-Treasury-Dashboard/1.0'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            let price = 0;
+            
+            if (endpoint.includes('aurora-ventures')) {
+              price = data?.['aurora-ventures']?.usd;
+            } else {
+              price = data?.[tokenAddress]?.usd;
+            }
+            
+            if (price && typeof price === 'number' && price > 0) {
+              console.log(`AURA price from ${endpoint}: $${price}`);
+              priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+              return price;
+            }
+          }
+        } catch (error) {
+          console.warn(`AURA price fetch failed for ${endpoint}:`, error);
+        }
+      }
+      
+      // Fallback to estimated price for AURA
+      const estimatedPrice = 0.001;
+      console.log(`Using estimated AURA price: $${estimatedPrice}`);
+      priceCache.set(tokenAddress, { price: estimatedPrice, timestamp: Date.now() });
+      return estimatedPrice;
+    }
+    
+    // For other tokens, try CoinGecko
     const response = await rateLimitedFetch(
       `https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${tokenAddress}&vs_currencies=usd`,
       {
@@ -267,6 +351,7 @@ async function getTokenPrice(tokenAddress: string): Promise<number> {
     
     if (price && typeof price === 'number') {
       console.log(`Token ${tokenAddress} price: $${price}`);
+      priceCache.set(tokenAddress, { price, timestamp: Date.now() });
       return price;
     }
 
@@ -279,16 +364,12 @@ async function getTokenPrice(tokenAddress: string): Promise<number> {
 
 async function getLPTokenDetails(mint: string, balance: number): Promise<LPDetails | null> {
   try {
-    if (!METEORA_LP_TOKENS.has(mint)) {
-      return null;
-    }
-
-    const poolConfig = METEORA_POOLS[mint as keyof typeof METEORA_POOLS];
+    const poolConfig = METEORA_LP_TOKENS.get(mint);
     if (!poolConfig) {
       return null;
     }
 
-    console.log(`Fetching LP details for pool: ${mint}`);
+    console.log(`Fetching LP details for pool: ${mint} (${poolConfig.name})`);
 
     // Get token info for both tokens
     const token1Info = await getTokenInfo(poolConfig.token1);
@@ -298,13 +379,18 @@ async function getLPTokenDetails(mint: string, balance: number): Promise<LPDetai
     const token1Price = await getTokenPrice(poolConfig.token1);
     const token2Price = await getTokenPrice(poolConfig.token2);
 
-    // Estimate token amounts based on balance (simplified)
-    // In a real implementation, you'd fetch actual pool data from Meteora API
-    const estimatedToken1Amount = balance * 0.5; // Simplified estimation
-    const estimatedToken2Amount = balance * 0.5; // Simplified estimation
+    console.log(`LP token prices: ${token1Info.symbol}=$${token1Price}, ${token2Info.symbol}=$${token2Price}`);
+
+    // For LP tokens, we'll estimate the value based on the current balance
+    // This is a simplified calculation - in reality you'd need to query the pool's state
+    const estimatedToken1Amount = balance * 0.5;
+    const estimatedToken2Amount = balance * 0.5;
 
     const token1UsdValue = estimatedToken1Amount * token1Price;
     const token2UsdValue = estimatedToken2Amount * token2Price;
+    const totalUsdValue = token1UsdValue + token2UsdValue;
+
+    console.log(`LP position estimated value: $${totalUsdValue.toFixed(2)}`);
 
     return {
       poolAddress: mint,
@@ -319,7 +405,7 @@ async function getLPTokenDetails(mint: string, balance: number): Promise<LPDetai
         usdValue: token2UsdValue
       },
       priceRange: { min: 0, max: 0 }, // Would need real pool data
-      totalUsdValue: token1UsdValue + token2UsdValue
+      totalUsdValue: totalUsdValue
     };
   } catch (error) {
     console.error(`Error fetching LP details for ${mint}:`, error);
@@ -402,8 +488,10 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
                 tokenPrice = await getTokenPrice(mint);
               }
               
+              const poolConfig = METEORA_LP_TOKENS.get(mint);
+              
               balances.push({
-                symbol: isLpToken ? `${METEORA_POOLS[mint as keyof typeof METEORA_POOLS]?.name || 'LP'}` : tokenMeta.symbol,
+                symbol: isLpToken ? `${poolConfig?.name || 'LP'}` : tokenMeta.symbol,
                 name: isLpToken ? `${tokenMeta.name} LP Token` : tokenMeta.name,
                 balance: balance,
                 usdValue: balance * tokenPrice,
@@ -422,7 +510,6 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
     } else if (blockchain === 'Ethereum') {
       console.log(`Fetching Ethereum balance for: ${address}`);
       
-      // Get ETH balance using Infura
       const infuraKey = Deno.env.get('INFURA_API_KEY');
       if (!infuraKey) {
         console.warn('INFURA_API_KEY not configured');
@@ -445,7 +532,6 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
       if (data.result) {
         const ethBalance = parseInt(data.result, 16) / 1e18;
         
-        // Get ETH price
         const ethPriceResponse = await rateLimitedFetch(
           'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
         );
@@ -548,27 +634,18 @@ async function getAuraMarketCap(): Promise<number> {
         const totalSupply = data.result.value.uiAmount;
         console.log(`AURA total supply: ${totalSupply}`);
         
-        // Try to get AURA price from CoinGecko
-        const priceResponse = await rateLimitedFetch(
-          `https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${auraTokenMint}&vs_currencies=usd`
-        );
+        // Get AURA price
+        const price = await getTokenPrice(auraTokenMint);
         
-        if (priceResponse.ok) {
-          const priceData = await priceResponse.json();
-          const price = priceData?.[auraTokenMint]?.usd;
-          
-          if (price && typeof price === 'number' && price > 0) {
-            const marketCap = totalSupply * price;
-            console.log(`AURA market cap calculated: $${marketCap} (${totalSupply} tokens × $${price})`);
-            return marketCap;
-          }
+        if (price > 0) {
+          const marketCap = totalSupply * price;
+          console.log(`AURA market cap calculated: $${marketCap} (${totalSupply} tokens × $${price})`);
+          return marketCap;
         }
         
-        // If CoinGecko price fails, try alternative calculation
-        console.log('CoinGecko price failed, trying manual calculation...');
-        // For now, return a reasonable estimate based on current data
-        // This would need to be replaced with actual market data
-        const estimatedPrice = 0.001; // $0.001 per AURA as fallback
+        // If no price available, use estimated price
+        console.log('Using estimated AURA price for market cap calculation...');
+        const estimatedPrice = 0.001;
         const estimatedMarketCap = totalSupply * estimatedPrice;
         console.log(`AURA market cap estimated: $${estimatedMarketCap} (${totalSupply} tokens × $${estimatedPrice} estimated)`);
         return estimatedMarketCap;
@@ -638,6 +715,8 @@ serve(async (req) => {
         const balances = await getWalletBalances(wallet.address, wallet.blockchain);
         const totalUsdValue = balances.reduce((sum, balance) => sum + (balance.usdValue || 0), 0);
         
+        console.log(`${wallet.name} total value: $${totalUsdValue.toFixed(2)}`);
+        
         return {
           ...wallet,
           balances: balances,
@@ -677,6 +756,19 @@ serve(async (req) => {
     console.log(`Total volatile assets: $${volatileAssets.toFixed(2)}`);
     console.log(`AURA market cap: $${auraMarketCap.toFixed(2)}`);
     console.log(`SOL price: $${solPrice.toFixed(2)}`);
+
+    // Log detailed LP token information
+    processedWallets.forEach(wallet => {
+      const lpTokens = wallet.balances.filter(b => b.isLpToken);
+      if (lpTokens.length > 0) {
+        console.log(`${wallet.name} LP tokens:`, lpTokens.map(lp => ({
+          symbol: lp.symbol,
+          balance: lp.balance,
+          usdValue: lp.usdValue,
+          hasDetails: !!lp.lpDetails
+        })));
+      }
+    });
 
     return new Response(
       JSON.stringify(result),
