@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, RefreshCw } from 'lucide-react';
@@ -59,7 +58,7 @@ const ValueIndicator = () => {
       });
 
       // Fetch AURA market cap from Solana blockchain
-      const totalMarketCap = await fetchAuraMarketCap();
+      const totalMarketCap = await fetchAuraMarketCapFromSolana();
       
       const totalAssetsValue = volatileAssets + hardAssets + operationalAssets;
       const speculativeInterest = Math.max(0, totalMarketCap - totalAssetsValue);
@@ -90,26 +89,47 @@ const ValueIndicator = () => {
     }
   };
 
-  const fetchAuraMarketCap = async (): Promise<number> => {
+  const fetchAuraMarketCapFromSolana = async (): Promise<number> => {
     try {
-      // Get AURA price from CoinGecko
-      const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=aura-3&vs_currencies=usd');
-      const priceData = await priceResponse.json();
-      const auraPrice = priceData['aura-3']?.usd || 0;
+      // Use the correct AURA token mint from the Solscan transaction
+      const auraTokenMint = 'CmoBeTxzrtjjhy9ym1tWdqMWAPbLktBP3i3rKNUqQaa';
       
-      if (auraPrice === 0) {
-        console.log('AURA price not found, using fallback calculation');
-        return 134873.51; // Fallback based on screenshot
+      // Fetch token supply directly from Solana
+      const supplyResponse = await fetch('https://api.mainnet-beta.solana.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getTokenSupply',
+          params: [auraTokenMint]
+        })
+      });
+      
+      const supplyData = await supplyResponse.json();
+      
+      if (supplyData.result?.value?.uiAmount) {
+        const totalSupply = supplyData.result.value.uiAmount;
+        console.log(`AURA total supply from Solana: ${totalSupply}`);
+        
+        // Get AURA price from CoinGecko
+        const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=aura-3&vs_currencies=usd');
+        const priceData = await priceResponse.json();
+        const auraPrice = priceData['aura-3']?.usd || 0;
+        
+        console.log(`AURA price from CoinGecko: ${auraPrice}`);
+        
+        const marketCap = totalSupply * auraPrice;
+        console.log(`Calculated AURA market cap: ${marketCap}`);
+        
+        return marketCap;
       }
       
-      // For now, use a fixed supply or calculate from known data
-      // This should be replaced with actual blockchain query when AURA mint address is known
-      const estimatedSupply = 999960812.88; // Based on screenshot
-      
-      return estimatedSupply * auraPrice;
+      console.log('Could not fetch AURA supply from Solana');
+      return 0;
     } catch (error) {
-      console.error('Error fetching AURA market cap:', error);
-      return 134873.51; // Fallback value from screenshot
+      console.error('Error fetching AURA market cap from Solana:', error);
+      return 0;
     }
   };
 
@@ -230,10 +250,10 @@ const ValueIndicator = () => {
         <div className="text-sm text-gray-500 border-t pt-4">
           <p>Live data from monitored wallets across Solana and Ethereum networks.</p>
           <p className="mt-1">
-            <strong>Total Market Cap:</strong> Fetched from Solana blockchain (AURA token supply × current price).
+            <strong>Total Market Cap:</strong> Fetched directly from Solana blockchain using AURA token mint address.
           </p>
           <p className="mt-1">
-            <strong>Speculative Interest:</strong> Total Market Cap - (Volatile Assets + Hard Assets).
+            <strong>Speculative Interest:</strong> Total Market Cap minus all Treasury Assets (Hard + Volatile).
           </p>
           <p className="mt-1">
             <strong>Total Treasury Value:</strong> Sum of all monitored wallet assets (excluding speculative interest).
