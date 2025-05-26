@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,6 +47,7 @@ const Index = () => {
   const [data, setData] = useState<ConsolidatedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const fetchData = async () => {
     try {
@@ -65,6 +65,7 @@ const Index = () => {
       }
       
       setData(responseData);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('Error fetching consolidated data:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch data');
@@ -133,6 +134,9 @@ const Index = () => {
               <div key={i} className="h-20 bg-gray-200 rounded"></div>
             ))}
           </div>
+          <div className="text-center mt-8">
+            <p className="text-gray-600">Loading treasury data...</p>
+          </div>
         </main>
       </div>
     );
@@ -153,21 +157,26 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Solana Price Widget */}
+          {/* Enhanced Solana Price Widget */}
           {data?.solPrice && (
             <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-700">Solana Price</div>
                   <div className="text-2xl font-bold text-purple-600">
                     ${data.solPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
+                {lastRefresh && (
+                  <div className="text-xs text-gray-500">
+                    Last updated: {lastRefresh.toLocaleTimeString()}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Value Indicator Section */}
+          {/* Enhanced Value Indicator Section */}
           <div className="bg-gray-50 rounded-lg p-8">
             <h2 className="text-2xl font-semibold mb-6 font-urbanist">Value Indicator</h2>
             {data?.treasury && (
@@ -184,6 +193,10 @@ const Index = () => {
                   <span className="text-gray-600">Hard Assets:</span>
                   <span className="font-semibold">${data.treasury.hardAssets.toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between border-t pt-2 font-semibold">
+                  <span className="text-gray-800">Total Treasury Value:</span>
+                  <span className="text-green-600">${(data.treasury.volatileAssets + data.treasury.hardAssets).toLocaleString()}</span>
+                </div>
               </div>
             )}
             <a 
@@ -194,9 +207,18 @@ const Index = () => {
             </a>
           </div>
 
-          {/* Dynamic Wallets Section */}
+          {/* Enhanced Dynamic Wallets Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold font-urbanist">Monitored Wallets</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold font-urbanist">Monitored Wallets</h2>
+              <button 
+                onClick={fetchData}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+              >
+                Refresh Data
+              </button>
+            </div>
+            
             {error && (
               <div className="text-red-600 p-4 bg-red-50 rounded-lg">
                 <p className="font-medium">Error loading wallet data</p>
@@ -247,12 +269,18 @@ const Index = () => {
                         </div>
                       </div>
                     )}
+                    
+                    {(!wallet.balances || wallet.balances.length === 0) && (
+                      <div className="text-sm text-gray-500 italic">
+                        No balance data available
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
-                No wallet data available. Data is being fetched...
+                No wallet data available. Click refresh to fetch latest data.
               </div>
             )}
           </div>
