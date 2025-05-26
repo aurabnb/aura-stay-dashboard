@@ -9,7 +9,89 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      wallet_balances: {
+        Row: {
+          balance: number
+          id: string
+          is_lp_token: boolean | null
+          last_updated: string
+          platform: string | null
+          token_address: string | null
+          token_name: string | null
+          token_symbol: string
+          usd_value: number | null
+          wallet_id: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          is_lp_token?: boolean | null
+          last_updated?: string
+          platform?: string | null
+          token_address?: string | null
+          token_name?: string | null
+          token_symbol: string
+          usd_value?: number | null
+          wallet_id: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          is_lp_token?: boolean | null
+          last_updated?: string
+          platform?: string | null
+          token_address?: string | null
+          token_name?: string | null
+          token_symbol?: string
+          usd_value?: number | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_balances_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          address: string
+          blockchain: string
+          created_at: string
+          description: string | null
+          explorer_url: string
+          id: string
+          name: string
+          updated_at: string
+          wallet_type: string
+        }
+        Insert: {
+          address: string
+          blockchain: string
+          created_at?: string
+          description?: string | null
+          explorer_url: string
+          id?: string
+          name: string
+          updated_at?: string
+          wallet_type: string
+        }
+        Update: {
+          address?: string
+          blockchain?: string
+          created_at?: string
+          description?: string | null
+          explorer_url?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
