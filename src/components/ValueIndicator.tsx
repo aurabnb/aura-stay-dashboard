@@ -1,145 +1,58 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface ValueData {
+interface TreasuryMetrics {
   totalMarketCap: number;
   volatileAssets: number;
   hardAssets: number;
-  speculativeInterest: number;
-  totalValue: number;
   lastUpdated: string;
 }
 
+interface ConsolidatedData {
+  treasury: TreasuryMetrics;
+  wallets: any[];
+  solPrice: number;
+}
+
 const ValueIndicator = () => {
-  const [valueData, setValueData] = useState<ValueData | null>(null);
+  const [data, setData] = useState<ConsolidatedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchValueData = async () => {
+  const fetchData = async () => {
     try {
-      // Fetch wallet balances to calculate totals
-      const { data: balances, error } = await supabase
-        .from('wallet_balances')
-        .select(`
-          *,
-          wallets!inner(name, wallet_type)
-        `);
-
+      console.log('Fetching consolidated treasury data...');
+      const { data: responseData, error } = await supabase.functions.invoke('fetch-wallet-balances');
+      
       if (error) throw error;
-
-      // Calculate values based on wallet types
-      let volatileAssets = 0;
-      let hardAssets = 0;
-      let operationalAssets = 0;
-
-      balances.forEach(balance => {
-        const walletType = balance.wallets.wallet_type;
-        const usdValue = balance.usd_value || 0;
-
-        switch (walletType) {
-          case 'funding':
-            // Project funding wallets contain hard assets (real estate investments)
-            hardAssets += usdValue;
-            break;
-          case 'marketing':
-          case 'business':
-            // Marketing and business costs are operational/volatile
-            volatileAssets += usdValue;
-            break;
-          case 'operations':
-            // Operations wallet
-            operationalAssets += usdValue;
-            break;
-          default:
-            volatileAssets += usdValue;
-        }
-      });
-
-      // Fetch AURA market cap from Solana blockchain
-      const totalMarketCap = await fetchAuraMarketCapFromSolana();
       
-      const totalAssetsValue = volatileAssets + hardAssets + operationalAssets;
-      const speculativeInterest = Math.max(0, totalMarketCap - totalAssetsValue);
-
-      const mockData: ValueData = {
-        totalMarketCap,
-        volatileAssets: volatileAssets + operationalAssets, // Include operational in volatile
-        hardAssets,
-        speculativeInterest,
-        totalValue: totalAssetsValue,
-        lastUpdated: new Date().toISOString()
-      };
-      
-      setValueData(mockData);
+      console.log('Received treasury data:', responseData);
+      setData(responseData);
     } catch (err) {
-      console.error('Error fetching value data:', err);
+      console.error('Error fetching treasury data:', err);
       // Set default values on error
-      setValueData({
-        totalMarketCap: 0,
-        volatileAssets: 0,
-        hardAssets: 0,
-        speculativeInterest: 0,
-        totalValue: 0,
-        lastUpdated: new Date().toISOString()
+      setData({
+        treasury: {
+          totalMarketCap: 0,
+          volatileAssets: 0,
+          hardAssets: 0,
+          lastUpdated: new Date().toISOString()
+        },
+        wallets: [],
+        solPrice: 0
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAuraMarketCapFromSolana = async (): Promise<number> => {
-    try {
-      // Use the correct AURA token mint from the Solscan transaction
-      const auraTokenMint = 'CmoBeTxzrtjjhy9ym1tWdqMWAPbLktBP3i3rKNUqQaa';
-      
-      // Fetch token supply directly from Solana
-      const supplyResponse = await fetch('https://api.mainnet-beta.solana.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getTokenSupply',
-          params: [auraTokenMint]
-        })
-      });
-      
-      const supplyData = await supplyResponse.json();
-      
-      if (supplyData.result?.value?.uiAmount) {
-        const totalSupply = supplyData.result.value.uiAmount;
-        console.log(`AURA total supply from Solana: ${totalSupply}`);
-        
-        // Get AURA price from CoinGecko
-        const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=aura-3&vs_currencies=usd');
-        const priceData = await priceResponse.json();
-        const auraPrice = priceData['aura-3']?.usd || 0;
-        
-        console.log(`AURA price from CoinGecko: ${auraPrice}`);
-        
-        const marketCap = totalSupply * auraPrice;
-        console.log(`Calculated AURA market cap: ${marketCap}`);
-        
-        return marketCap;
-      }
-      
-      console.log('Could not fetch AURA supply from Solana');
-      return 0;
-    } catch (error) {
-      console.error('Error fetching AURA market cap from Solana:', error);
-      return 0;
-    }
-  };
-
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      // First refresh wallet balances
-      await supabase.functions.invoke('fetch-wallet-balances');
-      // Then refetch the calculated values
-      await fetchValueData();
+      await fetchData();
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
@@ -148,7 +61,7 @@ const ValueIndicator = () => {
   };
 
   useEffect(() => {
-    fetchValueData();
+    fetchData();
   }, []);
 
   const formatCurrency = (value: number) => {
@@ -186,6 +99,10 @@ const ValueIndicator = () => {
     );
   }
 
+  const treasury = data?.treasury;
+  const totalAssetsValue = (treasury?.volatileAssets || 0) + (treasury?.hardAssets || 0);
+  const speculativeInterest = Math.max(0, (treasury?.totalMarketCap || 0) - totalAssetsValue);
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -220,27 +137,27 @@ const ValueIndicator = () => {
             <tbody className="divide-y divide-gray-200">
               <tr>
                 <td className="py-3 px-4 text-gray-700">Total Market Cap (from Solana)</td>
-                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(valueData?.totalMarketCap || 0)}</td>
+                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(treasury?.totalMarketCap || 0)}</td>
                 <td className="py-3 px-4 text-right text-green-600">Live</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-700">Volatile Assets</td>
-                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(valueData?.volatileAssets || 0)}</td>
+                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(treasury?.volatileAssets || 0)}</td>
                 <td className="py-3 px-4 text-right text-green-600">Live</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-700">Hard Assets</td>
-                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(valueData?.hardAssets || 0)}</td>
+                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(treasury?.hardAssets || 0)}</td>
                 <td className="py-3 px-4 text-right text-green-600">Live</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-700">Speculative Interest</td>
-                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(valueData?.speculativeInterest || 0)}</td>
+                <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(speculativeInterest)}</td>
                 <td className="py-3 px-4 text-right text-green-600">Live</td>
               </tr>
               <tr className="border-t-2 border-gray-300 bg-gray-50">
                 <td className="py-3 px-4 font-semibold text-gray-900">Total Treasury Value</td>
-                <td className="py-3 px-4 text-right font-semibold text-gray-900">{formatCurrency(valueData?.totalValue || 0)}</td>
+                <td className="py-3 px-4 text-right font-semibold text-gray-900">{formatCurrency(totalAssetsValue)}</td>
                 <td className="py-3 px-4 text-right text-green-600">Live</td>
               </tr>
             </tbody>
@@ -258,9 +175,9 @@ const ValueIndicator = () => {
           <p className="mt-1">
             <strong>Total Treasury Value:</strong> Sum of all monitored wallet assets (excluding speculative interest).
           </p>
-          {valueData?.lastUpdated && (
+          {treasury?.lastUpdated && (
             <p className="mt-1">
-              Last calculated: {new Date(valueData.lastUpdated).toLocaleString()}
+              Last calculated: {new Date(treasury.lastUpdated).toLocaleString()}
             </p>
           )}
         </div>
