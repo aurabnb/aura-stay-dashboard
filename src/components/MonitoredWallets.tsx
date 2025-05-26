@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet, ExternalLink, ChevronDown, ChevronUp, RefreshCw, TrendingUp } from 'lucide-react';
@@ -51,18 +50,39 @@ const MonitoredWallets = () => {
   const [expandedWallets, setExpandedWallets] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
       console.log('Fetching consolidated data...');
-      const { data: responseData, error } = await supabase.functions.invoke('fetch-wallet-balances');
+      setError(null);
+      const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
       
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       
       console.log('Received consolidated data:', responseData);
+      
+      // Check if the response has the expected structure
+      if (!responseData || !responseData.wallets || !Array.isArray(responseData.wallets)) {
+        console.error('Invalid response structure:', responseData);
+        throw new Error('Invalid response structure from server');
+      }
+      
       setData(responseData);
     } catch (error) {
       console.error('Error fetching consolidated data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch data');
+      // Set fallback data structure to prevent crashes
+      setData({
+        treasury: {
+          totalMarketCap: 0,
+          volatileAssets: 0,
+          hardAssets: 0,
+          lastUpdated: new Date().toISOString()
+        },
+        wallets: [],
+        solPrice: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -156,7 +176,32 @@ const MonitoredWallets = () => {
     );
   }
 
-  const totalPortfolioValue = data?.wallets.reduce((sum, wallet) => sum + wallet.totalUsdValue, 0) || 0;
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            Monitored Wallets
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-600 p-4 bg-red-50 rounded-lg">
+            <p className="font-medium">Error loading wallet data</p>
+            <p className="text-sm mt-1">{error}</p>
+            <button
+              onClick={refreshData}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const totalPortfolioValue = data?.wallets?.reduce((sum, wallet) => sum + (wallet.totalUsdValue || 0), 0) || 0;
 
   return (
     <Card className="w-full">
@@ -196,103 +241,109 @@ const MonitoredWallets = () => {
         )}
 
         <div className="space-y-4">
-          {data?.wallets.map((wallet) => (
-            <div key={wallet.wallet_id} className="p-4 border border-gray-200 rounded-lg">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 font-urbanist">{wallet.name}</h3>
-                  <p className="text-xs text-gray-500">{wallet.blockchain}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="font-semibold text-lg">${wallet.totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    <p className="text-xs text-gray-500">{wallet.balances.length} assets</p>
+          {data?.wallets && data.wallets.length > 0 ? (
+            data.wallets.map((wallet) => (
+              <div key={wallet.wallet_id} className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 font-urbanist">{wallet.name}</h3>
+                    <p className="text-xs text-gray-500">{wallet.blockchain}</p>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="font-semibold text-lg">${(wallet.totalUsdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-gray-500">{wallet.balances?.length || 0} assets</p>
+                    </div>
+                    <button
+                      onClick={() => openExplorer(wallet)}
+                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-sm mb-3">
+                  <span className="text-gray-500">Address:</span>
+                  <p className="font-mono">{formatAddress(wallet.address)}</p>
+                </div>
+
+                {wallet.balances && wallet.balances.length > 0 && (
                   <button
-                    onClick={() => openExplorer(wallet)}
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded"
+                    onClick={() => toggleWalletExpansion(wallet.wallet_id)}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    {expandedWallets.has(wallet.wallet_id) ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        Hide Assets
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        Show Assets ({wallet.balances.length})
+                      </>
+                    )}
                   </button>
-                </div>
-              </div>
-              
-              <div className="text-sm mb-3">
-                <span className="text-gray-500">Address:</span>
-                <p className="font-mono">{formatAddress(wallet.address)}</p>
-              </div>
+                )}
 
-              {wallet.balances.length > 0 && (
-                <button
-                  onClick={() => toggleWalletExpansion(wallet.wallet_id)}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  {expandedWallets.has(wallet.wallet_id) ? (
-                    <>
-                      <ChevronUp className="h-4 w-4" />
-                      Hide Assets
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-4 w-4" />
-                      Show Assets ({wallet.balances.length})
-                    </>
-                  )}
-                </button>
-              )}
-
-              {expandedWallets.has(wallet.wallet_id) && wallet.balances.length > 0 && (
-                <div className="mt-4 border-t pt-4">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Token Symbol</TableHead>
-                        <TableHead>Token Name</TableHead>
-                        <TableHead className="text-right">Balance</TableHead>
-                        <TableHead className="text-right">USD Value</TableHead>
-                        <TableHead>Platform</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {wallet.balances.map((balance, index) => (
-                        <React.Fragment key={index}>
-                          <TableRow>
-                            <TableCell className="font-medium">
-                              {balance.token_symbol}
-                              {balance.is_lp_token && (
-                                <span className="ml-1 px-1 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">LP</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{balance.token_name}</TableCell>
-                            <TableCell className="text-right">
-                              {balance.balance.toLocaleString(undefined, { maximumFractionDigits: 6 })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              ${balance.usd_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell className="capitalize">{balance.platform}</TableCell>
-                          </TableRow>
-                          {balance.is_lp_token && balance.lp_details && (
+                {expandedWallets.has(wallet.wallet_id) && wallet.balances && wallet.balances.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Token Symbol</TableHead>
+                          <TableHead>Token Name</TableHead>
+                          <TableHead className="text-right">Balance</TableHead>
+                          <TableHead className="text-right">USD Value</TableHead>
+                          <TableHead>Platform</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {wallet.balances.map((balance, index) => (
+                          <React.Fragment key={index}>
                             <TableRow>
-                              <TableCell colSpan={5} className="p-0">
-                                {renderLPDetails(balance.lp_details)}
+                              <TableCell className="font-medium">
+                                {balance.token_symbol}
+                                {balance.is_lp_token && (
+                                  <span className="ml-1 px-1 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">LP</span>
+                                )}
                               </TableCell>
+                              <TableCell>{balance.token_name}</TableCell>
+                              <TableCell className="text-right">
+                                {balance.balance.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                ${(balance.usd_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </TableCell>
+                              <TableCell className="capitalize">{balance.platform}</TableCell>
                             </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+                            {balance.is_lp_token && balance.lp_details && (
+                              <TableRow>
+                                <TableCell colSpan={5} className="p-0">
+                                  {renderLPDetails(balance.lp_details)}
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
 
-              {wallet.balances.length === 0 && (
-                <div className="mt-2 text-sm text-gray-500 italic">
-                  No balance data available. Click refresh to fetch latest balances.
-                </div>
-              )}
+                {(!wallet.balances || wallet.balances.length === 0) && (
+                  <div className="mt-2 text-sm text-gray-500 italic">
+                    No balance data available. Click refresh to fetch latest balances.
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No wallet data available. Click refresh to fetch data.
             </div>
-          ))}
+          )}
         </div>
       </CardContent>
     </Card>

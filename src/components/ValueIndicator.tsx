@@ -21,18 +21,28 @@ const ValueIndicator = () => {
   const [data, setData] = useState<ConsolidatedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
       console.log('Fetching consolidated treasury data...');
-      const { data: responseData, error } = await supabase.functions.invoke('fetch-wallet-balances');
+      setError(null);
+      const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
       
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       
       console.log('Received treasury data:', responseData);
+      
+      // Check if the response has the expected structure
+      if (!responseData || !responseData.treasury) {
+        console.error('Invalid response structure:', responseData);
+        throw new Error('Invalid response structure from server');
+      }
+      
       setData(responseData);
     } catch (err) {
       console.error('Error fetching treasury data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
       // Set default values on error
       setData({
         treasury: {
@@ -93,6 +103,31 @@ const ValueIndicator = () => {
                 <div key={i} className="h-4 bg-gray-200 rounded"></div>
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Aura Value Indicator
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-600 p-4 bg-red-50 rounded-lg">
+            <p className="font-medium">Error loading treasury data</p>
+            <p className="text-sm mt-1">{error}</p>
+            <button
+              onClick={refreshData}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Try Again
+            </button>
           </div>
         </CardContent>
       </Card>
