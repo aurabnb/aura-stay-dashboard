@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Connection, PublicKey } from 'https://esm.sh/@solana/web3.js@1.78.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -150,7 +149,6 @@ serve(async (req) => {
     // Calculate treasury metrics
     const totalMarketCap = await fetchAuraMarketCapFromSolana()
     const totalAssetsValue = totalVolatileAssets + totalHardAssets
-    const speculativeInterest = Math.max(0, totalMarketCap - totalAssetsValue)
 
     const treasury: TreasuryMetrics = {
       totalMarketCap,
@@ -334,19 +332,106 @@ async function fetchTokenMetadata(mint: string): Promise<{symbol: string, name: 
   }
 }
 
-async function fetchMeteoraLPPositions(address: string): Promise<TokenBalance[]> {
+async function fetchMeteoraVaultPositions(address: string): Promise<TokenBalance[]> {
   try {
-    console.log(`Checking for Meteora LP positions for address: ${address}`)
+    console.log(`Fetching Meteora vault positions for address: ${address}`)
     
-    // For now, return empty array as the Meteora API is not working properly
-    // This will be expanded once we have the correct API endpoints
-    const lpPositions: TokenBalance[] = []
+    // First, get all vaults to find ones where this address might have positions
+    const vaultsResponse = await fetch('https://stake-for-fee-keeper.meteora.ag/vault/all', {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; TreasuryBot/1.0)'
+      }
+    })
+
+    if (!vaultsResponse.ok) {
+      console.log(`Meteora vaults API failed with status: ${vaultsResponse.status}`)
+      return []
+    }
+
+    const vaultsData = await vaultsResponse.json()
+    console.log(`Found ${vaultsData.data?.length || 0} total vaults`)
+
+    if (!vaultsData.data || !Array.isArray(vaultsData.data)) {
+      console.log('No vault data available')
+      return []
+    }
+
+    const positions: TokenBalance[] = []
+
+    // For each vault, we need to check if the user has staked positions
+    // Unfortunately, the API doesn't seem to have a direct way to get user positions
+    // We'll need to use Solana RPC to check for vault token balances
     
-    // Check if this wallet has any known LP tokens by examining SPL tokens
-    console.log(`No Meteora LP positions found for address: ${address}`)
-    return lpPositions
+    for (const vault of vaultsData.data.slice(0, 10)) { // Limit to first 10 to avoid rate limits
+      try {
+        if (!vault.stake_mint) continue
+
+        // Check if user has tokens for this vault's stake mint
+        const tokenResponse = await fetch('https://api.mainnet-beta.solana.com', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'getTokenAccountsByOwner',
+            params: [
+              address,
+              { mint: vault.stake_mint },
+              { encoding: 'jsonParsed' }
+            ]
+          })
+        })
+
+        const tokenData = await tokenResponse.json()
+        
+        if (tokenData.result?.value && tokenData.result.value.length > 0) {
+          const tokenAccount = tokenData.result.value[0]
+          const balance = parseFloat(tokenAccount.account.data.parsed.info.tokenAmount.uiAmount || 0)
+          
+          if (balance > 0) {
+            console.log(`Found vault position: ${vault.token_a_symbol}/${vault.token_b_symbol} - Balance: ${balance}`)
+            
+            // Calculate USD value based on vault's total staked amount USD
+            const shareOfPool = balance / (vault.total_staked_amount || 1)
+            const usdValue = shareOfPool * (vault.total_staked_amount_usd || 0)
+            
+            positions.push({
+              symbol: `${vault.token_a_symbol}/${vault.token_b_symbol}`,
+              name: `Meteora Vault LP Token`,
+              balance: balance,
+              usdValue: usdValue,
+              tokenAddress: vault.stake_mint,
+              isLpToken: true,
+              platform: 'meteora-vault',
+              lpDetails: {
+                poolAddress: vault.pool_address,
+                token1: { 
+                  symbol: vault.token_a_symbol, 
+                  amount: balance * shareOfPool, 
+                  usdValue: usdValue * 0.5 
+                },
+                token2: { 
+                  symbol: vault.token_b_symbol, 
+                  amount: balance * shareOfPool, 
+                  usdValue: usdValue * 0.5 
+                },
+                priceRange: { min: 0, max: 0 }, // Vaults don't have price ranges like DLMM
+                totalUsdValue: usdValue
+              }
+            })
+          }
+        }
+      } catch (vaultError) {
+        console.error(`Error checking vault ${vault.pool_address}:`, vaultError)
+        continue
+      }
+    }
+
+    console.log(`Found ${positions.length} Meteora vault positions for address: ${address}`)
+    return positions
   } catch (error) {
-    console.error('Error in fetchMeteoraLPPositions:', error)
+    console.error('Error in fetchMeteoraVaultPositions:', error)
     return []
   }
 }
@@ -492,9 +577,9 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
       }
     }
 
-    // Try to fetch Meteora LP positions (disabled for now due to API issues)
-    // const lpPositions = await fetchMeteoraLPPositions(address)
-    // balances.push(...lpPositions)
+    // Fetch Meteora vault positions
+    const vaultPositions = await fetchMeteoraVaultPositions(address)
+    balances.push(...vaultPositions)
 
     return balances
   } catch (error) {
