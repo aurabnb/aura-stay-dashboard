@@ -212,7 +212,7 @@ async function fetchTokenPrices(tokens: string[]): Promise<Record<string, number
         'USDT': 'tether',
         'BTC': 'bitcoin',
         'ETH': 'ethereum',
-        'AURA': 'aura-network',
+        'AURA': 'aurad', // Updated to correct CoinGecko ID
         'WETH': 'weth',
         'WBTC': 'wrapped-bitcoin',
         'WSOL': 'wrapped-solana',
@@ -260,7 +260,7 @@ async function fetchTokenPrices(tokens: string[]): Promise<Record<string, number
           'tether': 'USDT',
           'bitcoin': 'BTC',
           'ethereum': 'ETH',
-          'aura-network': 'AURA',
+          'aurad': 'AURA', // Updated mapping
           'weth': 'WETH',
           'wrapped-bitcoin': 'WBTC',
           'wrapped-solana': 'WSOL',
@@ -297,7 +297,7 @@ async function fetchTokenMetadata(mint: string): Promise<{symbol: string, name: 
   try {
     console.log(`Fetching metadata for token: ${mint}`)
     
-    // Try Solscan API first with proper headers
+    // Try Solscan API first with proper headers and handle nested responses
     try {
       const solscanResponse = await fetch(`https://api.solscan.io/token/meta?token=${mint}`, {
         headers: {
@@ -307,18 +307,50 @@ async function fetchTokenMetadata(mint: string): Promise<{symbol: string, name: 
       })
       if (solscanResponse.ok) {
         const data = await solscanResponse.json()
-        if (data.symbol && data.name) {
-          console.log(`Found metadata via Solscan: ${data.symbol} - ${data.name}`)
-          return { symbol: data.symbol, name: data.name }
+        // Handle nested response structure
+        const tokenData = data.data || data
+        if (tokenData.symbol && tokenData.name) {
+          console.log(`Found metadata via Solscan: ${tokenData.symbol} - ${tokenData.name}`)
+          return { symbol: tokenData.symbol, name: tokenData.name }
         }
       }
     } catch (solscanError) {
-      console.log('Solscan API failed, using fallback')
+      console.log('Solscan API failed, trying Metaplex fallback')
     }
 
-    // Check for known tokens first
+    // Fallback to Metaplex metadata program
+    try {
+      const metaplexResponse = await fetch('https://api.mainnet-beta.solana.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getAccountInfo',
+          params: [
+            mint,
+            { encoding: 'jsonParsed' }
+          ]
+        })
+      })
+      
+      if (metaplexResponse.ok) {
+        const data = await metaplexResponse.json()
+        if (data.result?.value?.data?.parsed?.info) {
+          const info = data.result.value.data.parsed.info
+          if (info.symbol && info.name) {
+            console.log(`Found metadata via Metaplex: ${info.symbol} - ${info.name}`)
+            return { symbol: info.symbol, name: info.name }
+          }
+        }
+      }
+    } catch (metaplexError) {
+      console.log('Metaplex API failed, using known tokens')
+    }
+
+    // Check for known tokens with updated mapping
     const knownTokens: Record<string, {symbol: string, name: string}> = {
-      '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {symbol: 'UNKNOWN', name: 'Unknown Token'}
+      '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {symbol: 'UNK', name: 'Unknown Token'}
     }
     
     if (knownTokens[mint]) {
@@ -332,113 +364,151 @@ async function fetchTokenMetadata(mint: string): Promise<{symbol: string, name: 
   }
 }
 
-async function fetchMeteoraVaultPositions(address: string): Promise<TokenBalance[]> {
+async function fetchMeteoraDLMMPositions(address: string): Promise<TokenBalance[]> {
   try {
-    console.log(`Fetching Meteora vault positions for address: ${address}`)
+    console.log(`Fetching Meteora DLMM positions for address: ${address}`)
     
-    // First, get all vaults to find ones where this address might have positions
-    const vaultsResponse = await fetch('https://stake-for-fee-keeper.meteora.ag/vault/all', {
+    // Fetch user LP positions from Meteora DLMM API
+    const dlmmResponse = await fetch(`https://dlmm-api.meteora.ag/user/positions/${address}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (compatible; TreasuryBot/1.0)'
       }
     })
 
-    if (!vaultsResponse.ok) {
-      console.log(`Meteora vaults API failed with status: ${vaultsResponse.status}`)
-      return []
+    if (!dlmmResponse.ok) {
+      console.log(`Meteora DLMM API failed with status: ${dlmmResponse.status}`)
+      // Fallback to on-chain data
+      return await fetchMeteoraDLMMOnChain(address)
     }
 
-    const vaultsData = await vaultsResponse.json()
-    console.log(`Found ${vaultsData.data?.length || 0} total vaults`)
+    const dlmmData = await dlmmResponse.json()
+    console.log('DLMM API Response:', JSON.stringify(dlmmData, null, 2))
 
-    if (!vaultsData.data || !Array.isArray(vaultsData.data)) {
-      console.log('No vault data available')
-      return []
+    if (!dlmmData.positions || !Array.isArray(dlmmData.positions)) {
+      console.log('No DLMM positions found in API response')
+      return await fetchMeteoraDLMMOnChain(address)
     }
 
     const positions: TokenBalance[] = []
 
-    // For each vault, we need to check if the user has staked positions
-    // Unfortunately, the API doesn't seem to have a direct way to get user positions
-    // We'll need to use Solana RPC to check for vault token balances
-    
-    for (const vault of vaultsData.data.slice(0, 10)) { // Limit to first 10 to avoid rate limits
-      try {
-        if (!vault.stake_mint) continue
-
-        // Check if user has tokens for this vault's stake mint
-        const tokenResponse = await fetch('https://api.mainnet-beta.solana.com', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'getTokenAccountsByOwner',
-            params: [
-              address,
-              { mint: vault.stake_mint },
-              { encoding: 'jsonParsed' }
-            ]
-          })
-        })
-
-        const tokenData = await tokenResponse.json()
+    for (const position of dlmmData.positions) {
+      if (position.base_amount > 0 || position.quote_amount > 0) {
+        const totalUsdValue = (position.base_amount_usd || 0) + (position.quote_amount_usd || 0)
         
-        if (tokenData.result?.value && tokenData.result.value.length > 0) {
-          const tokenAccount = tokenData.result.value[0]
-          const balance = parseFloat(tokenAccount.account.data.parsed.info.tokenAmount.uiAmount || 0)
-          
-          if (balance > 0) {
-            console.log(`Found vault position: ${vault.token_a_symbol}/${vault.token_b_symbol} - Balance: ${balance}`)
-            
-            // Calculate USD value based on vault's total staked amount USD
-            const shareOfPool = balance / (vault.total_staked_amount || 1)
-            const usdValue = shareOfPool * (vault.total_staked_amount_usd || 0)
-            
-            positions.push({
-              symbol: `${vault.token_a_symbol}/${vault.token_b_symbol}`,
-              name: `Meteora Vault LP Token`,
-              balance: balance,
-              usdValue: usdValue,
-              tokenAddress: vault.stake_mint,
-              isLpToken: true,
-              platform: 'meteora-vault',
-              lpDetails: {
-                poolAddress: vault.pool_address,
-                token1: { 
-                  symbol: vault.token_a_symbol, 
-                  amount: balance * shareOfPool, 
-                  usdValue: usdValue * 0.5 
-                },
-                token2: { 
-                  symbol: vault.token_b_symbol, 
-                  amount: balance * shareOfPool, 
-                  usdValue: usdValue * 0.5 
-                },
-                priceRange: { min: 0, max: 0 }, // Vaults don't have price ranges like DLMM
-                totalUsdValue: usdValue
-              }
-            })
+        positions.push({
+          symbol: `${position.base_token_symbol}/${position.quote_token_symbol}`,
+          name: `Meteora DLMM LP Token`,
+          balance: position.liquidity || 1,
+          usdValue: totalUsdValue,
+          tokenAddress: position.pool_address,
+          isLpToken: true,
+          platform: 'meteora-dlmm',
+          lpDetails: {
+            poolAddress: position.pool_address,
+            token1: { 
+              symbol: position.base_token_symbol, 
+              amount: position.base_amount, 
+              usdValue: position.base_amount_usd || 0
+            },
+            token2: { 
+              symbol: position.quote_token_symbol, 
+              amount: position.quote_amount, 
+              usdValue: position.quote_amount_usd || 0
+            },
+            priceRange: { 
+              min: position.lower_price || 0, 
+              max: position.upper_price || 0 
+            },
+            totalUsdValue: totalUsdValue
           }
-        }
-      } catch (vaultError) {
-        console.error(`Error checking vault ${vault.pool_address}:`, vaultError)
+        })
+      }
+    }
+
+    console.log(`Found ${positions.length} Meteora DLMM positions for address: ${address}`)
+    return positions
+  } catch (error) {
+    console.error('Error in fetchMeteoraDLMMPositions:', error)
+    return await fetchMeteoraDLMMOnChain(address)
+  }
+}
+
+async function fetchMeteoraDLMMOnChain(address: string): Promise<TokenBalance[]> {
+  try {
+    console.log(`Fetching Meteora DLMM positions on-chain for address: ${address}`)
+    
+    // Meteora DLMM program ID
+    const meteoraDLMMProgramId = 'LBUZKhRxPF3XUpuy1G2ZvtvZjkzQ3TS4gGycGJkyv1S'
+    
+    const response = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getProgramAccounts',
+        params: [
+          meteoraDLMMProgramId,
+          {
+            filters: [
+              { dataSize: 304 }, // Adjust if needed based on account structure
+              { memcmp: { offset: 8, bytes: address } } // Look for user address in account data
+            ],
+            encoding: 'base64'
+          }
+        ]
+      })
+    })
+
+    const data = await response.json()
+    console.log(`Found ${data.result?.length || 0} on-chain DLMM accounts`)
+
+    if (!data.result || data.result.length === 0) {
+      return []
+    }
+
+    // Parse account data to extract position information
+    // This is a simplified parser - actual implementation would need proper binary parsing
+    const positions: TokenBalance[] = []
+    
+    for (const account of data.result.slice(0, 5)) { // Limit to prevent timeout
+      try {
+        // This is a placeholder for actual account data parsing
+        // In reality, you'd need to decode the binary data according to Meteora's account structure
+        positions.push({
+          symbol: 'LP_TOKEN',
+          name: 'Meteora DLMM Position',
+          balance: 1,
+          usdValue: 0,
+          tokenAddress: account.pubkey,
+          isLpToken: true,
+          platform: 'meteora-dlmm-onchain',
+          lpDetails: {
+            poolAddress: account.pubkey,
+            token1: { symbol: 'TOKEN_A', amount: 0, usdValue: 0 },
+            token2: { symbol: 'TOKEN_B', amount: 0, usdValue: 0 },
+            priceRange: { min: 0, max: 0 },
+            totalUsdValue: 0
+          }
+        })
+      } catch (parseError) {
+        console.error('Error parsing DLMM account data:', parseError)
         continue
       }
     }
 
-    console.log(`Found ${positions.length} Meteora vault positions for address: ${address}`)
     return positions
   } catch (error) {
-    console.error('Error in fetchMeteoraVaultPositions:', error)
+    console.error('Error in fetchMeteoraDLMMOnChain:', error)
     return []
   }
 }
 
 async function fetchAuraMarketCapFromSolana(): Promise<number> {
   try {
-    const auraTokenMint = 'CmoBeTxzrtjjhy9ym1tWdqMWAPbLktBP3i3rKNUqQaa'
+    // Updated AURA token mint address
+    const auraTokenMint = 'AURYydfxJib1ZkTir1Jn1J9ECnpjNzasxqcooGdh1V1'
     
     const response = await fetch('https://api.mainnet-beta.solana.com', {
       method: 'POST',
@@ -541,9 +611,9 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
           const knownTokens: Record<string, {symbol: string, name: string}> = {
             'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {symbol: 'USDC', name: 'USD Coin'},
             'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': {symbol: 'USDT', name: 'Tether USD'},
-            'CmoBeTxzrtjjhy9ym1tWdqMWAPbLktBP3i3rKNUqQaa': {symbol: 'AURA', name: 'Aura Token'},
+            'AURYydfxJib1ZkTir1Jn1J9ECnpjNzasxqcooGdh1V1': {symbol: 'AURA', name: 'Aura Token'}, // Updated AURA mint
             'So11111111111111111111111111111111111111112': {symbol: 'WSOL', name: 'Wrapped SOL'},
-            '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {symbol: 'UNKNOWN', name: 'Unknown Token'}
+            '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {symbol: 'UNK', name: 'Unknown Token'}
           }
           
           if (knownTokens[tokenInfo.mint]) {
@@ -577,9 +647,9 @@ async function fetchSolanaBalances(address: string): Promise<TokenBalance[]> {
       }
     }
 
-    // Fetch Meteora vault positions
-    const vaultPositions = await fetchMeteoraVaultPositions(address)
-    balances.push(...vaultPositions)
+    // Fetch Meteora DLMM positions
+    const dlmmPositions = await fetchMeteoraDLMMPositions(address)
+    balances.push(...dlmmPositions)
 
     return balances
   } catch (error) {
