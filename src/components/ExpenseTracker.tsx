@@ -8,6 +8,7 @@ interface ExpenseEntry {
   date: string;
   category: string;
   transaction: string;
+  amount?: string;
 }
 
 const ExpenseTracker = () => {
@@ -16,7 +17,7 @@ const ExpenseTracker = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Google Sheets CSV export URL (replace the /edit part with /export?format=csv)
+  // Google Sheets CSV export URL
   const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1CzTl1xO9fIEaV0MePMBWnUYaj9rp1i85l7_DtA8SLnk/export?format=csv&gid=0';
 
   const fetchExpenseData = async () => {
@@ -35,25 +36,51 @@ const ExpenseTracker = () => {
       const data = await response.json();
       const csvText = data.contents;
       
-      // Parse CSV data
-      const lines = csvText.split('\n');
-      const headers = lines[0].split(',').map((h: string) => h.trim().replace(/"/g, ''));
+      console.log('Raw CSV response:', csvText);
+      
+      // Parse CSV data - handle base64 encoded content
+      let actualCsvText = csvText;
+      if (csvText.startsWith('data:text/csv;base64,')) {
+        // Decode base64 content
+        const base64Content = csvText.replace('data:text/csv;base64,', '');
+        actualCsvText = atob(base64Content);
+      }
+      
+      console.log('Decoded CSV text:', actualCsvText);
+      
+      // Split into lines and parse
+      const lines = actualCsvText.split(/\r?\n/);
+      console.log('CSV lines:', lines);
       
       const parsedExpenses: ExpenseEntry[] = [];
       
+      // Skip header row and empty rows
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (line) {
-          // Simple CSV parsing - handle quoted fields
-          const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-          const cleanedValues = values.map(v => v.replace(/"/g, '').trim());
-          
-          if (cleanedValues.length >= 3) {
-            parsedExpenses.push({
-              date: cleanedValues[0] || '',
-              category: cleanedValues[1] || '',
-              transaction: cleanedValues[2] || ''
-            });
+        if (line && !line.startsWith(',,')) {
+          try {
+            // Enhanced CSV parsing to handle quoted fields properly
+            const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            const values = line.split(csvRegex).map(v => v.replace(/^"|"$/g, '').trim());
+            
+            console.log(`Parsing line ${i}:`, line, 'Values:', values);
+            
+            if (values.length >= 3 && values[0] && values[1] && values[2]) {
+              const expense: ExpenseEntry = {
+                date: values[0] || '',
+                category: values[1] || '',
+                transaction: values[2] || ''
+              };
+              
+              // Add amount if available
+              if (values[3]) {
+                expense.amount = values[3];
+              }
+              
+              parsedExpenses.push(expense);
+            }
+          } catch (lineError) {
+            console.warn(`Error parsing line ${i}:`, lineError);
           }
         }
       }
@@ -70,13 +97,8 @@ const ExpenseTracker = () => {
 
   const refreshData = async () => {
     setRefreshing(true);
-    try {
-      await fetchExpenseData();
-    } catch (error) {
-      console.error('Error refreshing expense data:', error);
-    } finally {
-      setRefreshing(false);
-    }
+    await fetchExpenseData();
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -105,7 +127,7 @@ const ExpenseTracker = () => {
         </a>
       );
     }
-    return transaction;
+    return <span className="text-sm">{transaction}</span>;
   };
 
   const getCategoryColor = (category: string) => {
@@ -242,6 +264,7 @@ const ExpenseTracker = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Transaction</TableHead>
+                {expenses.some(e => e.amount) && <TableHead>Amount</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,11 +282,18 @@ const ExpenseTracker = () => {
                     <TableCell>
                       {formatTransactionLink(expense.transaction)}
                     </TableCell>
+                    {expenses.some(e => e.amount) && (
+                      <TableCell>
+                        {expense.amount && (
+                          <span className="font-medium text-gray-900">{expense.amount}</span>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                     No expense data available. Click refresh to fetch latest data.
                   </TableCell>
                 </TableRow>

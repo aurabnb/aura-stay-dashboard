@@ -13,6 +13,14 @@ interface TokenInfo {
   logoURI?: string;
 }
 
+interface LPDetails {
+  poolAddress: string;
+  token1: { symbol: string; amount: number; usdValue: number };
+  token2: { symbol: string; amount: number; usdValue: number };
+  priceRange: { min: number; max: number };
+  totalUsdValue: number;
+}
+
 interface WalletBalance {
   symbol: string;
   name: string;
@@ -21,13 +29,13 @@ interface WalletBalance {
   tokenAddress?: string;
   isLpToken: boolean;
   platform: string;
-  lpDetails?: any;
+  lpDetails?: LPDetails;
 }
 
 // Enhanced token cache with fallbacks
 const tokenCache = new Map<string, TokenInfo>();
 
-// Known token mappings as fallback
+// Known token mappings with LP token detection
 const KNOWN_TOKENS: Record<string, TokenInfo> = {
   'So11111111111111111111111111111111111111112': {
     symbol: 'SOL',
@@ -43,6 +51,58 @@ const KNOWN_TOKENS: Record<string, TokenInfo> = {
     symbol: 'USDT',
     name: 'Tether USD',
     decimals: 6
+  },
+  '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': {
+    symbol: 'AURA',
+    name: 'Aurora Ventures',
+    decimals: 9
+  },
+  '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh': {
+    symbol: 'WBTC',
+    name: 'Wrapped Bitcoin',
+    decimals: 8
+  },
+  '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': {
+    symbol: 'ETH',
+    name: 'Ethereum',
+    decimals: 8
+  },
+  '2d77b594b9bbaed03221f7c63af8c4307432daf1': {
+    symbol: 'CULT',
+    name: 'Cult DAO',
+    decimals: 18
+  }
+};
+
+// Known LP token mints from Meteora
+const METEORA_LP_TOKENS = new Set([
+  'FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5',
+  '8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP', 
+  'GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX',
+  'GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW'
+]);
+
+// Pool configurations
+const METEORA_POOLS = {
+  'FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5': {
+    token1: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
+    token2: '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // WBTC
+    name: 'AURA-WBTC'
+  },
+  '8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP': {
+    token1: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
+    token2: '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // WBTC
+    name: 'AURA-WBTC'
+  },
+  'GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX': {
+    token1: '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // ETH
+    token2: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
+    name: 'ETH-AURA'
+  },
+  'GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW': {
+    token1: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
+    token2: '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // ETH
+    name: 'AURA-ETH'
   }
 };
 
@@ -127,8 +187,31 @@ async function getSolanaPrice(): Promise<number> {
 
 async function getTokenPrice(tokenAddress: string): Promise<number> {
   try {
+    // Special handling for DCULT - use CULT price instead
+    if (tokenAddress === '2d77b594b9bbaed03221f7c63af8c4307432daf1') {
+      console.log('Fetching CULT price for DCULT token');
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=cult-dao&vs_currencies=usd',
+        {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Aura-Treasury-Dashboard/1.0'
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const price = data?.['cult-dao']?.usd;
+        if (price && typeof price === 'number') {
+          console.log(`CULT price: $${price}`);
+          return price;
+        }
+      }
+    }
+    
     // Add delay to respect rate limits
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
     
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${tokenAddress}&vs_currencies=usd`,
@@ -157,6 +240,56 @@ async function getTokenPrice(tokenAddress: string): Promise<number> {
   } catch (error) {
     console.warn(`Failed to get price for token ${tokenAddress}:`, error);
     return 0;
+  }
+}
+
+async function getLPTokenDetails(mint: string, balance: number): Promise<LPDetails | null> {
+  try {
+    if (!METEORA_LP_TOKENS.has(mint)) {
+      return null;
+    }
+
+    const poolConfig = METEORA_POOLS[mint as keyof typeof METEORA_POOLS];
+    if (!poolConfig) {
+      return null;
+    }
+
+    console.log(`Fetching LP details for pool: ${mint}`);
+
+    // Get token info for both tokens
+    const token1Info = await getTokenInfo(poolConfig.token1);
+    const token2Info = await getTokenInfo(poolConfig.token2);
+
+    // Get token prices
+    const token1Price = await getTokenPrice(poolConfig.token1);
+    const token2Price = await getTokenPrice(poolConfig.token2);
+
+    // Estimate token amounts based on balance (simplified)
+    // In a real implementation, you'd fetch actual pool data from Meteora API
+    const estimatedToken1Amount = balance * 0.5; // Simplified estimation
+    const estimatedToken2Amount = balance * 0.5; // Simplified estimation
+
+    const token1UsdValue = estimatedToken1Amount * token1Price;
+    const token2UsdValue = estimatedToken2Amount * token2Price;
+
+    return {
+      poolAddress: mint,
+      token1: {
+        symbol: token1Info.symbol,
+        amount: estimatedToken1Amount,
+        usdValue: token1UsdValue
+      },
+      token2: {
+        symbol: token2Info.symbol,
+        amount: estimatedToken2Amount,
+        usdValue: token2UsdValue
+      },
+      priceRange: { min: 0, max: 0 }, // Would need real pool data
+      totalUsdValue: token1UsdValue + token2UsdValue
+    };
+  } catch (error) {
+    console.error(`Error fetching LP details for ${mint}:`, error);
+    return null;
   }
 }
 
@@ -222,16 +355,28 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
             
             if (balance > 0) {
               const tokenMeta = await getTokenInfo(mint);
-              const tokenPrice = await getTokenPrice(mint);
+              const isLpToken = METEORA_LP_TOKENS.has(mint);
+              
+              let tokenPrice = 0;
+              let lpDetails = null;
+              
+              if (isLpToken) {
+                lpDetails = await getLPTokenDetails(mint, balance);
+                // For LP tokens, use the total USD value from LP details
+                tokenPrice = lpDetails ? lpDetails.totalUsdValue / balance : 0;
+              } else {
+                tokenPrice = await getTokenPrice(mint);
+              }
               
               balances.push({
-                symbol: tokenMeta.symbol,
-                name: tokenMeta.name,
+                symbol: isLpToken ? `${METEORA_POOLS[mint as keyof typeof METEORA_POOLS]?.name || 'LP'}` : tokenMeta.symbol,
+                name: isLpToken ? `${tokenMeta.name} LP Token` : tokenMeta.name,
                 balance: balance,
                 usdValue: balance * tokenPrice,
                 tokenAddress: mint,
-                isLpToken: false,
-                platform: 'spl-token'
+                isLpToken: isLpToken,
+                platform: isLpToken ? 'meteora' : 'spl-token',
+                lpDetails: lpDetails || undefined
               });
             }
           } catch (error) {
@@ -295,7 +440,6 @@ async function getAuraMarketCap(): Promise<number> {
   try {
     console.log('Fetching AURA market cap...');
     
-    // Try multiple approaches for AURA market cap
     const auraTokenMint = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe';
     
     // Method 1: Try CoinGecko with AURA contract
