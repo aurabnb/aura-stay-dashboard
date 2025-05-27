@@ -10,6 +10,7 @@ import PriceChart from './TradingDashboard/PriceChart';
 import PriceAlerts from './TradingDashboard/PriceAlerts';
 import JupiterSwapWidget from './TradingDashboard/JupiterSwapWidget';
 import JupiterPriceAPI from './TradingDashboard/JupiterPriceAPI';
+import StakingSection from './TradingDashboard/StakingSection';
 
 interface Token {
   symbol: string;
@@ -58,7 +59,7 @@ const TradingDashboard = () => {
       fees24h: 255,
       apy: 12.8,
       userShare: 0.2,
-      poolUrl: 'https://www.meteora.ag/pools/8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP'
+      poolUrl: 'https://www.meteora.ag/pools/8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvti3ZjP'
     },
     {
       pair: 'ETH/AURA',
@@ -105,12 +106,18 @@ const TradingDashboard = () => {
     <div className="space-y-8 bg-gradient-to-br from-gray-50 to-white min-h-screen p-6">
       <Tabs defaultValue="trade" className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid w-full max-w-4xl grid-cols-6 bg-white shadow-lg rounded-xl border-0 p-2">
+          <TabsList className="grid w-full max-w-5xl grid-cols-7 bg-white shadow-lg rounded-xl border-0 p-2">
             <TabsTrigger 
               value="trade" 
               className="data-[state=active]:bg-black data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Trade
+            </TabsTrigger>
+            <TabsTrigger 
+              value="staking"
+              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Staking
             </TabsTrigger>
             <TabsTrigger 
               value="portfolio"
@@ -165,6 +172,10 @@ const TradingDashboard = () => {
               />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="staking" className="space-y-6">
+          <StakingSection />
         </TabsContent>
 
         <TabsContent value="portfolio" className="space-y-6">

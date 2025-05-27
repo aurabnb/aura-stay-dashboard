@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Vote, Users, Calendar, TrendingUp } from 'lucide-react';
+import { Vote, Users, Calendar, TrendingUp, AlertTriangle, Shield } from 'lucide-react';
 
 interface Proposal {
   id: string;
@@ -23,6 +23,12 @@ interface Proposal {
 const GovernanceDashboard = () => {
   const [userVotingPower] = useState(1250);
   const [hasVoted, setHasVoted] = useState<Record<string, boolean>>({});
+  
+  // Token supply and voting calculations
+  const totalTokenSupply = 100000000; // 100M tokens
+  const maxVotingPowerPerAccount = totalTokenSupply * 0.02; // 2% max
+  const effectiveVotingPower = Math.min(userVotingPower, maxVotingPowerPerAccount);
+  const votingPowerPercentage = (effectiveVotingPower / totalTokenSupply) * 100;
 
   const proposals: Proposal[] = [
     {
@@ -65,7 +71,7 @@ const GovernanceDashboard = () => {
 
   const handleVote = (proposalId: string, vote: 'for' | 'against') => {
     setHasVoted(prev => ({ ...prev, [proposalId]: true }));
-    console.log(`Voted ${vote} on proposal ${proposalId}`);
+    console.log(`Voted ${vote} on proposal ${proposalId} with ${effectiveVotingPower} voting power`);
   };
 
   const getCategoryColor = (category: string) => {
@@ -98,7 +104,8 @@ const GovernanceDashboard = () => {
               <Vote className="h-8 w-8 text-blue-600" />
               <div>
                 <p className="text-sm text-gray-600">Your Voting Power</p>
-                <p className="text-2xl font-bold">{userVotingPower.toLocaleString()}</p>
+                <p className="text-2xl font-bold">{effectiveVotingPower.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">{votingPowerPercentage.toFixed(3)}% of supply</p>
               </div>
             </div>
           </CardContent>
@@ -141,12 +148,28 @@ const GovernanceDashboard = () => {
         </Card>
       </div>
 
+      {/* Voting Power Notice */}
+      {userVotingPower > maxVotingPowerPerAccount && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-medium text-orange-800">
+                  Voting Power Capped: You hold {userVotingPower.toLocaleString()} tokens, but voting power is limited to 2% of total supply ({maxVotingPowerPerAccount.toLocaleString()} tokens) to prevent governance concentration.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="active">Active Proposals</TabsTrigger>
           <TabsTrigger value="passed">Passed</TabsTrigger>
           <TabsTrigger value="failed">Failed</TabsTrigger>
-          <TabsTrigger value="charter">Charter Rules</TabsTrigger>
+          <TabsTrigger value="charter">Voting Rules</TabsTrigger>
         </TabsList>
         
         <TabsContent value="active" className="space-y-6">
@@ -193,26 +216,34 @@ const GovernanceDashboard = () => {
                   </div>
 
                   {!hasVoted[proposal.id] && proposal.status === 'active' && (
-                    <div className="flex gap-3 pt-4">
-                      <Button 
-                        onClick={() => handleVote(proposal.id, 'for')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Vote For
-                      </Button>
-                      <Button 
-                        onClick={() => handleVote(proposal.id, 'against')}
-                        variant="outline"
-                        className="border-red-600 text-red-600 hover:bg-red-50"
-                      >
-                        Vote Against
-                      </Button>
+                    <div className="space-y-3">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <Shield className="h-4 w-4 inline mr-1" />
+                          Your vote will count as {effectiveVotingPower.toLocaleString()} votes (1 token = 1 vote)
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <Button 
+                          onClick={() => handleVote(proposal.id, 'for')}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Vote For ({effectiveVotingPower.toLocaleString()})
+                        </Button>
+                        <Button 
+                          onClick={() => handleVote(proposal.id, 'against')}
+                          variant="outline"
+                          className="border-red-600 text-red-600 hover:bg-red-50"
+                        >
+                          Vote Against ({effectiveVotingPower.toLocaleString()})
+                        </Button>
+                      </div>
                     </div>
                   )}
 
                   {hasVoted[proposal.id] && (
                     <div className="bg-blue-50 p-3 rounded-lg">
-                      <p className="text-sm text-blue-800">✓ You have voted on this proposal</p>
+                      <p className="text-sm text-blue-800">✓ You have voted on this proposal with {effectiveVotingPower.toLocaleString()} voting power</p>
                     </div>
                   )}
                 </CardContent>
@@ -257,16 +288,24 @@ const GovernanceDashboard = () => {
         <TabsContent value="charter" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Governance Charter</CardTitle>
+              <CardTitle>Governance Voting Rules</CardTitle>
               <CardDescription>
                 The rules and guidelines that govern our decentralized decision-making process
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-lg mb-2">Voting Power</h4>
-                  <p className="text-gray-600">1 token = 1 vote, with time-weighted multipliers for long-term stakers</p>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <Vote className="h-5 w-5 text-blue-600" />
+                    Voting Power System
+                  </h4>
+                  <ul className="space-y-2 text-gray-700">
+                    <li>• <strong>1 Token = 1 Vote:</strong> Each AURA token grants one vote</li>
+                    <li>• <strong>2% Maximum Cap:</strong> No single account can have more than 2% of total supply voting power</li>
+                    <li>• <strong>Current Max:</strong> {maxVotingPowerPerAccount.toLocaleString()} tokens ({(maxVotingPowerPerAccount / totalTokenSupply * 100).toFixed(1)}%)</li>
+                    <li>• <strong>Your Power:</strong> {effectiveVotingPower.toLocaleString()} votes ({votingPowerPercentage.toFixed(3)}%)</li>
+                  </ul>
                 </div>
                 
                 <div>
@@ -291,6 +330,17 @@ const GovernanceDashboard = () => {
                   <h4 className="font-semibold text-lg mb-2">Voting Timeline</h4>
                   <p className="text-gray-600">
                     All proposals have a 7-day voting period with a minimum participation threshold for validity.
+                  </p>
+                </div>
+
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-orange-600" />
+                    Anti-Concentration Measures
+                  </h4>
+                  <p className="text-gray-700">
+                    The 2% voting power cap prevents any single entity from controlling governance decisions, 
+                    ensuring democratic participation and protecting against whale manipulation.
                   </p>
                 </div>
               </div>
