@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TradePanel from './TradingDashboard/TradePanel';
@@ -8,6 +7,7 @@ import AnalyticsSection from './TradingDashboard/AnalyticsSection';
 import ConstructionSection from './TradingDashboard/ConstructionSection';
 import PortfolioTracker from './TradingDashboard/PortfolioTracker';
 import PriceChart from './TradingDashboard/PriceChart';
+import PriceAlerts from './TradingDashboard/PriceAlerts';
 
 interface Token {
   symbol: string;
@@ -103,7 +103,7 @@ const TradingDashboard = () => {
     <div className="space-y-8 bg-gradient-to-br from-gray-50 to-white min-h-screen p-6">
       <Tabs defaultValue="trade" className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5 bg-white shadow-lg rounded-xl border-0 p-2">
+          <TabsList className="grid w-full max-w-4xl grid-cols-6 bg-white shadow-lg rounded-xl border-0 p-2">
             <TabsTrigger 
               value="trade" 
               className="data-[state=active]:bg-black data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
@@ -121,6 +121,12 @@ const TradingDashboard = () => {
               className="data-[state=active]:bg-gray-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Charts
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alerts"
+              className="data-[state=active]:bg-orange-600 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Alerts
             </TabsTrigger>
             <TabsTrigger 
               value="liquidity"
@@ -169,6 +175,10 @@ const TradingDashboard = () => {
             tokenAddress="3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe"
             tokenSymbol="AURA"
           />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="space-y-6">
+          <PriceAlerts />
         </TabsContent>
         
         <TabsContent value="liquidity" className="space-y-6">
