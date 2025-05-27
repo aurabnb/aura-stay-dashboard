@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '../components/Header';
 import TreasuryProgress from '../components/TreasuryProgress';
@@ -24,7 +25,7 @@ const Index = () => {
           <section className="text-center py-16">
             <h1 className="text-5xl md:text-7xl font-bold text-black mb-8 font-urbanist leading-tight">
               Building the World's First<br />
-              <span className="text-green-600">Decentralized Unique Stay Network</span>
+              <span className="text-gray-800">Decentralized Unique Stay Network</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 max-w-5xl mx-auto font-urbanist leading-relaxed mb-16">
               Starting with boutique eco-stays, scaling to resort communities. Every property owned by the community, every decision voted on-chain.
@@ -33,14 +34,14 @@ const Index = () => {
             {/* Hero Image */}
             <div className="mb-16">
               <img 
-                src="/lovable-uploads/ea2ec5fb-7766-4c6c-8b6a-659540d919d3.png" 
-                alt="Cozy cabins under the northern lights - representing unique stays in extraordinary locations"
+                src="/lovable-uploads/2c54a081-ee21-40e5-8639-04f3b307ca0b.png" 
+                alt="Northern lights over a serene landscape"
                 className="w-full max-w-6xl mx-auto rounded-3xl shadow-2xl"
               />
             </div>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105 shadow-lg">
+              <button className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105 shadow-lg">
                 Join the Movement
               </button>
               <button className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">
@@ -50,7 +51,7 @@ const Index = () => {
           </section>
 
           {/* Mission Statement */}
-          <section className="bg-gradient-to-r from-green-50 to-blue-50 rounded-3xl p-12 text-center">
+          <section className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-3xl p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 font-urbanist">
               Redefining Hospitality Through Blockchain
             </h2>
@@ -93,7 +94,7 @@ const Index = () => {
           </section>
 
           {/* How It Works */}
-          <section className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-12">
+          <section className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-12">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">How AURA Works</h2>
               <p className="text-lg text-gray-600 font-urbanist">Simple, transparent, community-driven</p>
@@ -101,7 +102,7 @@ const Index = () => {
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-6">
                   <span className="text-white font-bold text-xl">1</span>
                 </div>
                 <h3 className="text-xl font-semibold mb-4 font-urbanist">Community Funding</h3>
@@ -111,7 +112,7 @@ const Index = () => {
               </div>
               
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
                   <span className="text-white font-bold text-xl">2</span>
                 </div>
                 <h3 className="text-xl font-semibold mb-4 font-urbanist">Democratic Decisions</h3>
@@ -121,7 +122,7 @@ const Index = () => {
               </div>
               
               <div className="text-center">
-                <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
                   <span className="text-white font-bold text-xl">3</span>
                 </div>
                 <h3 className="text-xl font-semibold mb-4 font-urbanist">Shared Returns</h3>
@@ -152,8 +153,8 @@ const Index = () => {
           
           {/* Community Access */}
           <section className="grid md:grid-cols-2 gap-8">
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-10 text-center border border-green-200 hover:shadow-lg transition-shadow">
-              <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-8">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -164,14 +165,14 @@ const Index = () => {
               </p>
               <a 
                 href="/value-indicator"
-                className="inline-block bg-green-600 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-green-700 transition-colors text-lg"
+                className="inline-block bg-black text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-800 transition-colors text-lg"
               >
                 Monitor Treasury
               </a>
             </div>
             
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-10 text-center border border-blue-200 hover:shadow-lg transition-shadow">
-              <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-8">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-8">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -182,7 +183,7 @@ const Index = () => {
               </p>
               <a 
                 href="/community-board"
-                className="inline-block bg-blue-600 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-blue-700 transition-colors text-lg"
+                className="inline-block bg-gray-700 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-800 transition-colors text-lg"
               >
                 Join Community
               </a>
@@ -199,7 +200,7 @@ const Index = () => {
               Every token holder becomes a co-owner in this revolutionary hospitality ecosystem.
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">
+              <button className="bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">
                 Buy $AURA Token
               </button>
               <button className="border-2 border-white hover:bg-white hover:text-black text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">

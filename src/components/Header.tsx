@@ -149,7 +149,7 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
+            <button className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
               Buy with Fiat
             </button>
             <button className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
