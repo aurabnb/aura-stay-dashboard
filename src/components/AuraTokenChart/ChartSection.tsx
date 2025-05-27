@@ -19,24 +19,10 @@ const ChartSection: React.FC<ChartSectionProps> = ({ tokenAddress }) => {
         const iframe = iframeRef.current;
         iframe.onload = () => {
           setChartLoaded(true);
-          // Try to customize chart colors via postMessage
-          try {
-            iframe.contentWindow?.postMessage({
-              type: 'chart-config',
-              config: {
-                upColor: '#10B981',
-                downColor: '#EF4444',
-                backgroundColor: '#ffffff',
-                timeframe: timeframe
-              }
-            }, '*');
-          } catch (e) {
-            console.log('Chart customization not available');
-          }
         };
         
-        // Force reload the iframe with new timeframe
-        iframe.src = `https://dexscreener.com/solana/${tokenAddress}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}`;
+        // Use light theme with custom colors that match your site
+        iframe.src = `https://dexscreener.com/solana/${tokenAddress}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}&chartType=candles&chartLeftToolbar=show&chartTheme=dark`;
       }
     }, 100);
 
@@ -79,7 +65,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({ tokenAddress }) => {
         }}
       >
         {!chartLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
               <p className="text-lg text-gray-600 font-urbanist">Loading real-time chart...</p>
@@ -89,7 +75,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({ tokenAddress }) => {
         
         <iframe
           ref={iframeRef}
-          src={`https://dexscreener.com/solana/${tokenAddress}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}`}
+          src={`https://dexscreener.com/solana/${tokenAddress}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}&chartType=candles&chartLeftToolbar=show&chartTheme=dark`}
           width="100%"
           height="500"
           style={{ 
