@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import Vision from "./pages/Vision";
 import Roadmap from "./pages/Roadmap";
 import Transparency from "./pages/Transparency";
 import NotFound from "./pages/NotFound";
+import FiatPurchase from "./pages/FiatPurchase";
 
 const queryClient = new QueryClient();
 
@@ -34,12 +34,14 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/vision" element={<Vision />} />
           <Route path="/roadmap" element={<Roadmap />} />
+          <Route path="/transparency" element={<Transparency />} />
           <Route path="/value-indicator" element={<ValueIndicatorPage />} />
           <Route path="/multisig" element={<MultisigPage />} />
           <Route path="/community-board" element={<CommunityBoardPage />} />
           <Route path="/stake-to-earn" element={<StakeToEarnPage />} />
           <Route path="/governance" element={<GovernancePage />} />
           <Route path="/trading" element={<TradingPage />} />
+          <Route path="/buy-fiat" element={<FiatPurchase />} />
           <Route path="/investment-hub" element={<InvestmentHubPage />} />
           <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/samsara" element={<SamsaraPage />} />

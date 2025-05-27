@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, Wallet, Copy, ExternalLink } from 'lucide-react';
@@ -164,6 +163,19 @@ const Header = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const handleBuyWithFiat = () => {
+    if (isConnected && walletAddress) {
+      // Navigate to fiat purchase page with wallet address
+      window.location.href = '/buy-fiat';
+    } else {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet first to purchase with fiat",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -335,7 +347,10 @@ const Header = () => {
               )}
             </div>
 
-            <button className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
+            <button 
+              onClick={handleBuyWithFiat}
+              className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors"
+            >
               Buy with Fiat
             </button>
             <button className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
