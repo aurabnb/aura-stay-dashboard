@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Wallet, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,6 +20,7 @@ const Header = () => {
   const [connectedWallet, setConnectedWallet] = useState<'phantom' | 'solflare' | null>(null);
   const [walletAdapter, setWalletAdapter] = useState<WalletAdapter | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Check for existing wallet connection on mount
@@ -166,8 +168,8 @@ const Header = () => {
 
   const handleBuyWithFiat = () => {
     if (isConnected && walletAddress) {
-      // Navigate to fiat purchase page with wallet address
-      window.location.href = '/buy-fiat';
+      // Navigate to fiat purchase page with wallet address in state
+      navigate('/buy-fiat', { state: { walletAddress } });
     } else {
       toast({
         title: "Wallet Required",

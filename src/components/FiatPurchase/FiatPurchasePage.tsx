@@ -6,9 +6,13 @@ import Header from '../Header';
 import Footer from '../Footer';
 
 const FiatPurchasePage: React.FC = () => {
-  // Get wallet address from header component state if available
   const location = useLocation();
-  const walletAddress = (location.state as any)?.walletAddress;
+  const walletAddress = location.state?.walletAddress;
+
+  const handlePurchaseComplete = () => {
+    console.log('Purchase flow completed');
+    // You can add additional logic here like analytics tracking
+  };
 
   return (
     <div className="min-h-screen bg-white font-urbanist">
@@ -26,9 +30,7 @@ const FiatPurchasePage: React.FC = () => {
           
           <MoonPayWidget 
             walletAddress={walletAddress}
-            onPurchaseComplete={() => {
-              console.log('Purchase flow completed');
-            }}
+            onPurchaseComplete={handlePurchaseComplete}
           />
         </div>
       </main>

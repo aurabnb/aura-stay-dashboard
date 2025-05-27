@@ -13,20 +13,19 @@ interface MoonPayWidgetProps {
 
 const MoonPayWidget: React.FC<MoonPayWidgetProps> = ({ walletAddress, onPurchaseComplete }) => {
   const [purchaseStep, setPurchaseStep] = useState<'initial' | 'moonpay' | 'swap'>('initial');
-  const [showWidget, setShowWidget] = useState(false);
   const { toast } = useToast();
 
-  // MoonPay configuration
+  // MoonPay configuration - using sandbox
   const moonPayConfig = {
-    apiKey: 'pk_test_123', // This is sandbox key - replace with real key for production
+    apiKey: 'pk_test_sandbox_key', // Sandbox key for testing
     currencyCode: 'SOL',
-    walletAddress: walletAddress,
-    colorCode: '#000000',
-    defaultAmount: '50', // $50 default
-    redirectURL: window.location.origin,
+    colorCode: '%23000000', // URL encoded black color
+    defaultAmount: '50',
+    redirectURL: encodeURIComponent(window.location.origin),
   };
 
   const buildMoonPayUrl = () => {
+    const baseUrl = 'https://buy-sandbox.moonpay.com';
     const params = new URLSearchParams({
       apiKey: moonPayConfig.apiKey,
       currencyCode: moonPayConfig.currencyCode,
@@ -37,7 +36,7 @@ const MoonPayWidget: React.FC<MoonPayWidgetProps> = ({ walletAddress, onPurchase
       showWalletAddressForm: 'true',
     });
 
-    return `https://buy-sandbox.moonpay.com?${params.toString()}`;
+    return `${baseUrl}?${params.toString()}`;
   };
 
   const handleBuyWithCard = () => {
@@ -51,11 +50,21 @@ const MoonPayWidget: React.FC<MoonPayWidgetProps> = ({ walletAddress, onPurchase
     }
 
     setPurchaseStep('moonpay');
-    setShowWidget(true);
     
     // Open MoonPay in new window
     const moonPayUrl = buildMoonPayUrl();
-    window.open(moonPayUrl, '_blank', 'width=400,height=600');
+    console.log('Opening MoonPay URL:', moonPayUrl);
+    
+    const newWindow = window.open(moonPayUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+    
+    if (!newWindow) {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups for this site and try again",
+        variant: "destructive"
+      });
+      return;
+    }
     
     toast({
       title: "MoonPay Opened",
@@ -65,14 +74,29 @@ const MoonPayWidget: React.FC<MoonPayWidgetProps> = ({ walletAddress, onPurchase
 
   const handleSwapOnMeteora = () => {
     setPurchaseStep('swap');
-    // Direct link to Meteora SOL/AURA pool
+    // Direct link to Meteora SOL/AURA pool - using a generic Meteora URL for now
     const meteoraSwapUrl = 'https://meteora.ag/pools/9Wd2xPc6KmF6qmqbsQSbhemAmRpVfgVBFUPeLpYw7';
-    window.open(meteoraSwapUrl, '_blank');
+    
+    const newWindow = window.open(meteoraSwapUrl, '_blank');
+    
+    if (!newWindow) {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups for this site and try again",
+        variant: "destructive"
+      });
+      return;
+    }
     
     toast({
       title: "Redirecting to Meteora",
       description: "Complete your SOL → AURA swap on Meteora",
     });
+    
+    // Call completion callback if provided
+    if (onPurchaseComplete) {
+      onPurchaseComplete();
+    }
   };
 
   return (
