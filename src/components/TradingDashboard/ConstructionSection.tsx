@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Hammer, Calendar, DollarSign, Truck, Users, Wrench } from 'lucide-react';
+import { Hammer, Calendar, DollarSign, Truck, Users, Wrench, Camera, Video } from 'lucide-react';
 
 interface ConstructionMilestone {
   phase: string;
@@ -28,35 +28,35 @@ const ConstructionSection: React.FC = () => {
     {
       phase: 'Site Preparation',
       description: 'Land clearing, access roads, utilities',
-      startDate: '2024-11-01',
-      endDate: '2024-12-15',
-      progress: 100,
+      startDate: '2025-06-01',
+      endDate: '2025-07-15',
+      progress: 0,
       cost: 15000,
-      status: 'completed'
+      status: 'pending'
     },
     {
       phase: 'Foundation & Structure',
       description: 'Concrete foundation, bamboo frame construction',
-      startDate: '2024-12-16',
-      endDate: '2025-03-30',
-      progress: 75,
+      startDate: '2025-07-16',
+      endDate: '2025-10-30',
+      progress: 0,
       cost: 35000,
-      status: 'in-progress'
+      status: 'pending'
     },
     {
       phase: 'Roofing & Weatherproofing',
       description: 'Sustainable roofing, windows, exterior finish',
-      startDate: '2025-04-01',
-      endDate: '2025-05-15',
-      progress: 20,
+      startDate: '2025-11-01',
+      endDate: '2025-12-15',
+      progress: 0,
       cost: 25000,
-      status: 'in-progress'
+      status: 'pending'
     },
     {
       phase: 'Solar & Electrical',
       description: 'Solar panel installation, electrical systems',
-      startDate: '2025-05-16',
-      endDate: '2025-06-30',
+      startDate: '2025-12-16',
+      endDate: '2026-01-30',
       progress: 0,
       cost: 20000,
       status: 'pending'
@@ -64,8 +64,8 @@ const ConstructionSection: React.FC = () => {
     {
       phase: 'Interior & Plumbing',
       description: 'Interior finishing, bathroom, kitchen setup',
-      startDate: '2025-07-01',
-      endDate: '2025-08-15',
+      startDate: '2026-02-01',
+      endDate: '2026-03-15',
       progress: 0,
       cost: 18000,
       status: 'pending'
@@ -73,8 +73,8 @@ const ConstructionSection: React.FC = () => {
     {
       phase: 'Landscaping & Final',
       description: 'Gardens, pathways, final inspections',
-      startDate: '2025-08-16',
-      endDate: '2025-09-30',
+      startDate: '2026-03-16',
+      endDate: '2026-04-30',
       progress: 0,
       cost: 12000,
       status: 'pending'
@@ -85,29 +85,29 @@ const ConstructionSection: React.FC = () => {
     {
       category: 'Materials',
       budgeted: 65000,
-      spent: 28000,
-      remaining: 37000,
+      spent: 0,
+      remaining: 65000,
       icon: Hammer
     },
     {
       category: 'Labor',
       budgeted: 40000,
-      spent: 15000,
-      remaining: 25000,
+      spent: 0,
+      remaining: 40000,
       icon: Users
     },
     {
       category: 'Equipment',
       budgeted: 15000,
-      spent: 8000,
-      remaining: 7000,
+      spent: 0,
+      remaining: 15000,
       icon: Truck
     },
     {
       category: 'Permits & Legal',
       budgeted: 5000,
-      spent: 4000,
-      remaining: 1000,
+      spent: 0,
+      remaining: 5000,
       icon: Wrench
     }
   ];
@@ -118,18 +118,11 @@ const ConstructionSection: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'delayed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'in-progress': return 'bg-gray-200 text-gray-800';
+      case 'delayed': return 'bg-gray-300 text-gray-800';
+      default: return 'bg-gray-100 text-gray-600';
     }
-  };
-
-  const getProgressColor = (progress: number) => {
-    if (progress === 100) return 'bg-green-500';
-    if (progress > 50) return 'bg-blue-500';
-    if (progress > 0) return 'bg-yellow-500';
-    return 'bg-gray-300';
   };
 
   return (
@@ -141,7 +134,7 @@ const ConstructionSection: React.FC = () => {
             Construction Schedule
           </CardTitle>
           <CardDescription>
-            Volcano Stay project timeline and progress tracking
+            Volcano Stay project timeline and progress tracking - Construction starts June 2025
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -189,20 +182,20 @@ const ConstructionSection: React.FC = () => {
             Construction Costs
           </CardTitle>
           <CardDescription>
-            Budget breakdown and spending tracking
+            Budget breakdown and spending tracking - Construction not yet started
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {/* Overall Budget Summary */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">${totalBudget.toLocaleString()}</div>
-                <div className="text-sm text-blue-700">Total Budget</div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-gray-600">${totalBudget.toLocaleString()}</div>
+                <div className="text-sm text-gray-700">Total Budget</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">${totalSpent.toLocaleString()}</div>
-                <div className="text-sm text-green-700">Total Spent</div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-gray-600">${totalSpent.toLocaleString()}</div>
+                <div className="text-sm text-gray-700">Total Spent</div>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-600">${totalRemaining.toLocaleString()}</div>
@@ -214,9 +207,9 @@ const ConstructionSection: React.FC = () => {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Budget Utilization</span>
-                <span className="font-semibold">{((totalSpent / totalBudget) * 100).toFixed(1)}%</span>
+                <span className="font-semibold">0%</span>
               </div>
-              <Progress value={(totalSpent / totalBudget) * 100} className="h-3" />
+              <Progress value={0} className="h-3" />
             </div>
 
             {/* Cost Breakdown by Category */}
@@ -224,17 +217,16 @@ const ConstructionSection: React.FC = () => {
               <h4 className="font-semibold">Cost Breakdown by Category</h4>
               {costBreakdown.map((item, index) => {
                 const Icon = item.icon;
-                const utilizationPercent = (item.spent / item.budgeted) * 100;
                 
                 return (
                   <div key={index} className="p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <Icon className="h-5 w-5 text-blue-600" />
+                        <Icon className="h-5 w-5 text-gray-600" />
                         <span className="font-medium">{item.category}</span>
                       </div>
                       <span className="text-sm text-gray-600">
-                        {utilizationPercent.toFixed(1)}% utilized
+                        0% utilized
                       </span>
                     </div>
                     
@@ -245,7 +237,7 @@ const ConstructionSection: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-gray-600">Spent</p>
-                        <p className="font-semibold text-green-600">${item.spent.toLocaleString()}</p>
+                        <p className="font-semibold text-gray-600">${item.spent.toLocaleString()}</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Remaining</p>
@@ -253,20 +245,44 @@ const ConstructionSection: React.FC = () => {
                       </div>
                     </div>
                     
-                    <Progress value={utilizationPercent} className="h-2" />
+                    <Progress value={0} className="h-2" />
                   </div>
                 );
               })}
             </div>
 
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-yellow-800 mb-2">Budget Status</h4>
-              <p className="text-yellow-700 text-sm">
-                Construction is currently on budget with {((totalSpent / totalBudget) * 100).toFixed(1)}% of funds utilized. 
-                Foundation work is progressing ahead of schedule, which may allow for early completion.
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-800 mb-2">Project Status</h4>
+              <p className="text-gray-700 text-sm">
+                Construction is scheduled to begin in June 2025. All permits and planning are currently in progress. 
+                Progress photos and videos will be posted here once construction begins.
               </p>
-              <p className="text-xs text-yellow-600 mt-2">Last updated: March 20, 2025</p>
+              <p className="text-xs text-gray-600 mt-2">Last updated: {new Date().toLocaleDateString()}</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            Progress Documentation
+          </CardTitle>
+          <CardDescription>
+            Construction photos and videos will be posted here as work progresses
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <div className="flex justify-center items-center gap-4 mb-4">
+              <Camera className="h-12 w-12 text-gray-400" />
+              <Video className="h-12 w-12 text-gray-400" />
+            </div>
+            <h4 className="text-xl font-semibold text-gray-600 mb-2">Coming Soon</h4>
+            <p className="text-gray-500">
+              Progress photos and videos will be uploaded here once construction begins in June 2025
+            </p>
           </div>
         </CardContent>
       </Card>

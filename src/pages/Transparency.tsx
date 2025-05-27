@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import FundingBreakdown from '../components/FundingBreakdown';
 
 const Transparency = () => {
@@ -29,6 +30,7 @@ const Transparency = () => {
           </section>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

@@ -1,7 +1,8 @@
+
 import React from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import AuraStats from '../components/AuraStats';
-import FundingBreakdown from '../components/FundingBreakdown';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTreasuryData } from '../hooks/useTreasuryData';
 
@@ -27,12 +28,12 @@ const Index = () => {
               Starting with boutique eco-stays, scaling to resort communities. Every property owned by the community, every decision voted on-chain.
             </p>
             
-            {/* Hero Image */}
+            {/* Hero Image - Reduced Size */}
             <div className="mb-16">
               <img 
                 src="/lovable-uploads/2c54a081-ee21-40e5-8639-04f3b307ca0b.png" 
                 alt="Northern lights over a serene landscape"
-                className="w-full max-w-6xl mx-auto rounded-3xl shadow-2xl"
+                className="w-full max-w-4xl mx-auto rounded-3xl shadow-2xl"
               />
             </div>
             
@@ -116,6 +117,7 @@ const Index = () => {
           </section>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

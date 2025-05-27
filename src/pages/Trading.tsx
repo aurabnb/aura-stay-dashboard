@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import TradingDashboard from '../components/TradingDashboard';
 
 const TradingPage = () => {
@@ -21,6 +22,7 @@ const TradingPage = () => {
           <TradingDashboard />
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

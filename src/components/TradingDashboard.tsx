@@ -49,15 +49,6 @@ const TradingDashboard = () => {
   const liquidityPools: LiquidityPool[] = [
     {
       pair: 'AURA/WBTC',
-      totalLiquidity: 750000,
-      volume24h: 125000,
-      fees24h: 375,
-      apy: 15.2,
-      userShare: 0.5,
-      poolUrl: 'https://www.meteora.ag/pools/FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5'
-    },
-    {
-      pair: 'AURA/WBTC',
       totalLiquidity: 450000,
       volume24h: 85000,
       fees24h: 255,
@@ -82,15 +73,6 @@ const TradingDashboard = () => {
       apy: 16.8,
       userShare: 0.8,
       poolUrl: 'https://www.meteora.ag/pools/GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW'
-    },
-    {
-      pair: 'AURA/SOL',
-      totalLiquidity: 181793.41,
-      volume24h: 101105.95,
-      fees24h: 2022.12,
-      apy: 409.03,
-      userShare: 0.0,
-      poolUrl: 'https://meteora.ag/pools/6W59P1TZCbckwGV87mAThgoVAzgybMERJzesokeMM2ms'
     },
     {
       pair: 'AURA/SOL',
@@ -119,36 +101,30 @@ const TradingDashboard = () => {
     <div className="space-y-8 bg-gradient-to-br from-gray-50 to-white min-h-screen p-6">
       <Tabs defaultValue="trade" className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5 bg-white shadow-lg rounded-xl border-0 p-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-white shadow-lg rounded-xl border-0 p-2">
             <TabsTrigger 
               value="trade" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+              className="data-[state=active]:bg-black data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Trade
             </TabsTrigger>
             <TabsTrigger 
               value="liquidity"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+              className="data-[state=active]:bg-gray-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Liquidity
             </TabsTrigger>
             <TabsTrigger 
               value="analytics"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+              className="data-[state=active]:bg-gray-600 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Analytics
             </TabsTrigger>
             <TabsTrigger 
               value="construction"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+              className="data-[state=active]:bg-gray-800 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Construction
-            </TabsTrigger>
-            <TabsTrigger 
-              value="tokens"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
-            >
-              All Tokens
             </TabsTrigger>
           </TabsList>
         </div>
@@ -189,15 +165,6 @@ const TradingDashboard = () => {
 
         <TabsContent value="construction" className="space-y-6">
           <ConstructionSection />
-        </TabsContent>
-        
-        <TabsContent value="tokens" className="space-y-6">
-          <TokenList 
-            tokens={tokens}
-            selectedToken={selectedToken}
-            onTokenSelect={setSelectedToken}
-            showAll={true}
-          />
         </TabsContent>
       </Tabs>
     </div>
