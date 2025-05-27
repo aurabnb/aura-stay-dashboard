@@ -5,13 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Circle, Clock, Target, Building, Shield, Coins } from 'lucide-react';
 
+type RoadmapStatus = 'completed' | 'in-progress' | 'upcoming';
+
 const AuraRoadmapTracker = () => {
   const roadmapItems = [
     {
       id: 1,
       title: 'Aurabnb Pilot',
       description: 'Complete first decentralized Volcano stay in Guayabo, Costa Rica',
-      status: 'in-progress' as const,
+      status: 'in-progress' as RoadmapStatus,
       progress: 20,
       icon: Building,
       details: 'Currently 1/5th funded through LP rewards'
@@ -20,7 +22,7 @@ const AuraRoadmapTracker = () => {
       id: 2,
       title: 'Decentralized Trust',
       description: 'Open Guernsey Decentralized trust structure to hold all assets',
-      status: 'upcoming' as const,
+      status: 'upcoming' as RoadmapStatus,
       progress: 0,
       icon: Shield,
       details: 'Legal framework for transparent asset management'
@@ -29,7 +31,7 @@ const AuraRoadmapTracker = () => {
       id: 3,
       title: 'Money Market',
       description: 'Integrate with Cosmos for Money Market with additional utility and features',
-      status: 'upcoming' as const,
+      status: 'upcoming' as RoadmapStatus,
       progress: 0,
       icon: Coins,
       details: 'Enhanced DeFi functionality for AURA holders'
@@ -38,20 +40,20 @@ const AuraRoadmapTracker = () => {
       id: 4,
       title: 'Additional Locations',
       description: 'Complete two additional Airbnbs to ensure continuity in funding and progress',
-      status: 'upcoming' as const,
+      status: 'upcoming' as RoadmapStatus,
       progress: 0,
       icon: Target,
       details: 'Expand the AURA eco-stay network'
     }
   ];
 
-  const getStatusIcon = (status: string, progress: number) => {
+  const getStatusIcon = (status: RoadmapStatus, progress: number) => {
     if (status === 'completed') return <CheckCircle className="h-5 w-5 text-green-600" />;
     if (status === 'in-progress') return <Clock className="h-5 w-5 text-blue-600" />;
     return <Circle className="h-5 w-5 text-gray-400" />;
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: RoadmapStatus) => {
     if (status === 'completed') return 'bg-green-100 text-green-800 border-green-200';
     if (status === 'in-progress') return 'bg-blue-100 text-blue-800 border-blue-200';
     return 'bg-gray-100 text-gray-600 border-gray-200';
