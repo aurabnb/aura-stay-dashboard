@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, BarChart3, Droplets, ExternalLink } from 'lucide-react';
+import AuraTokenChart from './AuraTokenChart';
 
 interface Token {
   symbol: string;
@@ -310,6 +311,7 @@ const TradingDashboard = () => {
         </TabsContent>
         
         <TabsContent value="analytics" className="space-y-6">
+          {/* AURA Trading Volume and Price Chart */}
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -337,6 +339,51 @@ const TradingDashboard = () => {
             </Card>
           </div>
 
+          {/* Value Equation */}
+          <Card>
+            <CardHeader>
+              <CardTitle>AURA Value Equation</CardTitle>
+              <CardDescription>Understanding token value components</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="text-center text-lg font-mono bg-gray-50 p-6 rounded-lg">
+                  <p className="mb-4">
+                    <span className="font-bold text-blue-600">Total Market Cap</span> = 
+                    <span className="font-bold text-green-600 ml-2">Volatile Assets</span> + 
+                    <span className="font-bold text-purple-600 ml-2">Hard Assets</span> + 
+                    <span className="font-bold text-orange-600 ml-2">Speculative Interest</span>
+                  </p>
+                  
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <p>$115,655 = $3,946 + $608 + $111,101</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-green-50 p-4 rounded-lg text-center">
+                    <h4 className="font-semibold text-green-700 mb-2">Volatile Assets</h4>
+                    <p className="text-2xl font-bold text-green-600">$3,946</p>
+                    <p className="text-green-600 mt-1">Crypto holdings & liquid investments</p>
+                  </div>
+                  
+                  <div className="bg-purple-50 p-4 rounded-lg text-center">
+                    <h4 className="font-semibold text-purple-700 mb-2">Hard Assets</h4>
+                    <p className="text-2xl font-bold text-purple-600">$608</p>
+                    <p className="text-purple-600 mt-1">Real estate & physical assets</p>
+                  </div>
+                  
+                  <div className="bg-orange-50 p-4 rounded-lg text-center">
+                    <h4 className="font-semibold text-orange-700 mb-2">Speculative Interest</h4>
+                    <p className="text-2xl font-bold text-orange-600">$111,101</p>
+                    <p className="text-orange-600 mt-1">Market premium & future expectations</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Market Statistics */}
           <Card>
             <CardHeader>
               <CardTitle>AURA Market Statistics</CardTitle>
