@@ -2,37 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3 } from 'lucide-react';
+import AuraTokenChart from '../AuraTokenChart';
 
 const AnalyticsSection: React.FC = () => {
   return (
     <div className="space-y-6">
-      {/* Trading Volume and Price Chart */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              AURA Trading Volume
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Volume Chart (Coming Soon)</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>AURA Price Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Price Chart (Coming Soon)</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* AURA Token Chart */}
+      <AuraTokenChart />
 
       {/* Value Equation */}
       <Card>

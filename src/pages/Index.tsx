@@ -4,7 +4,6 @@ import Header from '../components/Header';
 import TreasuryProgress from '../components/TreasuryProgress';
 import FundingBreakdown from '../components/FundingBreakdown';
 import VolcanoStayShowcase from '../components/VolcanoStayShowcase';
-import AuraTokenChart from '../components/AuraTokenChart';
 import AuraRoadmapTracker from '../components/AuraRoadmapTracker';
 import AuraStats from '../components/AuraStats';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -59,11 +58,6 @@ const Index = () => {
           {/* Treasury Progress for Volcano Stay */}
           <section>
             <TreasuryProgress currentAmount={20000} targetAmount={100000} />
-          </section>
-
-          {/* AURA Token Chart */}
-          <section>
-            <AuraTokenChart />
           </section>
 
           {/* Volcano Stay Showcase */}
