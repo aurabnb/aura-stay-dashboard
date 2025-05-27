@@ -22,9 +22,21 @@ serve(async (req) => {
         
         console.log(`${wallet.name} total value: $${totalUsdValue.toFixed(2)}`);
         
+        // Map backend response to frontend interface
+        const mappedBalances = balances.map(balance => ({
+          token_symbol: balance.symbol,
+          token_name: balance.name,
+          balance: balance.balance,
+          usd_value: balance.usdValue,
+          token_address: balance.tokenAddress,
+          is_lp_token: balance.isLpToken,
+          platform: balance.platform,
+          lp_details: balance.lpDetails
+        }));
+        
         return {
           ...wallet,
-          balances: balances,
+          balances: mappedBalances,
           totalUsdValue: totalUsdValue
         };
       } catch (error) {
@@ -62,13 +74,13 @@ serve(async (req) => {
     console.log(`SOL price: $${solPrice.toFixed(2)}`);
 
     processedWallets.forEach(wallet => {
-      const lpTokens = wallet.balances.filter(b => b.isLpToken);
+      const lpTokens = wallet.balances.filter(b => b.is_lp_token);
       if (lpTokens.length > 0) {
         console.log(`${wallet.name} LP tokens:`, lpTokens.map(lp => ({
-          symbol: lp.symbol,
+          symbol: lp.token_symbol,
           balance: lp.balance,
-          usdValue: lp.usdValue,
-          hasDetails: !!lp.lpDetails
+          usdValue: lp.usd_value,
+          hasDetails: !!lp.lp_details
         })));
       }
     });
