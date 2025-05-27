@@ -4,7 +4,6 @@ import Header from '../components/Header';
 import TreasuryProgress from '../components/TreasuryProgress';
 import FundingBreakdown from '../components/FundingBreakdown';
 import VolcanoStayShowcase from '../components/VolcanoStayShowcase';
-import AuraEcosystemShowcase from '../components/AuraEcosystemShowcase';
 import AuraTokenChart from '../components/AuraTokenChart';
 import AuraRoadmapTracker from '../components/AuraRoadmapTracker';
 import AuraStats from '../components/AuraStats';
@@ -45,11 +44,6 @@ const Index = () => {
           {/* Key Stats */}
           <section>
             <AuraStats />
-          </section>
-
-          {/* AURA Ecosystem Transparency */}
-          <section>
-            <AuraEcosystemShowcase />
           </section>
 
           {/* Treasury Progress for Volcano Stay */}
