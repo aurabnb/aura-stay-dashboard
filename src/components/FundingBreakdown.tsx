@@ -3,14 +3,39 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Building, DollarSign, TrendingUp, Settings } from 'lucide-react';
+import { Building, DollarSign, TrendingUp, Settings, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const FundingBreakdown = () => {
   const lpFundsData = [
-    { name: 'Project Funding', value: 80, color: '#10B981', icon: Building },
-    { name: 'Marketing', value: 10, color: '#3B82F6', icon: TrendingUp },
-    { name: 'Operations', value: 5, color: '#F59E0B', icon: Settings },
-    { name: 'Business Costs', value: 5, color: '#EF4444', icon: DollarSign }
+    { 
+      name: 'Project Funding', 
+      value: 80, 
+      color: '#10B981', 
+      icon: Building,
+      walletUrl: 'https://solscan.io/account/7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgHEu'
+    },
+    { 
+      name: 'Marketing', 
+      value: 10, 
+      color: '#3B82F6', 
+      icon: TrendingUp,
+      walletUrl: 'https://solscan.io/account/8vKSgMcQhNqB1xQGGh6gQQZftY7Y9QvCE7sKdHKCKR8S'
+    },
+    { 
+      name: 'Operations', 
+      value: 5, 
+      color: '#F59E0B', 
+      icon: Settings,
+      walletUrl: 'https://solscan.io/account/9mTvd2xT8e3LqF7Y8C5vQpG9dKgXhJ6rN4bS8MzQfYew'
+    },
+    { 
+      name: 'Business Costs', 
+      value: 5, 
+      color: '#EF4444', 
+      icon: DollarSign,
+      walletUrl: 'https://solscan.io/account/AyTg3zP9xF5Q8YmC7pJ6vN9rKqH8LzS2eQ4bR7wXzM5v'
+    }
   ];
 
   const revenueData = [
@@ -19,6 +44,10 @@ const FundingBreakdown = () => {
     { name: 'Marketing', value: 10, color: '#3B82F6' },
     { name: 'Operations', value: 5, color: '#F59E0B' }
   ];
+
+  const openWallet = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="space-y-6">
@@ -41,7 +70,18 @@ const FundingBreakdown = () => {
                         <Icon className="h-4 w-4" style={{ color: item.color }} />
                         <span className="font-medium">{item.name}</span>
                       </div>
-                      <span className="text-sm font-semibold">{item.value}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">{item.value}%</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openWallet(item.walletUrl)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Wallet
+                        </Button>
+                      </div>
                     </div>
                     <Progress value={item.value} className="h-2" />
                     <p className="text-xs text-gray-600">
