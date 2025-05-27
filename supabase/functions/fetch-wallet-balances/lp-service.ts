@@ -2,6 +2,7 @@
 import { LPDetails } from './types.ts';
 import { METEORA_LP_TOKENS } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
+import { fetchMeteoraPoolData } from './meteora-service.ts';
 
 export async function getLPTokenDetails(mint: string, balance: number): Promise<LPDetails | null> {
   try {
@@ -11,7 +12,34 @@ export async function getLPTokenDetails(mint: string, balance: number): Promise<
       return null;
     }
 
-    console.log(`Calculating LP details for pool: ${mint} (${poolConfig.name})`);
+    console.log(`Fetching live Meteora data for pool: ${mint} (${poolConfig.name})`);
+
+    // Try to fetch real-time data from Meteora first
+    const meteoraData = await fetchMeteoraPoolData(mint, balance);
+    
+    if (meteoraData && meteoraData.userUsdValue > 0) {
+      console.log(`Live Meteora data fetched for ${mint}: $${meteoraData.userUsdValue.toFixed(2)} (APY: ${meteoraData.apy.toFixed(2)}%)`);
+      
+      return {
+        poolAddress: mint,
+        token1: {
+          symbol: meteoraData.tokenA.symbol,
+          amount: meteoraData.tokenA.amount,
+          usdValue: meteoraData.tokenA.usdValue
+        },
+        token2: {
+          symbol: meteoraData.tokenB.symbol,
+          amount: meteoraData.tokenB.amount,
+          usdValue: meteoraData.tokenB.usdValue
+        },
+        priceRange: { min: 0, max: 0 },
+        totalUsdValue: meteoraData.userUsdValue,
+        meteoraData: meteoraData
+      };
+    }
+
+    // Fallback to existing calculation method
+    console.log(`Falling back to estimated calculation for pool: ${mint}`);
 
     const token1Info = await getTokenInfo(poolConfig.token1);
     const token2Info = await getTokenInfo(poolConfig.token2);
@@ -27,20 +55,16 @@ export async function getLPTokenDetails(mint: string, balance: number): Promise<
 
     if (token1Price > 0 || token2Price > 0) {
       // Calculate based on a 50/50 split assumption
-      // This is simplified - real pools would need on-chain data
       if (token1Price > 0 && token2Price > 0) {
-        // Both tokens have prices - use 50/50 split
         const totalValuePerToken = (token1Price + token2Price) / 2;
         estimatedTotalValue = balance * totalValuePerToken;
         token1Amount = balance * 0.5;
         token2Amount = balance * 0.5;
       } else if (token1Price > 0) {
-        // Only token1 has a price
         estimatedTotalValue = balance * token1Price;
         token1Amount = balance;
         token2Amount = 0;
       } else {
-        // Only token2 has a price
         estimatedTotalValue = balance * token2Price;
         token1Amount = 0;
         token2Amount = balance;
