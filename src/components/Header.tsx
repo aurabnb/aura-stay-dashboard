@@ -1,11 +1,14 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 
 const Header = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [showEcosystemDropdown, setShowEcosystemDropdown] = useState(false);
+  const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
   const location = useLocation();
 
   const connectWallet = async (walletType: 'phantom' | 'solflare') => {
@@ -44,7 +47,7 @@ const Header = () => {
   const isActivePage = (path: string) => location.pathname === path;
 
   return (
-    <header className="bg-white border-b border-gray-100">
+    <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center space-x-8">
@@ -101,7 +104,7 @@ const Header = () => {
             </div>
           </div>
           
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden lg:flex space-x-8">
             <Link
               to="/"
               className={`px-3 py-2 text-sm font-medium font-urbanist transition-colors ${
@@ -112,26 +115,78 @@ const Header = () => {
             >
               Home
             </Link>
+
+            {/* Ecosystem Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowEcosystemDropdown(!showEcosystemDropdown)}
+                className="flex items-center gap-1 px-3 py-2 text-sm font-medium font-urbanist text-gray-700 hover:text-black transition-colors"
+              >
+                Ecosystem
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              {showEcosystemDropdown && (
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
+                  <Link to="/properties" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Properties
+                  </Link>
+                  <Link to="/samsara" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Samsara
+                  </Link>
+                  <Link to="/airscape" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Airscape
+                  </Link>
+                  <Link to="/booking" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Booking
+                  </Link>
+                  <Link to="/local-vendors" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
+                    Local Vendors
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Finance Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
+                className="flex items-center gap-1 px-3 py-2 text-sm font-medium font-urbanist text-gray-700 hover:text-black transition-colors"
+              >
+                Finance
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              {showFinanceDropdown && (
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
+                  <Link to="/value-indicator" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Value Indicator
+                  </Link>
+                  <Link to="/trading" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Trading
+                  </Link>
+                  <Link to="/stake-to-earn" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Stake to Earn
+                  </Link>
+                  <Link to="/investment-hub" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Investment Hub
+                  </Link>
+                  <Link to="/multisig" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
+                    Multisig
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Link
-              to="/value-indicator"
+              to="/governance"
               className={`px-3 py-2 text-sm font-medium font-urbanist transition-colors ${
-                isActivePage('/value-indicator') 
+                isActivePage('/governance') 
                   ? 'text-black border-b-2 border-black' 
                   : 'text-gray-700 hover:text-black'
               }`}
             >
-              Value Indicator
+              Governance
             </Link>
-            <Link
-              to="/multisig"
-              className={`px-3 py-2 text-sm font-medium font-urbanist transition-colors ${
-                isActivePage('/multisig') 
-                  ? 'text-black border-b-2 border-black' 
-                  : 'text-gray-700 hover:text-black'
-              }`}
-            >
-              Multisig
-            </Link>
+
             <Link
               to="/community-board"
               className={`px-3 py-2 text-sm font-medium font-urbanist transition-colors ${
@@ -140,11 +195,14 @@ const Header = () => {
                   : 'text-gray-700 hover:text-black'
               }`}
             >
-              Community Board
+              Community
             </Link>
           </nav>
 
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
+              Buy with Fiat
+            </button>
             <button className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
               Buy $AURA
             </button>

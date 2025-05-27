@@ -8,6 +8,15 @@ import Index from "./pages/Index";
 import ValueIndicatorPage from "./pages/ValueIndicator";
 import MultisigPage from "./pages/Multisig";
 import CommunityBoardPage from "./pages/CommunityBoard";
+import StakeToEarnPage from "./pages/StakeToEarn";
+import GovernancePage from "./pages/Governance";
+import TradingPage from "./pages/Trading";
+import InvestmentHubPage from "./pages/InvestmentHub";
+import PropertiesPage from "./pages/Properties";
+import SamsaraPage from "./pages/Samsara";
+import AirscapePage from "./pages/Airscape";
+import BookingPage from "./pages/Booking";
+import LocalVendorsPage from "./pages/LocalVendors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +32,15 @@ const App = () => (
           <Route path="/value-indicator" element={<ValueIndicatorPage />} />
           <Route path="/multisig" element={<MultisigPage />} />
           <Route path="/community-board" element={<CommunityBoardPage />} />
+          <Route path="/stake-to-earn" element={<StakeToEarnPage />} />
+          <Route path="/governance" element={<GovernancePage />} />
+          <Route path="/trading" element={<TradingPage />} />
+          <Route path="/investment-hub" element={<InvestmentHubPage />} />
+          <Route path="/properties" element={<PropertiesPage />} />
+          <Route path="/samsara" element={<SamsaraPage />} />
+          <Route path="/airscape" element={<AirscapePage />} />
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/local-vendors" element={<LocalVendorsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
