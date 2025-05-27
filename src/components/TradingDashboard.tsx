@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TokenList from './TradingDashboard/TokenList';
 import TradePanel from './TradingDashboard/TradePanel';
+import TokenList from './TradingDashboard/TokenList';
 import LiquidityPools from './TradingDashboard/LiquidityPools';
 import AnalyticsSection from './TradingDashboard/AnalyticsSection';
+import ConstructionSection from './TradingDashboard/ConstructionSection';
 
 interface Token {
   symbol: string;
@@ -117,16 +117,18 @@ const TradingDashboard = () => {
   return (
     <div className="space-y-8">
       <Tabs defaultValue="trade" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="trade">Trade</TabsTrigger>
           <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="construction">Construction</TabsTrigger>
+          <TabsTrigger value="tokens">All Tokens</TabsTrigger>
         </TabsList>
         
         <TabsContent value="trade" className="space-y-6">
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <TokenList
+              <TokenList 
                 tokens={tokens}
                 selectedToken={selectedToken}
                 onTokenSelect={setSelectedToken}
@@ -147,7 +149,7 @@ const TradingDashboard = () => {
         </TabsContent>
         
         <TabsContent value="liquidity" className="space-y-6">
-          <LiquidityPools
+          <LiquidityPools 
             liquidityPools={liquidityPools}
             onAddLiquidity={handleAddLiquidity}
           />
@@ -155,6 +157,19 @@ const TradingDashboard = () => {
         
         <TabsContent value="analytics" className="space-y-6">
           <AnalyticsSection />
+        </TabsContent>
+
+        <TabsContent value="construction" className="space-y-6">
+          <ConstructionSection />
+        </TabsContent>
+        
+        <TabsContent value="tokens" className="space-y-6">
+          <TokenList 
+            tokens={tokens}
+            selectedToken={selectedToken}
+            onTokenSelect={setSelectedToken}
+            showAll={true}
+          />
         </TabsContent>
       </Tabs>
     </div>
