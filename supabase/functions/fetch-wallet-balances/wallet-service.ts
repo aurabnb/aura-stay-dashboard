@@ -1,4 +1,3 @@
-
 import { WalletBalance } from './types.ts';
 import { METEORA_LP_TOKENS } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
@@ -59,15 +58,21 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
       const tokenData = await tokenResponse.json();
       
       if (tokenData.result?.value) {
+        console.log(`Found ${tokenData.result.value.length} token accounts for ${address}`);
+        
         for (const account of tokenData.result.value) {
           try {
             const tokenInfo = account.account.data.parsed.info;
             const mint = tokenInfo.mint;
             const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || '0');
             
+            console.log(`Processing token ${mint} with balance: ${balance}`);
+            
             if (balance > 0) {
               const tokenMeta = await getTokenInfo(mint);
               const isLpToken = METEORA_LP_TOKENS.has(mint);
+              
+              console.log(`Token ${mint}: symbol=${tokenMeta.symbol}, isLP=${isLpToken}, balance=${balance}`);
               
               let tokenPrice = 0;
               let lpDetails = null;
@@ -75,19 +80,29 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
               if (isLpToken) {
                 console.log(`Processing LP token: ${mint} with balance: ${balance}`);
                 lpDetails = await getLPTokenDetails(mint, balance);
-                tokenPrice = lpDetails ? lpDetails.totalUsdValue / balance : 0;
-                console.log(`LP Token ${mint}: balance=${balance}, calculated price per token=$${tokenPrice}, total value=$${lpDetails?.totalUsdValue || 0}`);
+                
+                if (lpDetails && lpDetails.totalUsdValue > 0) {
+                  tokenPrice = lpDetails.totalUsdValue / balance;
+                  console.log(`LP Token ${mint}: calculated price per token=$${tokenPrice}, total value=$${lpDetails.totalUsdValue}`);
+                } else {
+                  console.warn(`LP Token ${mint}: failed to calculate details or got 0 value`);
+                  // Use fallback calculation for LP tokens
+                  tokenPrice = await getTokenPrice(mint);
+                }
               } else {
                 tokenPrice = await getTokenPrice(mint);
               }
               
               const poolConfig = METEORA_LP_TOKENS.get(mint);
+              const finalUsdValue = balance * tokenPrice;
+              
+              console.log(`Adding token: ${tokenMeta.symbol}, balance: ${balance}, price: $${tokenPrice}, USD value: $${finalUsdValue}`);
               
               balances.push({
-                symbol: isLpToken ? `${poolConfig?.name || 'LP'}` : tokenMeta.symbol,
-                name: isLpToken ? `${tokenMeta.name} LP Token` : tokenMeta.name,
+                symbol: isLpToken ? `${poolConfig?.name || tokenMeta.symbol} LP` : tokenMeta.symbol,
+                name: isLpToken ? `${poolConfig?.name || tokenMeta.name} LP Token` : tokenMeta.name,
                 balance: balance,
-                usdValue: balance * tokenPrice,
+                usdValue: finalUsdValue,
                 tokenAddress: mint,
                 isLpToken: isLpToken,
                 platform: isLpToken ? 'meteora' : 'spl-token',
@@ -98,6 +113,8 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             console.warn('Error processing token account:', error);
           }
         }
+      } else {
+        console.log(`No token accounts found for ${address}`);
       }
 
     } else if (blockchain === 'Ethereum') {
@@ -186,6 +203,13 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
   } catch (error) {
     console.error(`Error fetching balances for ${address}:`, error);
   }
+
+  console.log(`Final balances for ${address}:`, balances.map(b => ({
+    symbol: b.symbol,
+    balance: b.balance,
+    usdValue: b.usdValue,
+    isLP: b.isLpToken
+  })));
 
   return balances;
 }

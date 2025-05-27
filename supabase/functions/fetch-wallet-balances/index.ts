@@ -21,6 +21,7 @@ serve(async (req) => {
         const totalUsdValue = balances.reduce((sum, balance) => sum + (balance.usdValue || 0), 0);
         
         console.log(`${wallet.name} total value: $${totalUsdValue.toFixed(2)}`);
+        console.log(`${wallet.name} found ${balances.length} balances`);
         
         // Map backend response to frontend interface
         const mappedBalances = balances.map(balance => ({
@@ -73,14 +74,29 @@ serve(async (req) => {
     console.log(`AURA market cap: $${auraMarketCap.toFixed(2)}`);
     console.log(`SOL price: $${solPrice.toFixed(2)}`);
 
+    // Log detailed wallet information
     processedWallets.forEach(wallet => {
+      console.log(`\n${wallet.name} details:`);
+      console.log(`  Total balances: ${wallet.balances.length}`);
+      console.log(`  Total USD value: $${wallet.totalUsdValue.toFixed(2)}`);
+      
       const lpTokens = wallet.balances.filter(b => b.is_lp_token);
+      const regularTokens = wallet.balances.filter(b => !b.is_lp_token);
+      
       if (lpTokens.length > 0) {
-        console.log(`${wallet.name} LP tokens:`, lpTokens.map(lp => ({
+        console.log(`  LP tokens (${lpTokens.length}):`, lpTokens.map(lp => ({
           symbol: lp.token_symbol,
           balance: lp.balance,
           usdValue: lp.usd_value,
           hasDetails: !!lp.lp_details
+        })));
+      }
+      
+      if (regularTokens.length > 0) {
+        console.log(`  Regular tokens (${regularTokens.length}):`, regularTokens.map(token => ({
+          symbol: token.token_symbol,
+          balance: token.balance,
+          usdValue: token.usd_value
         })));
       }
     });
