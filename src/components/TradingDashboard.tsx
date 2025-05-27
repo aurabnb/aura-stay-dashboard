@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,6 +81,24 @@ const TradingDashboard = () => {
       apy: 16.8,
       userShare: 0.8,
       poolUrl: 'https://www.meteora.ag/pools/GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW'
+    },
+    {
+      pair: 'AURA/SOL',
+      totalLiquidity: 181793.41,
+      volume24h: 101105.95,
+      fees24h: 2022.12,
+      apy: 409.03,
+      userShare: 0.0,
+      poolUrl: 'https://meteora.ag/pools/6W59P1TZCbckwGV87mAThgoVAzgybMERJzesokeMM2ms'
+    },
+    {
+      pair: 'AURA/SOL',
+      totalLiquidity: 80297.12,
+      volume24h: 47482.89,
+      fees24h: 949.66,
+      apy: 434.67,
+      userShare: 0.0,
+      poolUrl: 'https://meteora.ag/pools/9Wd2xPc6KmF6qmqbsQSbhemAmRpVfgVBFUPeLpYw7'
     }
   ];
 
