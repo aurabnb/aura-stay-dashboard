@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, BarChart3, Droplets } from 'lucide-react';
+import { TrendingUp, TrendingDown, BarChart3, Droplets, ExternalLink } from 'lucide-react';
 
 interface Token {
   symbol: string;
@@ -15,6 +14,7 @@ interface Token {
   volume24h: number;
   marketCap: number;
   icon: string;
+  jupiterUrl?: string;
 }
 
 interface LiquidityPool {
@@ -24,6 +24,7 @@ interface LiquidityPool {
   fees24h: number;
   apy: number;
   userShare: number;
+  poolUrl: string;
 }
 
 const TradingDashboard = () => {
@@ -35,65 +36,65 @@ const TradingDashboard = () => {
     {
       symbol: 'AURA',
       name: 'Aura Token',
-      price: 0.45,
+      price: 0.00011566,
       change24h: 12.5,
       volume24h: 125000,
       marketCap: 4500000,
-      icon: '🌟'
-    },
-    {
-      symbol: 'SAMSARA',
-      name: 'Samsara Token',
-      price: 1.20,
-      change24h: -3.2,
-      volume24h: 85000,
-      marketCap: 1200000,
-      icon: '🏝️'
-    },
-    {
-      symbol: 'AIRSCAPE',
-      name: 'Airscape Token',
-      price: 2.15,
-      change24h: 8.7,
-      volume24h: 200000,
-      marketCap: 8888888,
-      icon: '✈️'
+      icon: '🌟',
+      jupiterUrl: 'https://jup.ag/swap/SOL-3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe'
     }
   ];
 
   const liquidityPools: LiquidityPool[] = [
     {
-      pair: 'AURA/USDC',
+      pair: 'AURA/WBTC',
       totalLiquidity: 750000,
       volume24h: 125000,
       fees24h: 375,
       apy: 15.2,
-      userShare: 0.5
+      userShare: 0.5,
+      poolUrl: 'https://www.meteora.ag/pools/FVtpMFtDtskHt5MmLExkjKrCkXQi8ebVZHuFhRnQL6W5'
     },
     {
-      pair: 'SAMSARA/USDC',
+      pair: 'AURA/WBTC',
       totalLiquidity: 450000,
       volume24h: 85000,
       fees24h: 255,
       apy: 12.8,
-      userShare: 0.2
+      userShare: 0.2,
+      poolUrl: 'https://www.meteora.ag/pools/8trgRQFSHKSiUUY19Qba5MrcRoq6ALnbmaocvfti3ZjP'
     },
     {
-      pair: 'AIRSCAPE/AURA',
+      pair: 'ETH/AURA',
       totalLiquidity: 900000,
       volume24h: 200000,
       fees24h: 600,
       apy: 18.5,
-      userShare: 1.2
+      userShare: 1.2,
+      poolUrl: 'https://www.meteora.ag/pools/GyQ4VWSERBxvLRJmRatxk3DMdF6GeMk4hsBo4h7jcpfX'
+    },
+    {
+      pair: 'AURA/ETH',
+      totalLiquidity: 820000,
+      volume24h: 180000,
+      fees24h: 540,
+      apy: 16.8,
+      userShare: 0.8,
+      poolUrl: 'https://www.meteora.ag/pools/GTMY5eBd4cXaihz2ZB69g3WkVmvhudamf1kQn3E9preW'
     }
   ];
 
   const handleTrade = () => {
     console.log(`${tradeType}ing ${tradeAmount} ${selectedToken}`);
+    // Redirect to Jupiter for actual trading
+    const token = tokens.find(t => t.symbol === selectedToken);
+    if (token?.jupiterUrl) {
+      window.open(token.jupiterUrl, '_blank');
+    }
   };
 
-  const handleAddLiquidity = (pair: string) => {
-    console.log(`Adding liquidity to ${pair}`);
+  const handleAddLiquidity = (poolUrl: string) => {
+    window.open(poolUrl, '_blank');
   };
 
   return (
@@ -111,8 +112,8 @@ const TradingDashboard = () => {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Token Prices</CardTitle>
-                  <CardDescription>Live prices from our internal DEX</CardDescription>
+                  <CardTitle>AURA Token Trading</CardTitle>
+                  <CardDescription>Live price data and Jupiter DEX integration</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -133,7 +134,7 @@ const TradingDashboard = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-semibold">${token.price.toFixed(4)}</p>
+                            <p className="text-lg font-semibold">${token.price.toFixed(8)}</p>
                             <div className="flex items-center gap-1">
                               {token.change24h > 0 ? (
                                 <TrendingUp className="h-4 w-4 text-green-600" />
@@ -156,6 +157,22 @@ const TradingDashboard = () => {
                             <p className="font-semibold">${token.marketCap.toLocaleString()}</p>
                           </div>
                         </div>
+                        {token.jupiterUrl && (
+                          <div className="mt-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(token.jupiterUrl, '_blank');
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Trade on Jupiter
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -168,7 +185,7 @@ const TradingDashboard = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Trade {selectedToken}</CardTitle>
-                  <CardDescription>Buy or sell with fiat or crypto</CardDescription>
+                  <CardDescription>Powered by Jupiter DEX</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex gap-2">
@@ -201,26 +218,20 @@ const TradingDashboard = () => {
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <div className="flex justify-between text-sm">
                       <span>Price</span>
-                      <span>${tokens.find(t => t.symbol === selectedToken)?.price.toFixed(4)}</span>
+                      <span>${tokens.find(t => t.symbol === selectedToken)?.price.toFixed(8)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Est. Total</span>
-                      <span>${((parseFloat(tradeAmount) || 0) * (tokens.find(t => t.symbol === selectedToken)?.price || 0)).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Trading Fee (0.3%)</span>
-                      <span>${(((parseFloat(tradeAmount) || 0) * (tokens.find(t => t.symbol === selectedToken)?.price || 0)) * 0.003).toFixed(2)}</span>
+                      <span>${((parseFloat(tradeAmount) || 0) * (tokens.find(t => t.symbol === selectedToken)?.price || 0)).toFixed(6)}</span>
                     </div>
                   </div>
 
                   <Button onClick={handleTrade} className="w-full">
-                    {tradeType === 'buy' ? 'Buy' : 'Sell'} {selectedToken}
+                    {tradeType === 'buy' ? 'Buy' : 'Sell'} {selectedToken} on Jupiter
                   </Button>
 
-                  <div className="text-center">
-                    <Button variant="link" className="text-blue-600">
-                      Buy with Fiat (MoonPay)
-                    </Button>
+                  <div className="text-center text-sm text-gray-600">
+                    <p>Trades are executed through Jupiter DEX</p>
                   </div>
                 </CardContent>
               </Card>
@@ -233,16 +244,16 @@ const TradingDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Droplets className="h-5 w-5" />
-                Liquidity Pools
+                Active Liquidity Pools
               </CardTitle>
               <CardDescription>
-                Add liquidity to earn trading fees and rewards
+                AURA liquidity pools on Meteora DEX - click to add liquidity
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {liquidityPools.map((pool, index) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                  <div key={index} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h4 className="font-semibold text-lg">{pool.pair}</h4>
@@ -251,7 +262,11 @@ const TradingDashboard = () => {
                           <span>Your Share: {pool.userShare}%</span>
                         </div>
                       </div>
-                      <Button onClick={() => handleAddLiquidity(pool.pair)}>
+                      <Button 
+                        onClick={() => handleAddLiquidity(pool.poolUrl)}
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
                         Add Liquidity
                       </Button>
                     </div>
@@ -276,6 +291,17 @@ const TradingDashboard = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    <div className="mt-3 text-xs text-gray-500">
+                      <a 
+                        href={pool.poolUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="hover:text-blue-600 flex items-center gap-1"
+                      >
+                        View on Meteora <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -289,23 +315,23 @@ const TradingDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Trading Volume
+                  AURA Trading Volume
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">Volume Chart (Integration Pending)</p>
+                  <p className="text-gray-500">Volume Chart (Coming Soon)</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Price Charts</CardTitle>
+                <CardTitle>AURA Price Chart</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">Price Chart (Integration Pending)</p>
+                  <p className="text-gray-500">Price Chart (Coming Soon)</p>
                 </div>
               </CardContent>
             </Card>
@@ -313,25 +339,25 @@ const TradingDashboard = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Market Statistics</CardTitle>
+              <CardTitle>AURA Market Statistics</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-gray-600">Total DEX Volume</p>
-                  <p className="text-2xl font-bold text-blue-600">$410K</p>
+                  <p className="text-2xl font-bold text-blue-600">$590K</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <p className="text-sm text-gray-600">Total Liquidity</p>
-                  <p className="text-2xl font-bold text-green-600">$2.1M</p>
+                  <p className="text-2xl font-bold text-green-600">$3.0M</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-gray-600">Active Traders</p>
-                  <p className="text-2xl font-bold text-purple-600">1,234</p>
+                  <p className="text-sm text-gray-600">Active LPs</p>
+                  <p className="text-2xl font-bold text-purple-600">156</p>
                 </div>
                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
                   <p className="text-sm text-gray-600">Fees Generated</p>
-                  <p className="text-2xl font-bold text-yellow-600">$1,230</p>
+                  <p className="text-2xl font-bold text-yellow-600">$1,770</p>
                 </div>
               </div>
             </CardContent>
