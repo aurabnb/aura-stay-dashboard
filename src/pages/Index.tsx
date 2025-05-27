@@ -25,7 +25,7 @@ const Index = () => {
           <div className="text-center mb-20">
             <h1 className="text-5xl md:text-6xl font-bold text-black mb-8 font-urbanist leading-tight">
               Building the World's First<br />
-              Decentralized Travel Network
+              Decentralized Unique Stay Network
             </h1>
             <p className="text-xl text-gray-600 max-w-4xl mx-auto font-urbanist leading-relaxed mb-12">
               Starting with boutique eco-stays, scaling to resort communities. Every property owned by the community, every decision voted on-chain.
