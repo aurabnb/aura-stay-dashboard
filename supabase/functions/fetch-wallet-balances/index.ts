@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -68,8 +67,8 @@ const KNOWN_TOKENS: Record<string, TokenInfo> = {
     name: 'Ethereum',
     decimals: 8
   },
-  '2d77b594b9bbaed03221f7c63af8c4307432daf1': {
-    symbol: 'DCULT',
+  '0xf0f9d895aca5c8678f706fb8216fa22957685a13': {
+    symbol: 'CULT',
     name: 'Cult DAO',
     decimals: 18
   }
@@ -103,30 +102,27 @@ const METEORA_LP_TOKENS = new Map([
   }]
 ]);
 
-// Reduced rate limiting with longer delays
+// Rate limiting setup
 let lastRequestTime = 0;
 let requestCount = 0;
-const MAX_REQUESTS_PER_MINUTE = 5; // Reduced from 10
-const BASE_DELAY = 2000; // Increased to 2 seconds
+const MAX_REQUESTS_PER_MINUTE = 5;
+const BASE_DELAY = 2000;
 
 async function rateLimitedFetch(url: string, options?: RequestInit, retries = 2): Promise<Response> {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
   
-  // Reset counter every minute
   if (timeSinceLastRequest > 60000) {
     requestCount = 0;
   }
   
-  // More aggressive rate limiting
   if (requestCount >= MAX_REQUESTS_PER_MINUTE) {
     const delay = BASE_DELAY * Math.pow(2, Math.min(requestCount - MAX_REQUESTS_PER_MINUTE, 5));
     console.log(`Rate limit reached, waiting ${delay}ms`);
     await new Promise(resolve => setTimeout(resolve, delay));
   }
   
-  // Ensure minimum delay between requests
-  const minDelay = BASE_DELAY + (requestCount * 500); // Increased delay multiplier
+  const minDelay = BASE_DELAY + (requestCount * 500);
   if (timeSinceLastRequest < minDelay) {
     await new Promise(resolve => setTimeout(resolve, minDelay - timeSinceLastRequest));
   }
@@ -137,7 +133,7 @@ async function rateLimitedFetch(url: string, options?: RequestInit, retries = 2)
   try {
     const response = await fetch(url, {
       ...options,
-      signal: AbortSignal.timeout(10000) // 10 second timeout
+      signal: AbortSignal.timeout(10000)
     });
     
     if (response.status === 429 && retries > 0) {
@@ -162,13 +158,11 @@ async function getTokenInfo(mint: string): Promise<TokenInfo> {
     return tokenCache.get(mint)!;
   }
 
-  // Check known tokens first
   if (KNOWN_TOKENS[mint]) {
     tokenCache.set(mint, KNOWN_TOKENS[mint]);
     return KNOWN_TOKENS[mint];
   }
 
-  // For unknown tokens, return fallback without API call to reduce rate limiting
   const fallbackInfo: TokenInfo = {
     symbol: 'UNK',
     name: 'Unknown Token',
@@ -206,25 +200,23 @@ async function getSolanaPrice(): Promise<number> {
     return price;
   } catch (error) {
     console.error('Error fetching SOL price:', error);
-    return 180; // Reasonable fallback
+    return 180;
   }
 }
 
 async function getTokenPrice(tokenAddress: string): Promise<number> {
-  // Check cache first (10 minute cache)
   const cached = priceCache.get(tokenAddress);
   if (cached && Date.now() - cached.timestamp < 600000) {
     return cached.price;
   }
 
-  // Fixed prices for known tokens to reduce API calls
   const FIXED_PRICES: Record<string, number> = {
     '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': 0.00011566, // AURA
     '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh': 105000, // WBTC
     '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': 3500, // ETH
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 1, // USDC
     'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 1, // USDT
-    '2d77b594b9bbaed03221f7c63af8c4307432daf1': 0.000005 // DCULT
+    '0xf0f9d895aca5c8678f706fb8216fa22957685a13': 0.000005 // CULT on Ethereum
   };
 
   if (FIXED_PRICES[tokenAddress]) {
@@ -233,7 +225,6 @@ async function getTokenPrice(tokenAddress: string): Promise<number> {
     return price;
   }
 
-  // For other tokens, return 0 to avoid API calls
   return 0;
 }
 
@@ -241,45 +232,54 @@ async function getLPTokenDetails(mint: string, balance: number): Promise<LPDetai
   try {
     const poolConfig = METEORA_LP_TOKENS.get(mint);
     if (!poolConfig) {
+      console.log(`No pool config found for LP token: ${mint}`);
       return null;
     }
 
     console.log(`Calculating LP details for pool: ${mint} (${poolConfig.name})`);
 
-    // Get token info for both tokens
     const token1Info = await getTokenInfo(poolConfig.token1);
     const token2Info = await getTokenInfo(poolConfig.token2);
-
-    // Get token prices
     const token1Price = await getTokenPrice(poolConfig.token1);
     const token2Price = await getTokenPrice(poolConfig.token2);
 
     console.log(`LP token prices: ${token1Info.symbol}=$${token1Price}, ${token2Info.symbol}=$${token2Price}`);
 
-    // Improved LP value calculation based on typical 50/50 pool
-    // For a balanced LP position, we assume equal USD value in both tokens
-    const estimatedToken1Amount = balance * 0.5;
-    const estimatedToken2Amount = balance * 0.5;
+    // Improved LP value calculation
+    // For AURA-WBTC pools, we need to consider the actual token ratios
+    let token1Amount, token2Amount;
+    
+    if (poolConfig.name.includes('AURA-WBTC') || poolConfig.name.includes('WBTC-AURA')) {
+      // WBTC is much more valuable, so less WBTC per LP token
+      const totalValue = balance * 0.1; // Estimated LP token value multiplier
+      token1Amount = totalValue / (2 * token1Price);
+      token2Amount = totalValue / (2 * token2Price);
+    } else {
+      // For other pools, use simpler 50/50 estimation
+      const estimatedTotalValue = balance * 0.05;
+      token1Amount = estimatedTotalValue / (2 * token1Price);
+      token2Amount = estimatedTotalValue / (2 * token2Price);
+    }
 
-    const token1UsdValue = estimatedToken1Amount * token1Price;
-    const token2UsdValue = estimatedToken2Amount * token2Price;
+    const token1UsdValue = token1Amount * token1Price;
+    const token2UsdValue = token2Amount * token2Price;
     const totalUsdValue = token1UsdValue + token2UsdValue;
 
-    console.log(`LP position estimated value: $${totalUsdValue.toFixed(2)}`);
+    console.log(`LP position calculated - ${token1Info.symbol}: ${token1Amount.toFixed(6)} ($${token1UsdValue.toFixed(2)}), ${token2Info.symbol}: ${token2Amount.toFixed(6)} ($${token2UsdValue.toFixed(2)}), Total: $${totalUsdValue.toFixed(2)}`);
 
     return {
       poolAddress: mint,
       token1: {
         symbol: token1Info.symbol,
-        amount: estimatedToken1Amount,
+        amount: token1Amount,
         usdValue: token1UsdValue
       },
       token2: {
         symbol: token2Info.symbol,
-        amount: estimatedToken2Amount,
+        amount: token2Amount,
         usdValue: token2UsdValue
       },
-      priceRange: { min: 0, max: 0 }, // Would need real pool data
+      priceRange: { min: 0, max: 0 },
       totalUsdValue: totalUsdValue
     };
   } catch (error) {
@@ -295,7 +295,6 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
     if (blockchain === 'Solana') {
       console.log(`Fetching Solana balances for: ${address}`);
       
-      // Get SOL balance with timeout
       const response = await fetch(`https://api.mainnet-beta.solana.com`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -324,7 +323,6 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
         });
       }
 
-      // Get SPL token balances with timeout
       const tokenResponse = await fetch(`https://api.mainnet-beta.solana.com`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -359,8 +357,8 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
               
               if (isLpToken) {
                 lpDetails = await getLPTokenDetails(mint, balance);
-                // For LP tokens, use the total USD value from LP details
                 tokenPrice = lpDetails ? lpDetails.totalUsdValue / balance : 0;
+                console.log(`LP Token ${mint}: balance=${balance}, calculated price per token=$${tokenPrice}, total value=$${lpDetails?.totalUsdValue || 0}`);
               } else {
                 tokenPrice = await getTokenPrice(mint);
               }
@@ -393,6 +391,7 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
         return balances;
       }
 
+      // Get ETH balance
       const response = await fetch(`https://mainnet.infura.io/v3/${infuraKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -409,7 +408,7 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
       
       if (data.result) {
         const ethBalance = parseInt(data.result, 16) / 1e18;
-        const ethPrice = 3500; // Fixed price to avoid additional API calls
+        const ethPrice = 3500;
         
         balances.push({
           symbol: 'ETH',
@@ -419,6 +418,46 @@ async function getWalletBalances(address: string, blockchain: string = 'Solana')
           isLpToken: false,
           platform: 'native'
         });
+      }
+
+      // Get CULT token balance
+      const cultTokenAddress = '0xf0f9d895aca5c8678f706fb8216fa22957685a13';
+      const cultResponse = await fetch(`https://mainnet.infura.io/v3/${infuraKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'eth_call',
+          params: [
+            {
+              to: cultTokenAddress,
+              data: `0x70a08231000000000000000000000000${address.slice(2)}`
+            },
+            'latest'
+          ]
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+
+      const cultData = await cultResponse.json();
+      
+      if (cultData.result && cultData.result !== '0x') {
+        const cultBalance = parseInt(cultData.result, 16) / 1e18;
+        const cultPrice = await getTokenPrice(cultTokenAddress);
+        
+        if (cultBalance > 0) {
+          console.log(`CULT balance found: ${cultBalance}, price: $${cultPrice}`);
+          balances.push({
+            symbol: 'CULT',
+            name: 'Cult DAO',
+            balance: cultBalance,
+            usdValue: cultBalance * cultPrice,
+            tokenAddress: cultTokenAddress,
+            isLpToken: false,
+            platform: 'erc20'
+          });
+        }
       }
     }
 
@@ -435,7 +474,6 @@ async function getAuraMarketCap(): Promise<number> {
     
     const auraTokenMint = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe';
     
-    // Get total supply from Solana RPC
     const response = await fetch(`https://api.mainnet-beta.solana.com`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -454,7 +492,6 @@ async function getAuraMarketCap(): Promise<number> {
       const totalSupply = data.result.value.uiAmount;
       console.log(`AURA total supply: ${totalSupply}`);
       
-      // Use fixed price to avoid additional API calls
       const fixedPrice = 0.00011566;
       const marketCap = totalSupply * fixedPrice;
       console.log(`AURA market cap calculated: $${marketCap} (${totalSupply} tokens × $${fixedPrice})`);
@@ -462,16 +499,15 @@ async function getAuraMarketCap(): Promise<number> {
     }
 
     console.warn('Could not get AURA total supply, returning fallback');
-    return 75000; // Reasonable fallback based on recent data
+    return 75000;
     
   } catch (error) {
     console.error('Error calculating AURA market cap:', error);
-    return 75000; // Fallback value
+    return 75000;
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -479,7 +515,6 @@ serve(async (req) => {
   try {
     console.log('=== Starting wallet balance fetch ===');
     
-    // Predefined wallets to monitor
     const wallets = [
       {
         wallet_id: '69fe7f1c-bf6a-4981-9d2e-93f25b3ae6be',
@@ -515,7 +550,6 @@ serve(async (req) => {
 
     console.log(`Processing ${wallets.length} wallets...`);
 
-    // Process wallets with better error handling
     const walletPromises = wallets.map(async (wallet) => {
       try {
         console.log(`Processing wallet: ${wallet.name} (${wallet.blockchain})`);
@@ -541,9 +575,8 @@ serve(async (req) => {
 
     const processedWallets = await Promise.all(walletPromises);
 
-    // Calculate treasury metrics
     const volatileAssets = processedWallets.reduce((sum, wallet) => sum + wallet.totalUsdValue, 0);
-    const hardAssets = 607.8665742658975; // Static value as before
+    const hardAssets = 607.8665742658975;
     const auraMarketCap = await getAuraMarketCap();
     const solPrice = await getSolanaPrice();
 
@@ -564,7 +597,6 @@ serve(async (req) => {
     console.log(`AURA market cap: $${auraMarketCap.toFixed(2)}`);
     console.log(`SOL price: $${solPrice.toFixed(2)}`);
 
-    // Log detailed LP token information
     processedWallets.forEach(wallet => {
       const lpTokens = wallet.balances.filter(b => b.isLpToken);
       if (lpTokens.length > 0) {
@@ -595,7 +627,7 @@ serve(async (req) => {
         error: 'Internal server error', 
         details: error.message,
         treasury: {
-          totalMarketCap: 75000, // Fallback values
+          totalMarketCap: 75000,
           volatileAssets: 0,
           hardAssets: 607.8665742658975,
           lastUpdated: new Date().toISOString()
