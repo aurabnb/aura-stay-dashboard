@@ -19,15 +19,6 @@ const ValueIndicatorPage = () => {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto font-urbanist">
               Real-time tracking of Aura Foundation's treasury, market value metrics, and expenses
             </p>
-            
-            {/* Aurora Image */}
-            <div className="mb-12 mt-8">
-              <img 
-                src="/lovable-uploads/f0fefd83-c00f-4677-bdd0-327b97ff0cb1.png" 
-                alt="Futuristic eco-pods under northern lights with cherry blossoms"
-                className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl"
-              />
-            </div>
           </div>
           
           <Tabs defaultValue="treasury" className="w-full">
