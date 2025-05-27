@@ -56,64 +56,66 @@ const AuraTokenChart = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <div className="w-full max-w-none">
+      <Card className="border border-gray-200">
+        <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-green-600" />
+              <CardTitle className="flex items-center gap-2 text-2xl font-urbanist">
+                <DollarSign className="h-6 w-6 text-green-600" />
                 $AURA Token
               </CardTitle>
-              <CardDescription>Real-time price and volume tracking via DEXScreener</CardDescription>
+              <CardDescription className="text-gray-600 font-urbanist">
+                Real-time price and volume tracking via DEXScreener
+              </CardDescription>
             </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-urbanist">
               Live
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Price Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Current Price</span>
+        <CardContent className="space-y-8">
+          {/* Price Stats - Made wider and more prominent */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-600 font-urbanist">Current Price</span>
                 <div className={`flex items-center gap-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  <span className="text-xs">{priceChangePercent}%</span>
+                  {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <span className="text-sm font-urbanist">{priceChangePercent}%</span>
                 </div>
               </div>
-              <p className="text-2xl font-bold">${currentPrice.toFixed(6)}</p>
-              <p className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              <p className="text-3xl font-bold text-black font-urbanist">${currentPrice.toFixed(6)}</p>
+              <p className={`text-sm font-urbanist ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                 {isPositive ? '+' : ''}${priceChange.toFixed(6)}
               </p>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart3 className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">Volume (24h)</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium text-green-700 font-urbanist">Volume (24h)</span>
               </div>
-              <p className="text-2xl font-bold text-blue-700">
+              <p className="text-3xl font-bold text-green-700 font-urbanist">
                 {volume24h.toLocaleString()}
               </p>
-              <p className="text-sm text-blue-600">$AURA traded</p>
+              <p className="text-sm text-green-600 font-urbanist">$AURA traded</p>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-600">Market Cap</span>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700 font-urbanist">Market Cap</span>
               </div>
-              <p className="text-2xl font-bold text-green-700">$115.7K</p>
-              <p className="text-sm text-green-600">From treasury data</p>
+              <p className="text-3xl font-bold text-blue-700 font-urbanist">$115.7K</p>
+              <p className="text-sm text-blue-600 font-urbanist">From treasury data</p>
             </div>
           </div>
 
-          {/* Chart Controls */}
-          <div className="space-y-4">
+          {/* Chart Section - Made much wider */}
+          <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h4 className="text-lg font-semibold">Price Chart</h4>
+              <h4 className="text-2xl font-semibold text-black font-urbanist">Price Chart</h4>
               <div className="flex gap-2">
                 {(['1h', '4h', '1d'] as const).map((period) => (
                   <Button
@@ -121,12 +123,11 @@ const AuraTokenChart = () => {
                     variant={timeframe === period ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleTimeframeChange(period)}
-                    className="text-xs"
-                    style={{
-                      backgroundColor: timeframe === period ? '#10B981' : '#E5E7EB',
-                      color: timeframe === period ? 'white' : '#1F2937',
-                      borderColor: '#E5E7EB'
-                    }}
+                    className={`text-sm font-urbanist font-medium transition-all ${
+                      timeframe === period 
+                        ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-green-400 hover:text-green-600'
+                    }`}
                   >
                     {period.toUpperCase()}
                   </Button>
@@ -134,22 +135,19 @@ const AuraTokenChart = () => {
               </div>
             </div>
 
-            {/* DEXScreener Chart Container */}
+            {/* DEXScreener Chart Container - Made much wider */}
             <div 
-              className="relative w-full bg-white border border-gray-200 rounded-lg overflow-hidden"
+              className="relative w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
               style={{ 
-                height: '400px', 
-                maxWidth: '600px', 
-                margin: '0 auto',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px'
+                height: '500px',
+                maxWidth: 'none'
               }}
             >
               {!chartLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">Loading real-time chart...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                    <p className="text-lg text-gray-600 font-urbanist">Loading real-time chart...</p>
                   </div>
                 </div>
               )}
@@ -158,10 +156,10 @@ const AuraTokenChart = () => {
                 ref={iframeRef}
                 src={`https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}`}
                 width="100%"
-                height="400"
+                height="500"
                 style={{ 
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   backgroundColor: '#ffffff'
                 }}
                 title="AURA Token Chart"
@@ -169,35 +167,35 @@ const AuraTokenChart = () => {
             </div>
 
             {/* Chart Info */}
-            <div className="text-center text-xs text-gray-500 space-y-1">
-              <p>Real-time price data powered by DEXScreener</p>
-              <p>Token Address: {AURA_TOKEN_ADDRESS}</p>
-              <div className="flex justify-center gap-4 text-xs">
-                <span className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-green-600 rounded"></div>
-                  Bullish Candles
+            <div className="text-center space-y-3">
+              <p className="text-sm text-gray-600 font-urbanist">Real-time price data powered by DEXScreener</p>
+              <p className="text-xs text-gray-500 font-mono break-all">Token Address: {AURA_TOKEN_ADDRESS}</p>
+              <div className="flex justify-center gap-6 text-sm">
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-600 rounded"></div>
+                  <span className="font-urbanist text-gray-700">Bullish Candles</span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-red-500 rounded"></div>
-                  Bearish Candles
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <span className="font-urbanist text-gray-700">Bearish Candles</span>
                 </span>
               </div>
             </div>
           </div>
 
           {/* Trading Links */}
-          <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">
+          <div className="flex justify-center gap-4 pt-6 border-t border-gray-200">
             <Button 
               variant="outline" 
               onClick={() => window.open(`https://jup.ag/swap/SOL-${AURA_TOKEN_ADDRESS}`, '_blank')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-white border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400 font-urbanist"
             >
               Trade on Jupiter
             </Button>
             <Button 
               variant="outline" 
               onClick={() => window.open(`https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}`, '_blank')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-white border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 font-urbanist"
             >
               View on DEXScreener
             </Button>
