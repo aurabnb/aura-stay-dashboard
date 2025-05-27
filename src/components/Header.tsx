@@ -7,7 +7,6 @@ const Header = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
-  const [showEcosystemDropdown, setShowEcosystemDropdown] = useState(false);
   const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
   const location = useLocation();
 
@@ -116,37 +115,7 @@ const Header = () => {
               Home
             </Link>
 
-            {/* Ecosystem Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowEcosystemDropdown(!showEcosystemDropdown)}
-                className="flex items-center gap-1 px-3 py-2 text-sm font-medium font-urbanist text-gray-700 hover:text-black transition-colors"
-              >
-                Ecosystem
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {showEcosystemDropdown && (
-                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
-                  <Link to="/properties" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Properties
-                  </Link>
-                  <Link to="/samsara" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Samsara
-                  </Link>
-                  <Link to="/airscape" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Airscape
-                  </Link>
-                  <Link to="/booking" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Booking
-                  </Link>
-                  <Link to="/local-vendors" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
-                    Local Vendors
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Finance Dropdown */}
+            {/* Finance Dropdown - Limited to AURA pilot essentials */}
             <div className="relative">
               <button
                 onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
@@ -158,34 +127,14 @@ const Header = () => {
               {showFinanceDropdown && (
                 <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
                   <Link to="/value-indicator" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Value Indicator
+                    Treasury Monitor
                   </Link>
-                  <Link to="/trading" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Trading
-                  </Link>
-                  <Link to="/stake-to-earn" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Stake to Earn
-                  </Link>
-                  <Link to="/investment-hub" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Investment Hub
-                  </Link>
-                  <Link to="/multisig" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
-                    Multisig
+                  <Link to="/trading" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
+                    Trading Hub
                   </Link>
                 </div>
               )}
             </div>
-
-            <Link
-              to="/governance"
-              className={`px-3 py-2 text-sm font-medium font-urbanist transition-colors ${
-                isActivePage('/governance') 
-                  ? 'text-black border-b-2 border-black' 
-                  : 'text-gray-700 hover:text-black'
-              }`}
-            >
-              Governance
-            </Link>
 
             <Link
               to="/community-board"

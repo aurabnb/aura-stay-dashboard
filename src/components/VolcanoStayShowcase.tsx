@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mountain, Leaf, Droplets, MapPin, Camera, Users, Vote, Calendar } from 'lucide-react';
+import { Mountain, Leaf, Droplets, MapPin, Vote, Calendar, Users } from 'lucide-react';
 
 const VolcanoStayShowcase = () => {
   const features = [
@@ -33,11 +33,20 @@ const VolcanoStayShowcase = () => {
     <div className="space-y-6">
       <Card className="overflow-hidden">
         <div className="relative">
-          <div className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 h-64 md:h-80 flex items-center justify-center">
-            <div className="text-center text-white p-6">
-              <Camera className="h-16 w-16 mx-auto mb-4 opacity-80" />
-              <p className="text-lg font-medium">Volcano Stay Renderings & Photos</p>
-              <p className="text-sm opacity-90">Coming Soon - Watch us build live on X</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+            <div className="relative h-64 md:h-80">
+              <img 
+                src="/lovable-uploads/376d858b-71fc-454d-9450-826650b45f5c.png" 
+                alt="Volcano Stay at sunset with Miravalles Volcano"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="relative h-64 md:h-80">
+              <img 
+                src="/lovable-uploads/2e8ea2f9-9d0f-4c9a-9664-88980e977f96.png" 
+                alt="Volcano Stay with hot tub and volcano views"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
           <div className="absolute top-4 left-4">
