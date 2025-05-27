@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import TreasuryProgress from '../components/TreasuryProgress';
@@ -56,9 +55,7 @@ const Index = () => {
               Redefining Hospitality Through Blockchain
             </h2>
             <p className="text-lg text-gray-700 max-w-4xl mx-auto font-urbanist leading-relaxed">
-              AURA isn't just about accommodation—it's about creating a new paradigm where travelers become stakeholders, 
-              communities benefit directly, and every stay contributes to a sustainable future. We're building more than properties; 
-              we're building a movement.
+              AURA isn't just about accommodation—it's about creating a new paradigm where travelers become stakeholders. We are building the future of unique stays with cult locations in paradise.
             </p>
           </section>
 
