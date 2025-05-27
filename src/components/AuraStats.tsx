@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Users, MapPin, Target } from 'lucide-react';
@@ -44,7 +43,7 @@ const AuraStats = () => {
 
   const growthTarget = {
     title: 'Growth Target',
-    value: '10',
+    value: '15',
     description: 'Properties by Year 1',
     icon: Target,
     color: 'text-black',
