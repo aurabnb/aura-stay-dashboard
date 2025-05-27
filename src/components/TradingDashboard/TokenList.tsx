@@ -56,8 +56,12 @@ const TokenList: React.FC<TokenListProps> = ({ tokens, selectedToken, onTokenSel
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center text-2xl shadow-lg">
-                    {token.icon}
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center shadow-lg">
+                    <img 
+                      src="/lovable-uploads/4fe737e3-ff6e-4f54-a1f1-69f986b09828.png" 
+                      alt="AURA Token"
+                      className="w-8 h-8 object-contain"
+                    />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
