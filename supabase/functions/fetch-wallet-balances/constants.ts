@@ -77,7 +77,7 @@ export const FIXED_PRICES: Record<string, number> = {
   '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': 3500, // ETH
   'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 1, // USDC
   'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 1, // USDT
-  '0xf0f9d895aca5c8678f706fb8216fa22957685a13': 0.000005 // CULT on Ethereum
+  '0xf0f9d895aca5c8678f706fb8216fa22957685a13': 0.00001 // CULT on Ethereum - updated price
 };
 
 export const WALLETS_CONFIG = [

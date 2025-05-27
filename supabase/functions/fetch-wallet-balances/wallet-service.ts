@@ -73,6 +73,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
               let lpDetails = null;
               
               if (isLpToken) {
+                console.log(`Processing LP token: ${mint} with balance: ${balance}`);
                 lpDetails = await getLPTokenDetails(mint, balance);
                 tokenPrice = lpDetails ? lpDetails.totalUsdValue / balance : 0;
                 console.log(`LP Token ${mint}: balance=${balance}, calculated price per token=$${tokenPrice}, total value=$${lpDetails?.totalUsdValue || 0}`);
@@ -159,12 +160,13 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
 
       const cultData = await cultResponse.json();
       
-      if (cultData.result && cultData.result !== '0x') {
+      if (cultData.result && cultData.result !== '0x' && cultData.result !== '0x0') {
         const cultBalance = parseInt(cultData.result, 16) / 1e18;
         const cultPrice = await getTokenPrice(cultTokenAddress);
         
+        console.log(`CULT balance found: ${cultBalance}, price: $${cultPrice}, USD value: $${cultBalance * cultPrice}`);
+        
         if (cultBalance > 0) {
-          console.log(`CULT balance found: ${cultBalance}, price: $${cultPrice}`);
           balances.push({
             symbol: 'CULT',
             name: 'Cult DAO',
@@ -175,6 +177,8 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             platform: 'erc20'
           });
         }
+      } else {
+        console.log('No CULT balance found or balance is zero');
       }
     }
 
