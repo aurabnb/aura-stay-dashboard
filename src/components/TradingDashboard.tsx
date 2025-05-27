@@ -6,6 +6,8 @@ import TokenList from './TradingDashboard/TokenList';
 import LiquidityPools from './TradingDashboard/LiquidityPools';
 import AnalyticsSection from './TradingDashboard/AnalyticsSection';
 import ConstructionSection from './TradingDashboard/ConstructionSection';
+import PortfolioTracker from './TradingDashboard/PortfolioTracker';
+import PriceChart from './TradingDashboard/PriceChart';
 
 interface Token {
   symbol: string;
@@ -101,7 +103,7 @@ const TradingDashboard = () => {
     <div className="space-y-8 bg-gradient-to-br from-gray-50 to-white min-h-screen p-6">
       <Tabs defaultValue="trade" className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-white shadow-lg rounded-xl border-0 p-2">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5 bg-white shadow-lg rounded-xl border-0 p-2">
             <TabsTrigger 
               value="trade" 
               className="data-[state=active]:bg-black data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
@@ -109,22 +111,28 @@ const TradingDashboard = () => {
               Trade
             </TabsTrigger>
             <TabsTrigger 
-              value="liquidity"
+              value="portfolio"
+              className="data-[state=active]:bg-gray-800 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Portfolio
+            </TabsTrigger>
+            <TabsTrigger 
+              value="charts"
               className="data-[state=active]:bg-gray-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Charts
+            </TabsTrigger>
+            <TabsTrigger 
+              value="liquidity"
+              className="data-[state=active]:bg-gray-600 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Liquidity
             </TabsTrigger>
             <TabsTrigger 
               value="analytics"
-              className="data-[state=active]:bg-gray-600 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+              className="data-[state=active]:bg-gray-500 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
             >
               Analytics
-            </TabsTrigger>
-            <TabsTrigger 
-              value="construction"
-              className="data-[state=active]:bg-gray-800 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
-            >
-              Construction
             </TabsTrigger>
           </TabsList>
         </div>
@@ -150,6 +158,17 @@ const TradingDashboard = () => {
               />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="portfolio" className="space-y-6">
+          <PortfolioTracker />
+        </TabsContent>
+
+        <TabsContent value="charts" className="space-y-6">
+          <PriceChart 
+            tokenAddress="3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe"
+            tokenSymbol="AURA"
+          />
         </TabsContent>
         
         <TabsContent value="liquidity" className="space-y-6">
