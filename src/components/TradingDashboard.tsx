@@ -10,6 +10,8 @@ import PriceChart from './TradingDashboard/PriceChart';
 import PriceAlerts from './TradingDashboard/PriceAlerts';
 import JupiterSwapWidget from './TradingDashboard/JupiterSwapWidget';
 import JupiterPriceAPI from './TradingDashboard/JupiterPriceAPI';
+import JupiterAdvancedSwap from './TradingDashboard/JupiterAdvancedSwap';
+import JupiterTokenList from './TradingDashboard/JupiterTokenList';
 import StakingSection from './TradingDashboard/StakingSection';
 
 interface Token {
@@ -37,6 +39,7 @@ const TradingDashboard = () => {
   const [selectedToken, setSelectedToken] = useState('AURA');
   const [tradeAmount, setTradeAmount] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+  const [selectedJupiterToken, setSelectedJupiterToken] = useState<any>(null);
 
   const tokens: Token[] = [
     {
@@ -156,20 +159,24 @@ const TradingDashboard = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
               <div className="space-y-6">
-                <JupiterSwapWidget 
-                  fromToken="SOL"
-                  toToken="AURA"
-                  onSwap={() => console.log('Swap initiated')}
+                <JupiterAdvancedSwap 
+                  fromToken={selectedJupiterToken}
                 />
                 <JupiterPriceAPI />
               </div>
             </div>
             <div className="lg:col-span-2">
-              <TokenList 
-                tokens={tokens}
-                selectedToken={selectedToken}
-                onTokenSelect={setSelectedToken}
-              />
+              <div className="space-y-6">
+                <JupiterTokenList 
+                  onTokenSelect={setSelectedJupiterToken}
+                  selectedToken={selectedJupiterToken}
+                />
+                <TokenList 
+                  tokens={tokens}
+                  selectedToken={selectedToken}
+                  onTokenSelect={setSelectedToken}
+                />
+              </div>
             </div>
           </div>
         </TabsContent>
