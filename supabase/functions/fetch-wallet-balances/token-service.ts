@@ -10,6 +10,17 @@ export async function getTokenInfo(mint: string): Promise<TokenInfo> {
     return tokenCache.get(mint)!;
   }
 
+  // Alias DCULT to CULT if they share the same address
+  if (mint === '0xf0f9d895aca5c8678f706fb8216fa22957685a13') {
+    const cultInfo: TokenInfo = {
+      symbol: 'CULT', // Force symbol to CULT even if frontend sends DCULT
+      name: 'Cult DAO',
+      decimals: 18
+    };
+    tokenCache.set(mint, cultInfo);
+    return cultInfo;
+  }
+
   if (KNOWN_TOKENS[mint]) {
     tokenCache.set(mint, KNOWN_TOKENS[mint]);
     return KNOWN_TOKENS[mint];
@@ -33,6 +44,7 @@ export async function getTokenPrice(tokenAddress: string): Promise<number> {
   if (FIXED_PRICES[tokenAddress]) {
     const price = FIXED_PRICES[tokenAddress];
     priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+    console.log(`Fetched price for token ${tokenAddress}: $${price}`);
     return price;
   }
 

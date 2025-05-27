@@ -164,6 +164,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
         const cultBalance = parseInt(cultData.result, 16) / 1e18;
         const cultPrice = await getTokenPrice(cultTokenAddress);
         
+        console.log(`Fetched price for CULT/DCULT: $${cultPrice}`);
         console.log(`CULT balance found: ${cultBalance}, price: $${cultPrice}, USD value: $${cultBalance * cultPrice}`);
         
         if (cultBalance > 0) {
