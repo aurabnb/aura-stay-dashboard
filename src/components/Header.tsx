@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
@@ -130,8 +129,11 @@ const Header = () => {
                   <Link to="/roadmap" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
                     Roadmap
                   </Link>
-                  <Link to="/vision" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
+                  <Link to="/vision" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
                     Vision
+                  </Link>
+                  <Link to="/transparency" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
+                    Transparency
                   </Link>
                 </div>
               )}

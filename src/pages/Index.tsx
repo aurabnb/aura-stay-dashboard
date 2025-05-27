@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import AuraStats from '../components/AuraStats';
@@ -114,15 +113,6 @@ const Index = () => {
                 Join Community
               </a>
             </div>
-          </section>
-
-          {/* Funding Transparency */}
-          <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">Complete Financial Transparency</h2>
-              <p className="text-lg text-gray-600 font-urbanist">See exactly how funds flow in and out</p>
-            </div>
-            <FundingBreakdown />
           </section>
         </div>
       </main>

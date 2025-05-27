@@ -19,6 +19,7 @@ import BookingPage from "./pages/Booking";
 import LocalVendorsPage from "./pages/LocalVendors";
 import Vision from "./pages/Vision";
 import Roadmap from "./pages/Roadmap";
+import Transparency from "./pages/Transparency";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
