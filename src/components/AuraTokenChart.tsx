@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 const AuraTokenChart = () => {
   const [timeframe, setTimeframe] = useState<'1h' | '4h' | '1d'>('1h');
   const [chartLoaded, setChartLoaded] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const AURA_TOKEN_ADDRESS = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe';
   
@@ -19,51 +20,39 @@ const AuraTokenChart = () => {
   const volume24h = 125000;
 
   useEffect(() => {
-    // Load DEXScreener chart
-    const loadChart = () => {
-      const container = document.getElementById('dexscreener-chart');
-      if (!container) return;
+    setChartLoaded(false);
+    
+    const timer = setTimeout(() => {
+      if (iframeRef.current) {
+        const iframe = iframeRef.current;
+        iframe.onload = () => {
+          setChartLoaded(true);
+          // Try to customize chart colors via postMessage
+          try {
+            iframe.contentWindow?.postMessage({
+              type: 'chart-config',
+              config: {
+                upColor: '#10B981',
+                downColor: '#EF4444',
+                backgroundColor: '#ffffff',
+                timeframe: timeframe
+              }
+            }, '*');
+          } catch (e) {
+            console.log('Chart customization not available');
+          }
+        };
+        
+        // Force reload the iframe with new timeframe
+        iframe.src = `https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}`;
+      }
+    }, 100);
 
-      // Clear existing content
-      container.innerHTML = '';
-
-      // Create iframe for DEXScreener chart
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}?embed=1&theme=light&trades=0&info=0`;
-      iframe.width = '100%';
-      iframe.height = '400';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
-      iframe.style.backgroundColor = '#ffffff';
-      
-      // Custom styling via postMessage (if supported)
-      iframe.onload = () => {
-        setChartLoaded(true);
-        // Try to customize chart colors via postMessage
-        try {
-          iframe.contentWindow?.postMessage({
-            type: 'chart-config',
-            config: {
-              upColor: '#10B981',
-              downColor: '#EF4444',
-              backgroundColor: '#ffffff',
-              timeframe: timeframe
-            }
-          }, '*');
-        } catch (e) {
-          console.log('Chart customization not available');
-        }
-      };
-
-      container.appendChild(iframe);
-    };
-
-    loadChart();
+    return () => clearTimeout(timer);
   }, [timeframe]);
 
   const handleTimeframeChange = (newTimeframe: '1h' | '4h' | '1d') => {
     setTimeframe(newTimeframe);
-    setChartLoaded(false);
   };
 
   return (
@@ -132,10 +121,11 @@ const AuraTokenChart = () => {
                     variant={timeframe === period ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleTimeframeChange(period)}
-                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    className="text-xs"
                     style={{
                       backgroundColor: timeframe === period ? '#10B981' : '#E5E7EB',
-                      color: timeframe === period ? 'white' : '#1F2937'
+                      color: timeframe === period ? 'white' : '#1F2937',
+                      borderColor: '#E5E7EB'
                     }}
                   >
                     {period.toUpperCase()}
@@ -155,16 +145,27 @@ const AuraTokenChart = () => {
                 borderRadius: '8px'
               }}
             >
-              <div id="dexscreener-chart" className="w-full h-full">
-                {!chartLoaded && (
-                  <div className="flex items-center justify-center h-full bg-gray-50">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-                      <p className="text-sm text-gray-600">Loading real-time chart...</p>
-                    </div>
+              {!chartLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-600">Loading real-time chart...</p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              
+              <iframe
+                ref={iframeRef}
+                src={`https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}?embed=1&theme=light&trades=0&info=0&timeframe=${timeframe}`}
+                width="100%"
+                height="400"
+                style={{ 
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: '#ffffff'
+                }}
+                title="AURA Token Chart"
+              />
             </div>
 
             {/* Chart Info */}
