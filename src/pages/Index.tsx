@@ -4,6 +4,10 @@ import Header from '../components/Header';
 import ApiStatusWidget from '../components/ApiStatusWidget';
 import SolanaPriceWidget from '../components/SolanaPriceWidget';
 import TreasurySummary from '../components/TreasurySummary';
+import TreasuryProgress from '../components/TreasuryProgress';
+import FundingBreakdown from '../components/FundingBreakdown';
+import VolcanoStayShowcase from '../components/VolcanoStayShowcase';
+import RoadmapTracker from '../components/RoadmapTracker';
 import WalletCard from '../components/WalletCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTreasuryData } from '../hooks/useTreasuryData';
@@ -22,13 +26,25 @@ const Index = () => {
         <div className="space-y-12">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold text-black mb-6 font-urbanist leading-tight">
-              Redefining the Art of Unique<br />
-              Short Term Stays
+              Building the World's First<br />
+              Decentralized Travel Network
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-urbanist">
-              Aura turns dream stays into community owned assets, everywhere on earth
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-urbanist">
+              Starting with boutique eco-stays, scaling to resort communities. Every property owned by the community, every decision voted on-chain.
             </p>
           </div>
+
+          {/* Treasury Progress for Volcano Stay */}
+          <TreasuryProgress currentAmount={20000} targetAmount={100000} />
+
+          {/* Volcano Stay Showcase */}
+          <VolcanoStayShowcase />
+
+          {/* Funding Breakdown */}
+          <FundingBreakdown />
+
+          {/* Roadmap Progress */}
+          <RoadmapTracker />
 
           <ApiStatusWidget apiStatus={apiStatus} lastRefresh={lastRefresh} />
 
