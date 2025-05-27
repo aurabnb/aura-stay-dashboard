@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import TreasuryProgress from '../components/TreasuryProgress';
@@ -34,8 +33,8 @@ const Index = () => {
             {/* Hero Image */}
             <div className="mb-16">
               <img 
-                src="/lovable-uploads/e9007ea8-e3e1-4665-aeeb-8b3f0ba1d126.png" 
-                alt="Modern eco-stay at the base of a volcanic mountain in Costa Rica"
+                src="/lovable-uploads/ea2ec5fb-7766-4c6c-8b6a-659540d919d3.png" 
+                alt="Cozy cabins under the northern lights - representing unique stays in extraordinary locations"
                 className="w-full max-w-6xl mx-auto rounded-3xl shadow-2xl"
               />
             </div>
@@ -156,7 +155,7 @@ const Index = () => {
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-10 text-center border border-green-200 hover:shadow-lg transition-shadow">
               <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <h3 className="text-2xl font-bold mb-6 font-urbanist">Treasury Monitor</h3>
