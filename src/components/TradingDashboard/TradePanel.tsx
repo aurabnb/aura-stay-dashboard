@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, DollarSign, Zap } from 'lucide-react';
+import { ArrowUpDown, DollarSign, Zap, ExternalLink } from 'lucide-react';
 
 interface Token {
   symbol: string;
@@ -39,6 +39,19 @@ const TradePanel: React.FC<TradePanelProps> = ({
   const selectedTokenData = tokens.find(t => t.symbol === selectedToken);
   const estimatedTotal = ((parseFloat(tradeAmount) || 0) * (selectedTokenData?.price || 0));
 
+  const handleJupiterTrade = () => {
+    // Create Jupiter URL based on trade type
+    let jupiterUrl;
+    if (tradeType === 'buy') {
+      jupiterUrl = `https://jup.ag/swap/SOL-3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe`;
+    } else {
+      jupiterUrl = `https://jup.ag/swap/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe-SOL`;
+    }
+    
+    window.open(jupiterUrl, '_blank');
+    onTrade();
+  };
+
   return (
     <Card className="bg-gradient-to-br from-white to-gray-50 border-0 shadow-lg sticky top-6">
       <CardHeader className="pb-6">
@@ -46,7 +59,7 @@ const TradePanel: React.FC<TradePanelProps> = ({
           <div>
             <CardTitle className="text-2xl font-bold text-gray-900 font-urbanist flex items-center gap-2">
               <ArrowUpDown className="h-6 w-6 text-blue-600" />
-              Trade {selectedToken}
+              Quick Trade {selectedToken}
             </CardTitle>
             <CardDescription className="text-gray-600 font-urbanist mt-2">
               Powered by Jupiter DEX
@@ -54,7 +67,7 @@ const TradePanel: React.FC<TradePanelProps> = ({
           </div>
           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-urbanist">
             <Zap className="h-3 w-3 mr-1" />
-            Fast
+            Jupiter
           </Badge>
         </div>
       </CardHeader>
@@ -123,17 +136,18 @@ const TradePanel: React.FC<TradePanelProps> = ({
         </div>
 
         <Button 
-          onClick={onTrade} 
+          onClick={handleJupiterTrade} 
           className="w-full h-12 text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 font-urbanist"
           disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
         >
           <DollarSign className="h-5 w-5 mr-2" />
-          {tradeType === 'buy' ? 'Buy' : 'Sell'} {selectedToken} on Jupiter
+          {tradeType === 'buy' ? 'Buy' : 'Sell'} on Jupiter
+          <ExternalLink className="h-4 w-4 ml-2" />
         </Button>
 
         <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
           <p className="text-sm text-blue-700 font-medium font-urbanist">
-            🚀 Trades executed through Jupiter DEX for best prices
+            🚀 Jupiter aggregates liquidity from all Solana DEXs for best prices
           </p>
         </div>
       </CardContent>

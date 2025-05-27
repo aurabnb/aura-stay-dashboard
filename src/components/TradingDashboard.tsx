@@ -8,6 +8,8 @@ import ConstructionSection from './TradingDashboard/ConstructionSection';
 import PortfolioTracker from './TradingDashboard/PortfolioTracker';
 import PriceChart from './TradingDashboard/PriceChart';
 import PriceAlerts from './TradingDashboard/PriceAlerts';
+import JupiterSwapWidget from './TradingDashboard/JupiterSwapWidget';
+import JupiterPriceAPI from './TradingDashboard/JupiterPriceAPI';
 
 interface Token {
   symbol: string;
@@ -145,22 +147,21 @@ const TradingDashboard = () => {
         
         <TabsContent value="trade" className="space-y-6">
           <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <div className="space-y-6">
+                <JupiterSwapWidget 
+                  fromToken="SOL"
+                  toToken="AURA"
+                  onSwap={() => console.log('Swap initiated')}
+                />
+                <JupiterPriceAPI />
+              </div>
+            </div>
             <div className="lg:col-span-2">
               <TokenList 
                 tokens={tokens}
                 selectedToken={selectedToken}
                 onTokenSelect={setSelectedToken}
-              />
-            </div>
-            <div>
-              <TradePanel
-                selectedToken={selectedToken}
-                tradeAmount={tradeAmount}
-                tradeType={tradeType}
-                tokens={tokens}
-                onTradeAmountChange={setTradeAmount}
-                onTradeTypeChange={setTradeType}
-                onTrade={handleTrade}
               />
             </div>
           </div>
