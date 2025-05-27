@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
@@ -53,10 +52,6 @@ const Index = () => {
 
           {/* Key Stats */}
           <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">The Numbers Behind Our Vision</h2>
-              <p className="text-lg text-gray-600 font-urbanist">Real progress, transparent metrics</p>
-            </div>
             <AuraStats />
           </section>
 
