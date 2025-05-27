@@ -17,6 +17,8 @@ import SamsaraPage from "./pages/Samsara";
 import AirscapePage from "./pages/Airscape";
 import BookingPage from "./pages/Booking";
 import LocalVendorsPage from "./pages/LocalVendors";
+import Vision from "./pages/Vision";
+import Roadmap from "./pages/Roadmap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/vision" element={<Vision />} />
+          <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/value-indicator" element={<ValueIndicatorPage />} />
           <Route path="/multisig" element={<MultisigPage />} />
           <Route path="/community-board" element={<CommunityBoardPage />} />

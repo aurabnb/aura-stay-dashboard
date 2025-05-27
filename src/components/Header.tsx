@@ -8,6 +8,7 @@ const Header = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const location = useLocation();
 
   const connectWallet = async (walletType: 'phantom' | 'solflare') => {
@@ -115,7 +116,28 @@ const Header = () => {
               Home
             </Link>
 
-            {/* Finance Dropdown - Limited to AURA pilot essentials */}
+            {/* Project Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                className="flex items-center gap-1 px-3 py-2 text-sm font-medium font-urbanist text-gray-700 hover:text-black transition-colors"
+              >
+                Project
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              {showProjectDropdown && (
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                  <Link to="/roadmap" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
+                    Roadmap
+                  </Link>
+                  <Link to="/vision" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
+                    Vision
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Finance Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}

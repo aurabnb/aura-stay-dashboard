@@ -1,10 +1,8 @@
+
 import React from 'react';
 import Header from '../components/Header';
-import TreasuryProgress from '../components/TreasuryProgress';
-import FundingBreakdown from '../components/FundingBreakdown';
-import VolcanoStayShowcase from '../components/VolcanoStayShowcase';
-import AuraRoadmapTracker from '../components/AuraRoadmapTracker';
 import AuraStats from '../components/AuraStats';
+import FundingBreakdown from '../components/FundingBreakdown';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTreasuryData } from '../hooks/useTreasuryData';
 
@@ -43,20 +41,13 @@ const Index = () => {
               <button className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105 shadow-lg">
                 Join the Movement
               </button>
-              <button className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">
+              <a 
+                href="/vision"
+                className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105 inline-block text-center"
+              >
                 Explore the Vision
-              </button>
+              </a>
             </div>
-          </section>
-
-          {/* Mission Statement */}
-          <section className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-3xl p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 font-urbanist">
-              Redefining Hospitality Through Blockchain
-            </h2>
-            <p className="text-lg text-gray-700 max-w-4xl mx-auto font-urbanist leading-relaxed">
-              AURA isn't just about accommodation—it's about creating a new paradigm where travelers become stakeholders. We are building the future of unique stays with cult locations in paradise.
-            </p>
           </section>
 
           {/* Key Stats */}
@@ -68,88 +59,8 @@ const Index = () => {
             <AuraStats />
           </section>
 
-          {/* Treasury Progress */}
-          <section className="bg-gray-50 rounded-3xl p-12">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">Funding Our First Stay</h2>
-              <p className="text-lg text-gray-600 font-urbanist max-w-3xl mx-auto">
-                Watch our community-driven funding in real-time as we build the Volcano Stay in Costa Rica
-              </p>
-            </div>
-            <TreasuryProgress currentAmount={20000} targetAmount={100000} />
-          </section>
-
-          {/* Volcano Stay Showcase */}
-          <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">Meet Your First Investment</h2>
-              <p className="text-lg text-gray-600 font-urbanist max-w-3xl mx-auto">
-                An eco-luxury experience at the edge of Costa Rica's Miravalles Volcano
-              </p>
-            </div>
-            <VolcanoStayShowcase />
-          </section>
-
-          {/* How It Works */}
-          <section className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-12">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">How AURA Works</h2>
-              <p className="text-lg text-gray-600 font-urbanist">Simple, transparent, community-driven</p>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-white font-bold text-xl">1</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-4 font-urbanist">Community Funding</h3>
-                <p className="text-gray-700 font-urbanist">
-                  LP rewards from $AURA trading automatically fund property acquisitions and development
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-white font-bold text-xl">2</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-4 font-urbanist">Democratic Decisions</h3>
-                <p className="text-gray-700 font-urbanist">
-                  Every aspect of each property is voted on by $AURA holders—from design to amenities
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-white font-bold text-xl">3</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-4 font-urbanist">Shared Returns</h3>
-                <p className="text-gray-700 font-urbanist">
-                  Revenue flows back to token holders transparently, creating real ownership value
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* AURA Roadmap Progress */}
-          <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">Our Journey Forward</h2>
-              <p className="text-lg text-gray-600 font-urbanist">Tracking progress through our pilot phase</p>
-            </div>
-            <AuraRoadmapTracker />
-          </section>
-
-          {/* Funding Transparency */}
-          <section>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">Complete Financial Transparency</h2>
-              <p className="text-lg text-gray-600 font-urbanist">See exactly how funds flow in and out</p>
-            </div>
-            <FundingBreakdown />
-          </section>
-          
           {/* Community Access */}
-          <section className="grid md:grid-cols-2 gap-8">
+          <section className="grid md:grid-cols-3 gap-8">
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-8">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +69,7 @@ const Index = () => {
               </div>
               <h3 className="text-2xl font-bold mb-6 font-urbanist">Treasury Monitor</h3>
               <p className="text-gray-700 mb-8 font-urbanist text-lg leading-relaxed">
-                Real-time tracking of funding progress, wallet balances, and financial transparency for the Volcano Stay project
+                Real-time tracking of funding progress, wallet balances, and financial transparency
               </p>
               <a 
                 href="/value-indicator"
@@ -171,39 +82,47 @@ const Index = () => {
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-8">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold mb-6 font-urbanist">Project Roadmap</h3>
+              <p className="text-gray-700 mb-8 font-urbanist text-lg leading-relaxed">
+                Track our progress and see what's coming next in the AURA ecosystem
+              </p>
+              <a 
+                href="/roadmap"
+                className="inline-block bg-gray-700 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-800 transition-colors text-lg"
+              >
+                View Roadmap
+              </a>
+            </div>
+
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <h3 className="text-2xl font-bold mb-6 font-urbanist">Community Hub</h3>
               <p className="text-gray-700 mb-8 font-urbanist text-lg leading-relaxed">
-                Share ideas, vote on decisions, and connect with fellow AURA community members building the future
+                Share ideas, vote on decisions, and connect with fellow AURA community members
               </p>
               <a 
                 href="/community-board"
-                className="inline-block bg-gray-700 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-800 transition-colors text-lg"
+                className="inline-block bg-gray-800 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-900 transition-colors text-lg"
               >
                 Join Community
               </a>
             </div>
           </section>
 
-          {/* Call to Action */}
-          <section className="bg-gradient-to-r from-black to-gray-900 rounded-3xl p-16 text-center text-white">
-            <h2 className="text-4xl md:text-5xl font-bold mb-8 font-urbanist">
-              Ready to Shape Travel's Future?
-            </h2>
-            <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto font-urbanist leading-relaxed">
-              Join the AURA community and help build the world's first decentralized unique stay network. 
-              Every token holder becomes a co-owner in this revolutionary hospitality ecosystem.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button className="bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">
-                Buy $AURA Token
-              </button>
-              <button className="border-2 border-white hover:bg-white hover:text-black text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105">
-                Read Whitepaper
-              </button>
+          {/* Funding Transparency */}
+          <section>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-urbanist">Complete Financial Transparency</h2>
+              <p className="text-lg text-gray-600 font-urbanist">See exactly how funds flow in and out</p>
             </div>
+            <FundingBreakdown />
           </section>
         </div>
       </main>
