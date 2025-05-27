@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +41,7 @@ const VolcanoStayShowcase = () => {
             />
           </div>
           <div className="absolute top-4 left-4">
-            <Badge className="bg-green-600 text-white">First AURA Stay</Badge>
+            <Badge className="bg-gray-600 text-white">First AURA Stay</Badge>
           </div>
         </div>
         
@@ -72,19 +73,19 @@ const VolcanoStayShowcase = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Users className="h-4 w-4 text-green-600" />
-                <span className="font-medium text-green-800">Modern Residence</span>
+                <Users className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-800">Modern Residence</span>
               </div>
-              <p className="text-green-700 text-sm">Sustainable bamboo construction with luxury amenities</p>
+              <p className="text-gray-700 text-sm">Glass house construction with luxury amenities</p>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Mountain className="h-4 w-4 text-blue-600" />
-                <span className="font-medium text-blue-800">Green Fields</span>
+                <Mountain className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-800">Wood Fired Hot Tub</span>
               </div>
-              <p className="text-blue-700 text-sm">Surrounded by pristine volcanic landscape</p>
+              <p className="text-gray-700 text-sm">Surrounded by pristine volcanic landscape</p>
             </div>
           </div>
 
@@ -94,7 +95,7 @@ const VolcanoStayShowcase = () => {
               return (
                 <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
                   <div className="flex-shrink-0">
-                    <Icon className="h-6 w-6 text-green-600" />
+                    <Icon className="h-6 w-6 text-gray-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">{feature.title}</h4>
@@ -107,11 +108,11 @@ const VolcanoStayShowcase = () => {
 
           <div className="border-t pt-6">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="flex-1 bg-green-600 hover:bg-green-700">
+              <Button className="flex-1 bg-gray-800 hover:bg-black text-white">
                 <Calendar className="h-4 w-4 mr-2" />
                 Join the Build Process
               </Button>
-              <Button variant="outline" className="flex-1">
+              <Button variant="outline" className="flex-1 border-gray-300 hover:border-gray-400 text-gray-700">
                 <Mountain className="h-4 w-4 mr-2" />
                 View Build Updates on X
               </Button>
