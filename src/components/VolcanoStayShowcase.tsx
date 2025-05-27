@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,27 +32,15 @@ const VolcanoStayShowcase = () => {
     <div className="space-y-6">
       <Card className="overflow-hidden">
         <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-            <div className="relative h-64 md:h-80">
-              <img 
-                src="/lovable-uploads/376d858b-71fc-454d-9450-826650b45f5c.png" 
-                alt="Volcano Stay at sunset with Miravalles Volcano"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="relative h-64 md:h-80">
-              <img 
-                src="/lovable-uploads/2e8ea2f9-9d0f-4c9a-9664-88980e977f96.png" 
-                alt="Volcano Stay with hot tub and volcano views"
-                className="w-full h-full object-cover"
-              />
-            </div>
+          <div className="relative h-64 md:h-80">
+            <img 
+              src="/lovable-uploads/376d858b-71fc-454d-9450-826650b45f5c.png" 
+              alt="Volcano Stay at sunset with Miravalles Volcano"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="absolute top-4 left-4">
             <Badge className="bg-green-600 text-white">First AURA Stay</Badge>
-          </div>
-          <div className="absolute top-4 right-4">
-            <Badge variant="outline" className="bg-white/90">Under Construction</Badge>
           </div>
         </div>
         
