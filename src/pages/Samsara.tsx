@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Header from '../components/Header';
+import SamsaraDetails from '../components/SamsaraDetails';
 
 const SamsaraPage = () => {
   return (
@@ -9,19 +10,14 @@ const SamsaraPage = () => {
       <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-black mb-6 font-urbanist leading-tight">
-            Samsara
+            Samsara Eco-Community
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-urbanist">
-            A Boutique Eco-Conscious Community in Dominical, Costa Rica
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto font-urbanist">
+            A boutique eco-conscious community in Dominical, Costa Rica featuring 45 sustainable units with ocean views, off-grid farm, and natural pool
           </p>
         </div>
         
-        <div className="bg-green-50 p-8 rounded-lg text-center">
-          <p className="text-gray-600 mb-4">Samsara booking page and details coming in Phase 3.1</p>
-          <p className="text-sm text-gray-500">
-            45 eco-conscious units with ocean views, solar energy, and natural pools
-          </p>
-        </div>
+        <SamsaraDetails />
       </main>
     </div>
   );

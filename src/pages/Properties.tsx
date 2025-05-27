@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Header from '../components/Header';
+import PropertyShowcase from '../components/PropertyShowcase';
 
 const PropertiesPage = () => {
   return (
@@ -16,12 +17,7 @@ const PropertiesPage = () => {
           </p>
         </div>
         
-        <div className="bg-blue-50 p-8 rounded-lg text-center">
-          <p className="text-gray-600 mb-4">Property showcase coming soon in Phase 2.1</p>
-          <p className="text-sm text-gray-500">
-            This will feature Volcan stay and new Aura properties with Airbnb integration
-          </p>
-        </div>
+        <PropertyShowcase />
       </main>
     </div>
   );
