@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, ExternalLink, TrendingUp, Heart } from 'lucide-react';
+import { Search, ExternalLink, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface JupiterToken {
@@ -29,8 +29,8 @@ const JupiterTokenList: React.FC<JupiterTokenListProps> = ({ onTokenSelect, sele
   const { toast } = useToast();
 
   const FEATURED_TOKENS = [
-    '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA - keep at top
     'So11111111111111111111111111111111111111112', // SOL
+    '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', // AURA
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
     'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
   ];
@@ -44,12 +44,8 @@ const JupiterTokenList: React.FC<JupiterTokenListProps> = ({ onTokenSelect, sele
       const response = await fetch('https://token.jup.ag/strict');
       const data = await response.json();
       
-      // Sort tokens to show AURA first, then other featured ones, then by market cap/popularity
+      // Sort tokens to show featured ones first, then by market cap/popularity
       const sortedTokens = data.sort((a: JupiterToken, b: JupiterToken) => {
-        // AURA always first
-        if (a.address === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') return -1;
-        if (b.address === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') return 1;
-        
         const aIsFeatured = FEATURED_TOKENS.includes(a.address);
         const bIsFeatured = FEATURED_TOKENS.includes(b.address);
         
@@ -99,33 +95,6 @@ const JupiterTokenList: React.FC<JupiterTokenListProps> = ({ onTokenSelect, sele
           <TrendingUp className="h-5 w-5" />
           Jupiter Token List
         </CardTitle>
-        
-        {/* Promotional message for AURA */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-4 mt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Heart className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Give $AURA a like on Jupiter to get us on the strict list!
-                </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Help us gain more visibility and trading volume
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open('https://jup.ag/tokens/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', '_blank')}
-              className="flex items-center gap-2 bg-white hover:bg-gray-50 border-gray-300"
-            >
-              <Heart className="h-4 w-4 text-red-500" />
-              Like AURA
-            </Button>
-          </div>
-        </div>
-
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
