@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TradePanel from './TradingDashboard/TradePanel';
@@ -115,18 +116,45 @@ const TradingDashboard = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-gradient-to-br from-gray-50 to-white min-h-screen p-6">
       <Tabs defaultValue="trade" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="trade">Trade</TabsTrigger>
-          <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="construction">Construction</TabsTrigger>
-          <TabsTrigger value="tokens">All Tokens</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center mb-8">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5 bg-white shadow-lg rounded-xl border-0 p-2">
+            <TabsTrigger 
+              value="trade" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Trade
+            </TabsTrigger>
+            <TabsTrigger 
+              value="liquidity"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Liquidity
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger 
+              value="construction"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              Construction
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tokens"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-700 data-[state=active]:text-white font-semibold font-urbanist transition-all duration-300"
+            >
+              All Tokens
+            </TabsTrigger>
+          </TabsList>
+        </div>
         
         <TabsContent value="trade" className="space-y-6">
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <TokenList 
                 tokens={tokens}
