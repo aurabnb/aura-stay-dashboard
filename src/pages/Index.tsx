@@ -28,9 +28,19 @@ const Index = () => {
               Building the World's First<br />
               Decentralized Travel Network
             </h1>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto font-urbanist leading-relaxed">
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto font-urbanist leading-relaxed mb-12">
               Starting with boutique eco-stays, scaling to resort communities. Every property owned by the community, every decision voted on-chain.
             </p>
+            
+            {/* Hero Image */}
+            <div className="mb-12">
+              <img 
+                src="/lovable-uploads/2c54a081-ee21-40e5-8639-04f3b307ca0b.png" 
+                alt="Luxury eco-stay with stunning mountain and water views at sunset"
+                className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl"
+              />
+            </div>
+            
             <div className="mt-10 flex justify-center gap-4">
               <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-urbanist font-medium transition-colors">
                 Join the Pilot
