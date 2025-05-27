@@ -14,9 +14,6 @@ const TradingPage = () => {
             <h1 className="text-4xl md:text-5xl font-bold text-black mb-6 font-urbanist leading-tight">
               Trading Hub
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-urbanist">
-              Trade AURA, SAMSARA, and AIRSCAPE tokens with our internal DEX
-            </p>
           </div>
           
           <TradingDashboard />
