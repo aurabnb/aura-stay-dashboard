@@ -28,7 +28,7 @@ const Index = () => {
               Starting with boutique eco-stays, scaling to resort communities. Every property owned by the community, every decision voted on-chain.
             </p>
             
-            {/* Hero Image - Reduced Size */}
+            {/* Hero Image */}
             <div className="mb-16">
               <img 
                 src="/lovable-uploads/2c54a081-ee21-40e5-8639-04f3b307ca0b.png" 
@@ -41,12 +41,12 @@ const Index = () => {
               <button className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105 shadow-lg">
                 Join the Movement
               </button>
-              <a 
-                href="/vision"
+              <Link 
+                to="/roadmap"
                 className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-4 rounded-full font-urbanist font-semibold text-lg transition-all hover:scale-105 inline-block text-center"
               >
-                Explore the Vision
-              </a>
+                View Roadmap
+              </Link>
             </div>
           </section>
 
@@ -71,12 +71,12 @@ const Index = () => {
               <p className="text-gray-700 mb-8 font-urbanist text-lg leading-relaxed">
                 Real-time tracking of funding progress, wallet balances, and financial transparency
               </p>
-              <a 
-                href="/value-indicator"
+              <Link 
+                to="/value-indicator"
                 className="inline-block bg-black text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-800 transition-colors text-lg"
               >
                 Monitor Treasury
-              </a>
+              </Link>
             </div>
             
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
@@ -89,12 +89,12 @@ const Index = () => {
               <p className="text-gray-700 mb-8 font-urbanist text-lg leading-relaxed">
                 Track our progress and see what's coming next in the AURA ecosystem
               </p>
-              <a 
-                href="/roadmap"
+              <Link 
+                to="/roadmap"
                 className="inline-block bg-gray-700 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-800 transition-colors text-lg"
               >
                 View Roadmap
-              </a>
+              </Link>
             </div>
 
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 text-center border border-gray-200 hover:shadow-lg transition-shadow">
@@ -107,12 +107,12 @@ const Index = () => {
               <p className="text-gray-700 mb-8 font-urbanist text-lg leading-relaxed">
                 Share ideas, vote on decisions, and connect with fellow AURA community members
               </p>
-              <a 
-                href="/community-board"
+              <Link 
+                to="/community-board"
                 className="inline-block bg-gray-800 text-white px-8 py-4 rounded-full font-urbanist font-semibold hover:bg-gray-900 transition-colors text-lg"
               >
                 Join Community
-              </a>
+              </Link>
             </div>
           </section>
         </div>

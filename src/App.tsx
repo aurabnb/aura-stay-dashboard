@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,7 +17,6 @@ import SamsaraPage from "./pages/Samsara";
 import AirscapePage from "./pages/Airscape";
 import BookingPage from "./pages/Booking";
 import LocalVendorsPage from "./pages/LocalVendors";
-import Vision from "./pages/Vision";
 import Roadmap from "./pages/Roadmap";
 import Transparency from "./pages/Transparency";
 import NotFound from "./pages/NotFound";
@@ -32,7 +32,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/vision" element={<Vision />} />
           <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/transparency" element={<Transparency />} />
           <Route path="/value-indicator" element={<ValueIndicatorPage />} />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Wallet, Copy, ExternalLink } from 'lucide-react';
@@ -221,12 +220,9 @@ const Header = () => {
                 <ChevronDown className="h-4 w-4" />
               </button>
               {showProjectDropdown && (
-                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px]">
                   <Link to="/roadmap" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
                     Roadmap
-                  </Link>
-                  <Link to="/vision" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
-                    Vision
                   </Link>
                   <Link to="/transparency" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm">
                     Transparency
@@ -249,7 +245,7 @@ const Header = () => {
                 <ChevronDown className="h-4 w-4" />
               </button>
               {showFinanceDropdown && (
-                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
+                <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
                   <Link to="/value-indicator" className="block px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100">
                     Treasury Monitor
                   </Link>
