@@ -1,3 +1,4 @@
+
 import { WalletBalance } from './types.ts';
 import { METEORA_LP_TOKENS } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
@@ -86,7 +87,6 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
                   console.log(`LP Token ${mint}: calculated price per token=$${tokenPrice}, total value=$${lpDetails.totalUsdValue}`);
                 } else {
                   console.warn(`LP Token ${mint}: failed to calculate details or got 0 value`);
-                  // Use fallback calculation for LP tokens
                   tokenPrice = await getTokenPrice(mint);
                 }
               } else {

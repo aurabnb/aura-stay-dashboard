@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RefreshCw, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import MeteoraPoolsWidget from './MeteoraPoolsWidget';
@@ -180,10 +178,6 @@ const MonitoredWallets = () => {
                     </div>
                   </CardDescription>
                 </div>
-                <Avatar>
-                  <AvatarImage src={`https://robohash.org/${wallet.address}.png?size=50x50`} />
-                  <AvatarFallback>{wallet.name.substring(0, 2)}</AvatarFallback>
-                </Avatar>
               </div>
             </CardHeader>
             <CardContent>

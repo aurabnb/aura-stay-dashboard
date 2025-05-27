@@ -10,10 +10,21 @@ export async function getTokenInfo(mint: string): Promise<TokenInfo> {
     return tokenCache.get(mint)!;
   }
 
+  // Handle AURA token specifically
+  if (mint === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') {
+    const auraInfo: TokenInfo = {
+      symbol: 'AURA',
+      name: 'AURA Token',
+      decimals: 6
+    };
+    tokenCache.set(mint, auraInfo);
+    return auraInfo;
+  }
+
   // Alias DCULT to CULT if they share the same address
   if (mint === '0xf0f9d895aca5c8678f706fb8216fa22957685a13') {
     const cultInfo: TokenInfo = {
-      symbol: 'CULT', // Force symbol to CULT even if frontend sends DCULT
+      symbol: 'CULT',
       name: 'Cult DAO',
       decimals: 18
     };
@@ -39,6 +50,14 @@ export async function getTokenPrice(tokenAddress: string): Promise<number> {
   const cached = priceCache.get(tokenAddress);
   if (cached && Date.now() - cached.timestamp < 600000) {
     return cached.price;
+  }
+
+  // Handle AURA token price specifically
+  if (tokenAddress === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') {
+    const auraPrice = 0.00011566;
+    priceCache.set(tokenAddress, { price: auraPrice, timestamp: Date.now() });
+    console.log(`Fetched price for AURA token: $${auraPrice}`);
+    return auraPrice;
   }
 
   if (FIXED_PRICES[tokenAddress]) {
