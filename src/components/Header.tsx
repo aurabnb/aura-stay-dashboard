@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Wallet, Copy, ExternalLink } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface WalletAdapter {
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  disconnect?: () => Promise<void>;
+  on?: (event: string, handler: () => void) => void;
+  publicKey?: { toString: () => string } | null;
+}
 
 const Header = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -8,42 +17,153 @@ const Header = () => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [connectedWallet, setConnectedWallet] = useState<'phantom' | 'solflare' | null>(null);
+  const [walletAdapter, setWalletAdapter] = useState<WalletAdapter | null>(null);
   const location = useLocation();
+  const { toast } = useToast();
+
+  // Check for existing wallet connection on mount
+  useEffect(() => {
+    checkExistingConnection();
+  }, []);
+
+  const checkExistingConnection = async () => {
+    try {
+      // Check Phantom
+      const phantom = (window as any).phantom?.solana;
+      if (phantom?.isConnected && phantom?.publicKey) {
+        setIsConnected(true);
+        setWalletAddress(phantom.publicKey.toString());
+        setConnectedWallet('phantom');
+        setWalletAdapter(phantom);
+        return;
+      }
+
+      // Check Solflare
+      const solflare = (window as any).solflare;
+      if (solflare?.isConnected && solflare?.publicKey) {
+        setIsConnected(true);
+        setWalletAddress(solflare.publicKey.toString());
+        setConnectedWallet('solflare');
+        setWalletAdapter(solflare);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking existing wallet connection:', error);
+    }
+  };
 
   const connectWallet = async (walletType: 'phantom' | 'solflare') => {
     try {
-      let provider;
+      let provider: WalletAdapter | null = null;
       
       if (walletType === 'phantom') {
         provider = (window as any).phantom?.solana;
         if (!provider) {
+          toast({
+            title: "Phantom Wallet Not Found",
+            description: "Please install Phantom wallet extension",
+          });
           window.open('https://phantom.app/', '_blank');
           return;
         }
       } else if (walletType === 'solflare') {
         provider = (window as any).solflare;
         if (!provider) {
+          toast({
+            title: "Solflare Wallet Not Found",
+            description: "Please install Solflare wallet extension",
+          });
           window.open('https://solflare.com/', '_blank');
           return;
         }
       }
 
+      if (!provider) return;
+
       const response = await provider.connect();
-      setWalletAddress(response.publicKey.toString());
+      const address = response.publicKey.toString();
+      
+      setWalletAddress(address);
       setIsConnected(true);
+      setConnectedWallet(walletType);
+      setWalletAdapter(provider);
       setShowWalletOptions(false);
-      console.log('Connected to', walletType, ':', response.publicKey.toString());
-    } catch (error) {
+      
+      // Set up disconnect handler
+      if (provider.on) {
+        provider.on('disconnect', () => {
+          disconnectWallet();
+        });
+      }
+
+      toast({
+        title: "Wallet Connected! 🎉",
+        description: `Successfully connected to ${walletType === 'phantom' ? 'Phantom' : 'Solflare'}`,
+      });
+
+      console.log(`Connected to ${walletType}:`, address);
+    } catch (error: any) {
       console.error('Failed to connect wallet:', error);
+      
+      let errorMessage = 'Failed to connect wallet';
+      if (error?.message?.includes('User rejected')) {
+        errorMessage = 'Connection cancelled by user';
+      }
+      
+      toast({
+        title: "Connection Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
   };
 
-  const disconnectWallet = () => {
-    setIsConnected(false);
-    setWalletAddress('');
+  const disconnectWallet = async () => {
+    try {
+      if (walletAdapter?.disconnect) {
+        await walletAdapter.disconnect();
+      }
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+    } finally {
+      setIsConnected(false);
+      setWalletAddress('');
+      setConnectedWallet(null);
+      setWalletAdapter(null);
+      
+      toast({
+        title: "Wallet Disconnected",
+        description: "Your wallet has been disconnected",
+      });
+    }
+  };
+
+  const copyAddress = () => {
+    navigator.clipboard.writeText(walletAddress);
+    toast({
+      title: "Address Copied! 📋",
+      description: "Wallet address copied to clipboard",
+    });
+  };
+
+  const openInExplorer = () => {
+    window.open(`https://explorer.solana.com/address/${walletAddress}`, '_blank');
   };
 
   const isActivePage = (path: string) => location.pathname === path;
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowWalletOptions(false);
+      setShowFinanceDropdown(false);
+      setShowProjectDropdown(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -58,48 +178,6 @@ const Header = () => {
                   className="h-8 w-auto"
                 />
               </Link>
-            </div>
-            
-            <div className="relative">
-              {!isConnected ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowWalletOptions(!showWalletOptions)}
-                    className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium font-urbanist transition-colors"
-                  >
-                    Connect Wallet
-                  </button>
-                  
-                  {showWalletOptions && (
-                    <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px]">
-                      <button
-                        onClick={() => connectWallet('phantom')}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100"
-                      >
-                        Phantom
-                      </button>
-                      <button
-                        onClick={() => connectWallet('solflare')}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 font-urbanist text-sm"
-                      >
-                        Solflare
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-600 font-urbanist">
-                    {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
-                  </span>
-                  <button
-                    onClick={disconnectWallet}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors"
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              )}
             </div>
           </div>
           
@@ -118,7 +196,11 @@ const Header = () => {
             {/* Project Dropdown */}
             <div className="relative">
               <button
-                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProjectDropdown(!showProjectDropdown);
+                  setShowFinanceDropdown(false);
+                }}
                 className="flex items-center gap-1 px-3 py-2 text-sm font-medium font-urbanist text-gray-700 hover:text-black transition-colors"
               >
                 Project
@@ -142,7 +224,11 @@ const Header = () => {
             {/* Finance Dropdown */}
             <div className="relative">
               <button
-                onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowFinanceDropdown(!showFinanceDropdown);
+                  setShowProjectDropdown(false);
+                }}
                 className="flex items-center gap-1 px-3 py-2 text-sm font-medium font-urbanist text-gray-700 hover:text-black transition-colors"
               >
                 Finance
@@ -173,6 +259,82 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center space-x-4">
+            {/* Wallet Connection */}
+            <div className="relative">
+              {!isConnected ? (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowWalletOptions(!showWalletOptions);
+                    }}
+                    className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium font-urbanist transition-colors flex items-center gap-2"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Connect Wallet
+                  </button>
+                  
+                  {showWalletOptions && (
+                    <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          connectWallet('phantom');
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 font-urbanist text-sm border-b border-gray-100 flex items-center gap-3"
+                      >
+                        <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          P
+                        </div>
+                        Phantom
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          connectWallet('solflare');
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 font-urbanist text-sm flex items-center gap-3"
+                      >
+                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          S
+                        </div>
+                        Solflare
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2">
+                    <div className={`w-3 h-3 rounded-full ${connectedWallet === 'phantom' ? 'bg-purple-600' : 'bg-orange-500'}`}></div>
+                    <span className="text-sm text-gray-700 font-urbanist font-medium">
+                      {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+                    </span>
+                    <button
+                      onClick={copyAddress}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Copy address"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={openInExplorer}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                      title="View in explorer"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={disconnectWallet}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium font-urbanist transition-colors">
               Buy with Fiat
             </button>
