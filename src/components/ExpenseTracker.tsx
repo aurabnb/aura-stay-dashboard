@@ -109,7 +109,7 @@ const ExpenseTracker = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={openSheet}
-              className="flex items-center gap-2 px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+              className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-800"
             >
               <ExternalLink className="h-4 w-4" />
               Open Sheet
@@ -117,7 +117,7 @@ const ExpenseTracker = () => {
             <button
               onClick={refreshData}
               disabled={refreshing}
-              className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1 text-sm bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh

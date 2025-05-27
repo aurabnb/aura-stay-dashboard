@@ -13,10 +13,10 @@ const TotalSummary: React.FC<TotalSummaryProps> = ({ expenses, totalUsdValue }) 
   if (expenses.length === 0) return null;
 
   return (
-    <div className="mt-6 p-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border-2 border-blue-200">
+    <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
             <DollarSign className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -25,7 +25,7 @@ const TotalSummary: React.FC<TotalSummaryProps> = ({ expenses, totalUsdValue }) 
           </div>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-bold text-blue-600">
+          <div className="text-3xl font-bold text-gray-900">
             {formatCurrency(totalUsdValue)}
           </div>
           <div className="text-sm text-gray-500">

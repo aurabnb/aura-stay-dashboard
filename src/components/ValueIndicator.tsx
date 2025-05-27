@@ -149,7 +149,7 @@ const ValueIndicator = () => {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-1 text-sm bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -173,27 +173,27 @@ const ValueIndicator = () => {
               <tr>
                 <td className="py-3 px-4 text-gray-700">Total Market Cap (from Solana)</td>
                 <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(treasury?.totalMarketCap || 0)}</td>
-                <td className="py-3 px-4 text-right text-green-600">Live</td>
+                <td className="py-3 px-4 text-right text-gray-900">Live</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-700">Volatile Assets</td>
                 <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(treasury?.volatileAssets || 0)}</td>
-                <td className="py-3 px-4 text-right text-green-600">Live</td>
+                <td className="py-3 px-4 text-right text-gray-900">Live</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-700">Hard Assets</td>
                 <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(treasury?.hardAssets || 0)}</td>
-                <td className="py-3 px-4 text-right text-green-600">Live</td>
+                <td className="py-3 px-4 text-right text-gray-900">Live</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-700">Speculative Interest</td>
                 <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(speculativeInterest)}</td>
-                <td className="py-3 px-4 text-right text-green-600">Live</td>
+                <td className="py-3 px-4 text-right text-gray-900">Live</td>
               </tr>
               <tr className="border-t-2 border-gray-300 bg-gray-50">
                 <td className="py-3 px-4 font-semibold text-gray-900">Total Treasury Value</td>
                 <td className="py-3 px-4 text-right font-semibold text-gray-900">{formatCurrency(totalAssetsValue)}</td>
-                <td className="py-3 px-4 text-right text-green-600">Live</td>
+                <td className="py-3 px-4 text-right text-gray-900">Live</td>
               </tr>
             </tbody>
           </table>

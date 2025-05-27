@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import MeteoraPoolsWidget from './MeteoraPoolsWidget';
 
@@ -169,6 +170,7 @@ const MonitoredWallets = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5" />
                     {wallet.name}
                     <Badge variant="secondary" className="ml-2">{wallet.blockchain}</Badge>
                   </CardTitle>
@@ -191,7 +193,7 @@ const MonitoredWallets = () => {
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-2 px-3 font-medium text-gray-900">Token</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-900">Balance</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900">Value (USD)</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900">USD Value</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -205,7 +207,7 @@ const MonitoredWallets = () => {
                     <tr className="border-t border-gray-300 bg-gray-50">
                       <td className="py-2 px-3 font-semibold text-gray-900">Total</td>
                       <td className="py-2 px-3 text-right font-semibold text-gray-900"></td>
-                      <td className="py-2 px-3 text-right font-semibold text-green-600">{formatCurrency(wallet.totalUsdValue)}</td>
+                      <td className="py-2 px-3 text-right font-semibold text-gray-900">{formatCurrency(wallet.totalUsdValue)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -219,7 +221,7 @@ const MonitoredWallets = () => {
         <button
           onClick={refreshData}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-3 py-1 text-sm bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh Data
