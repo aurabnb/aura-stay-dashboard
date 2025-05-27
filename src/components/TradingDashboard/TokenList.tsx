@@ -19,14 +19,17 @@ interface TokenListProps {
   tokens: Token[];
   selectedToken: string;
   onTokenSelect: (symbol: string) => void;
+  showAll?: boolean;
 }
 
-const TokenList: React.FC<TokenListProps> = ({ tokens, selectedToken, onTokenSelect }) => {
+const TokenList: React.FC<TokenListProps> = ({ tokens, selectedToken, onTokenSelect, showAll = false }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>AURA Token Trading</CardTitle>
-        <CardDescription>Live price data and Jupiter DEX integration</CardDescription>
+        <CardTitle>{showAll ? 'All Tokens' : 'AURA Token Trading'}</CardTitle>
+        <CardDescription>
+          {showAll ? 'Complete token listing with trading data' : 'Live price data and Jupiter DEX integration'}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
