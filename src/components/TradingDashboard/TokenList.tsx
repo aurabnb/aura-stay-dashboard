@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,15 +56,11 @@ const TokenList: React.FC<TokenListProps> = ({ tokens, selectedToken, onTokenSel
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-200">
-                    {token.symbol === 'AURA' ? (
-                      <img 
-                        src="/lovable-uploads/a85f448b-cd5c-46a7-a2b5-7bdabd161e26.png" 
-                        alt="AURA Token"
-                        className="w-8 h-8 object-contain"
-                      />
-                    ) : (
-                      <span className="text-2xl">{token.icon}</span>
-                    )}
+                    <img 
+                      src="/lovable-uploads/bda7ceaf-0f30-45c5-9d04-8f54d2c01b09.png" 
+                      alt="AURA Token"
+                      className="w-10 h-10 object-contain"
+                    />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">

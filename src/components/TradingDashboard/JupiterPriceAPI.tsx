@@ -115,12 +115,8 @@ const JupiterPriceAPI: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-200">
-                      <img 
-                        src="/lovable-uploads/a85f448b-cd5c-46a7-a2b5-7bdabd161e26.png" 
-                        alt="AURA Token"
-                        className="w-8 h-8 object-contain"
-                      />
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-2xl">
+                      🌟
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
