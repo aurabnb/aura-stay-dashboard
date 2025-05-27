@@ -19,7 +19,7 @@ interface MetricCard {
 }
 
 const EnhancedAuraStats = () => {
-  const { data, loading, error, fetchData, lastRefresh, apiStatus } = useTreasuryData();
+  const { data, loading, error, fetchData, lastRefresh } = useTreasuryData();
   const [activeTab, setActiveTab] = useState('overview');
   const [metricsHistory, setMetricsHistory] = useState<Array<{timestamp: number, value: number}>>([]);
   const [goals, setGoals] = useState([
@@ -28,6 +28,9 @@ const EnhancedAuraStats = () => {
     { name: 'Liquidity Pool', target: 500000, current: 85000, progress: 17 }
   ]);
   const { toast } = useToast();
+
+  // Determine API status based on data and error state
+  const apiStatus = error ? 'error' : data ? 'success' : 'loading';
 
   // Calculate metrics
   const metrics: MetricCard[] = [

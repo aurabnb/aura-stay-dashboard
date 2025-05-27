@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TokenList from './TokenList';
 import TradePanel from './TradePanel';
@@ -209,7 +208,10 @@ const EnhancedTradingDashboard = () => {
                 onTradeTypeChange={setTradeType}
                 onTrade={handleTrade}
               />
-              <JupiterSwapWidget />
+              <JupiterSwapWidget 
+                fromToken="SOL"
+                toToken="AURA"
+              />
             </div>
           </div>
         </TabsContent>
