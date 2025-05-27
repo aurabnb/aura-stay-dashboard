@@ -1,48 +1,70 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 
 const AuraTokenChart = () => {
-  const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M'>('1D');
+  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '1d'>('1h');
+  const [chartLoaded, setChartLoaded] = useState(false);
 
-  // Sample data - in production this would come from your API
-  const priceData = {
-    '1D': [
-      { time: '00:00', price: 0.000115, volume: 12500 },
-      { time: '04:00', price: 0.000118, volume: 8900 },
-      { time: '08:00', price: 0.000120, volume: 15600 },
-      { time: '12:00', price: 0.000117, volume: 22100 },
-      { time: '16:00', price: 0.000122, volume: 18300 },
-      { time: '20:00', price: 0.000119, volume: 14700 },
-      { time: '24:00', price: 0.000121, volume: 11200 }
-    ],
-    '1W': [
-      { time: 'Mon', price: 0.000115, volume: 125000 },
-      { time: 'Tue', price: 0.000118, volume: 89000 },
-      { time: 'Wed', price: 0.000120, volume: 156000 },
-      { time: 'Thu', price: 0.000117, volume: 221000 },
-      { time: 'Fri', price: 0.000122, volume: 183000 },
-      { time: 'Sat', price: 0.000119, volume: 147000 },
-      { time: 'Sun', price: 0.000121, volume: 112000 }
-    ],
-    '1M': [
-      { time: 'Week 1', price: 0.000108, volume: 890000 },
-      { time: 'Week 2', price: 0.000112, volume: 1200000 },
-      { time: 'Week 3', price: 0.000115, volume: 1450000 },
-      { time: 'Week 4', price: 0.000121, volume: 1680000 }
-    ]
-  };
-
+  const AURA_TOKEN_ADDRESS = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe';
+  
+  // Current mock data - this would ideally come from DEXScreener API
   const currentPrice = 0.000121;
   const priceChange = 0.000006;
   const priceChangePercent = 5.2;
   const isPositive = priceChange > 0;
+  const volume24h = 125000;
 
-  const totalVolume = priceData[timeframe].reduce((sum, item) => sum + item.volume, 0);
+  useEffect(() => {
+    // Load DEXScreener chart
+    const loadChart = () => {
+      const container = document.getElementById('dexscreener-chart');
+      if (!container) return;
+
+      // Clear existing content
+      container.innerHTML = '';
+
+      // Create iframe for DEXScreener chart
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}?embed=1&theme=light&trades=0&info=0`;
+      iframe.width = '100%';
+      iframe.height = '400';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.style.backgroundColor = '#ffffff';
+      
+      // Custom styling via postMessage (if supported)
+      iframe.onload = () => {
+        setChartLoaded(true);
+        // Try to customize chart colors via postMessage
+        try {
+          iframe.contentWindow?.postMessage({
+            type: 'chart-config',
+            config: {
+              upColor: '#10B981',
+              downColor: '#EF4444',
+              backgroundColor: '#ffffff',
+              timeframe: timeframe
+            }
+          }, '*');
+        } catch (e) {
+          console.log('Chart customization not available');
+        }
+      };
+
+      container.appendChild(iframe);
+    };
+
+    loadChart();
+  }, [timeframe]);
+
+  const handleTimeframeChange = (newTimeframe: '1h' | '4h' | '1d') => {
+    setTimeframe(newTimeframe);
+    setChartLoaded(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -54,7 +76,7 @@ const AuraTokenChart = () => {
                 <DollarSign className="h-5 w-5 text-green-600" />
                 $AURA Token
               </CardTitle>
-              <CardDescription>Real-time price and volume tracking</CardDescription>
+              <CardDescription>Real-time price and volume tracking via DEXScreener</CardDescription>
             </div>
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               Live
@@ -62,6 +84,7 @@ const AuraTokenChart = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Price Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center justify-between mb-2">
@@ -80,10 +103,10 @@ const AuraTokenChart = () => {
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">Volume ({timeframe})</span>
+                <span className="text-sm font-medium text-blue-600">Volume (24h)</span>
               </div>
               <p className="text-2xl font-bold text-blue-700">
-                {totalVolume.toLocaleString()}
+                {volume24h.toLocaleString()}
               </p>
               <p className="text-sm text-blue-600">$AURA traded</p>
             </div>
@@ -98,57 +121,85 @@ const AuraTokenChart = () => {
             </div>
           </div>
 
+          {/* Chart Controls */}
           <div className="space-y-4">
-            <div className="flex gap-2">
-              {(['1D', '1W', '1M'] as const).map((period) => (
-                <Button
-                  key={period}
-                  variant={timeframe === period ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTimeframe(period)}
-                  className="text-xs"
-                >
-                  {period}
-                </Button>
-              ))}
+            <div className="flex justify-between items-center">
+              <h4 className="text-lg font-semibold">Price Chart</h4>
+              <div className="flex gap-2">
+                {(['1h', '4h', '1d'] as const).map((period) => (
+                  <Button
+                    key={period}
+                    variant={timeframe === period ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTimeframeChange(period)}
+                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    style={{
+                      backgroundColor: timeframe === period ? '#10B981' : '#E5E7EB',
+                      color: timeframe === period ? 'white' : '#1F2937'
+                    }}
+                  >
+                    {period.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={priceData[timeframe]}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="time" fontSize={12} />
-                  <YAxis fontSize={12} tickFormatter={(value) => `$${value.toFixed(6)}`} />
-                  <Tooltip 
-                    formatter={(value: number) => [`$${value.toFixed(6)}`, 'Price']}
-                    labelStyle={{ color: '#374151' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="price" 
-                    stroke="#10B981" 
-                    strokeWidth={2}
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            {/* DEXScreener Chart Container */}
+            <div 
+              className="relative w-full bg-white border border-gray-200 rounded-lg overflow-hidden"
+              style={{ 
+                height: '400px', 
+                maxWidth: '600px', 
+                margin: '0 auto',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px'
+              }}
+            >
+              <div id="dexscreener-chart" className="w-full h-full">
+                {!chartLoaded && (
+                  <div className="flex items-center justify-center h-full bg-gray-50">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-600">Loading real-time chart...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="h-48">
-              <h4 className="text-sm font-medium mb-3">Volume Distribution</h4>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={priceData[timeframe]}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="time" fontSize={12} />
-                  <YAxis fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                  <Tooltip 
-                    formatter={(value: number) => [value.toLocaleString(), 'Volume']}
-                    labelStyle={{ color: '#374151' }}
-                  />
-                  <Bar dataKey="volume" fill="#3B82F6" radius={[2, 2, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            {/* Chart Info */}
+            <div className="text-center text-xs text-gray-500 space-y-1">
+              <p>Real-time price data powered by DEXScreener</p>
+              <p>Token Address: {AURA_TOKEN_ADDRESS}</p>
+              <div className="flex justify-center gap-4 text-xs">
+                <span className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-green-600 rounded"></div>
+                  Bullish Candles
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-red-500 rounded"></div>
+                  Bearish Candles
+                </span>
+              </div>
             </div>
+          </div>
+
+          {/* Trading Links */}
+          <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">
+            <Button 
+              variant="outline" 
+              onClick={() => window.open(`https://jup.ag/swap/SOL-${AURA_TOKEN_ADDRESS}`, '_blank')}
+              className="flex items-center gap-2"
+            >
+              Trade on Jupiter
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open(`https://dexscreener.com/solana/${AURA_TOKEN_ADDRESS}`, '_blank')}
+              className="flex items-center gap-2"
+            >
+              View on DEXScreener
+            </Button>
           </div>
         </CardContent>
       </Card>
