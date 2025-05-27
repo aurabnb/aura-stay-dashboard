@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,7 @@ const AuraRoadmapTracker = () => {
       title: 'Aurabnb Pilot',
       description: 'Complete first decentralized Volcano stay in Guayabo, Costa Rica.',
       status: 'in-progress' as RoadmapStatus,
-      progress: 20,
+      progress: 5,
       icon: Building
     },
     {
