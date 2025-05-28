@@ -1,145 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Wallet } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import MeteoraPoolsWidget from './MeteoraPoolsWidget';
 
-interface LPDetails {
-  poolAddress: string;
-  token1: { symbol: string; amount: number; usdValue: number };
-  token2: { symbol: string; amount: number; usdValue: number };
-  priceRange: { min: number; max: number };
-  totalUsdValue: number;
-  meteoraData?: any;
-}
+// --- CONFIG ---
+// List your monitored wallet addresses here
+// Fill in your real wallet addresses below:
+const MONITORED_WALLETS = [
+  { name: 'Operations', address: 'fa1ro8lT7gSdZSn7XTz6a3zNquphpGlEh7omB2f6GTh' },
+  { name: 'Business Costs', address: 'Hxa3IlrmJq2fEDmc4gETZDdAPhQ6HyWqn2Es3vVKkFg' },
+  { name: 'Marketing', address: '7QapFoyM5VPGMuycCCdaYUoe29c8EzadJkJYBDKKFf4DN2' },
+  { name: 'Project Funding - Solana', address: 'Aftv2wfPusikfHFwdklFNpsmrFEgrBheHXo6jS4LkM8i' },
+];
 
-interface WalletBalance {
-  token_symbol: string;
-  token_name: string;
-  balance: number;
-  usd_value: number;
-  token_address?: string;
-  is_lp_token: boolean;
-  platform: string;
-  lp_details?: LPDetails;
-}
 
-interface WalletData {
-  wallet_id: string;
-  name: string;
-  address: string;
-  blockchain: string;
-  balances: WalletBalance[];
-  totalUsdValue: number;
-}
 
-interface ConsolidatedData {
-  treasury: any;
-  wallets: WalletData[];
-  solPrice: number;
-}
+// --- API ENDPOINTS ---
+const SOLSCAN_API = 'https://pro-api.solscan.io/v2.0';
+const JUPITER_API = 'https://lite-api.jup.ag/price/v2';
+const METEORA_API = 'https://dlmm-api.meteora.ag/pool';
 
-const MonitoredWallets = () => {
-  const [data, setData] = useState<ConsolidatedData | null>(null);
+// --- ENV ---
+const SOLSCAN_API_KEY = process.env.REACT_APP_SOLSCAN_API_KEY;
+
+// --- COMPONENT ---
+const MonitoredWallets: React.FC = () => {
+  // --- STATE ---
+  const [wallets, setWallets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = async () => {
-    try {
-      console.log('Fetching consolidated data...');
-      setError(null);
-      const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
-
-      if (fetchError) throw fetchError;
-
-      console.log('Received consolidated data:', responseData);
-
-      if (!responseData || !responseData.wallets || !Array.isArray(responseData.wallets)) {
-        console.error('Invalid response structure:', responseData);
-        throw new Error('Invalid response structure from server');
-      }
-
-      setData(responseData);
-    } catch (err) {
-      console.error('Error fetching consolidated data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
-      setData({
-        treasury: {
-          totalMarketCap: 0,
-          volatileAssets: 0,
-          hardAssets: 0,
-          lastUpdated: new Date().toISOString()
-        },
-        wallets: [],
-        solPrice: 0
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshData = async () => {
-    setRefreshing(true);
-    try {
-      await fetchData();
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Monitored Wallets</CardTitle>
-          <CardDescription>Loading wallet data...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-4 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Monitored Wallets</CardTitle>
-          <CardDescription>Error loading wallet data</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-red-600 p-4 bg-red-50 rounded-lg">
-            <p className="font-medium">Error loading wallet data</p>
-            <p className="text-sm mt-1">{error}</p>
-            <button
-              onClick={refreshData}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Try Again
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // --- HELPERS ---
   const formatCurrency = (value: number) => {
+    if (isNaN(value) || value === null || value === undefined) return '$0.00';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -148,82 +38,142 @@ const MonitoredWallets = () => {
     }).format(value);
   };
 
+  // --- API HELPERS ---
+async function fetchSolscanTokens(address: string) {
+  const url = `${SOLSCAN_API}/account/tokens?address=${address}`;
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${SOLSCAN_API_KEY}` },
+  });
+  if (!resp.ok) throw new Error(`Solscan error: ${resp.status}`);
+  return resp.json();
+}
+
+async function fetchSolscanSol(address: string) {
+  const url = `${SOLSCAN_API}/account/${address}`;
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${SOLSCAN_API_KEY}` },
+  });
+  if (!resp.ok) throw new Error(`Solscan error: ${resp.status}`);
+  return resp.json();
+}
+
+async function fetchJupiterPrices(mints: string[]): Promise<Record<string, { price: number }>> {
+  if (!mints.length) return {};
+  const ids = mints.join(',');
+  const url = `${JUPITER_API}?ids=${ids}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Jupiter error: ${resp.status}`);
+  const data = await resp.json();
+  return data.data || {};
+}
+
+async function fetchMeteoraPool(poolAddress: string) {
+  const url = `${METEORA_API}/${poolAddress}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Meteora error: ${resp.status}`);
+  return resp.json();
+}
+
+// --- FETCH LOGIC ---
+useEffect(() => {
+  const fetchAllWallets = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch balances for each wallet from Solscan
+      const walletsData = [];
+      let allMints = new Set<string>();
+      for (const wallet of MONITORED_WALLETS) {
+        // Fetch SOL balance
+        const solData = await fetchSolscanSol(wallet.address);
+        // Fetch SPL tokens
+        const tokensData = await fetchSolscanTokens(wallet.address);
+        // Gather all mints
+        tokensData.data?.forEach((token: any) => allMints.add(token.tokenAddress));
+        // Add SOL mint
+        allMints.add('So11111111111111111111111111111111111111112');
+        walletsData.push({
+          ...wallet,
+          sol: solData,
+          tokens: tokensData.data || [],
+        });
+      }
+      // 2. Fetch prices from Jupiter
+      const prices = await fetchJupiterPrices(Array.from(allMints));
+      // 3. Identify LP tokens and fetch pool info from Meteora (to be implemented)
+      // 4. Aggregate and set state (to be implemented)
+      setWallets(walletsData); // TEMP: set raw data for now
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch wallet data');
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchAllWallets();
+}, []);
+
+
+  // --- RENDER ---
+  if (loading) return <div>Loading monitored wallets...</div>;
+  if (error) return <div className="text-red-600">{error}</div>;
   return (
-    <div className="space-y-8">
-      {data.wallets
-        .filter(wallet => wallet.name.includes('Project Funding'))
-        .map(wallet => (
-          <MeteoraPoolsWidget
-            key={wallet.wallet_id}
-            walletBalances={wallet.balances}
-            walletName={wallet.name}
-            walletAddress={wallet.address}
-          />
-        ))}
-
-      <div className="grid gap-6">
-        {data.wallets.map((wallet) => (
-          <Card key={wallet.wallet_id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5" />
-                    {wallet.name}
-                    <Badge variant="secondary" className="ml-2">{wallet.blockchain}</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    <div className="truncate">
-                      {wallet.address}
-                    </div>
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-3 font-medium text-gray-900">Token</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900">Balance</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900">USD Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {wallet.balances.map((balance) => (
-                      <tr key={balance.token_symbol}>
-                        <td className="py-2 px-3 text-gray-700">{balance.token_symbol}</td>
-                        <td className="py-2 px-3 text-right text-gray-700">{balance.balance.toLocaleString()}</td>
-                        <td className="py-2 px-3 text-right text-gray-700">{formatCurrency(balance.usd_value)}</td>
-                      </tr>
-                    ))}
-                    <tr className="border-t border-gray-300 bg-gray-50">
-                      <td className="py-2 px-3 font-semibold text-gray-900">Total</td>
-                      <td className="py-2 px-3 text-right font-semibold text-gray-900"></td>
-                      <td className="py-2 px-3 text-right font-semibold text-gray-900">{formatCurrency(wallet.totalUsdValue)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="text-sm text-gray-500 text-center space-y-2">
-        <button
-          onClick={refreshData}
-          disabled={refreshing}
-          className="inline-flex items-center gap-2 px-3 py-1 text-sm bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Data
-        </button>
-        <p>Data is updated every 5 minutes.</p>
-      </div>
+    <div>
+      {wallets.map((wallet, idx) => {
+        // Prepare token rows: include SOL and all SPL tokens
+        const rows = [];
+        // Add SOL
+        if (wallet.sol && wallet.sol.lamports !== undefined) {
+          const solBalance = wallet.sol.lamports / 1e9;
+          rows.push({
+            symbol: 'SOL',
+            balance: solBalance,
+            usd: wallet.sol.price ? solBalance * wallet.sol.price : undefined, // fallback if price is fetched
+          });
+        }
+        // Add SPL tokens
+        wallet.tokens.forEach((token: any) => {
+          rows.push({
+            symbol: token.tokenSymbol || token.tokenName || token.tokenAddress,
+            balance: token.tokenAmount.uiAmount,
+            usd: undefined, // to be filled in future with Jupiter price
+          });
+        });
+        // Calculate total USD (currently just SOL, will expand with pricing logic)
+        const totalUsd = rows.reduce((sum, row) => sum + (row.usd || 0), 0);
+        return (
+          <div key={wallet.address} style={{ marginBottom: 32, border: '1px solid #e5e7eb', borderRadius: 12, padding: 20 }}>
+            <div style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 4 }}>{wallet.name} <span style={{ fontSize: 12, background: '#e5e7eb', borderRadius: 6, padding: '2px 8px', marginLeft: 8 }}>Solana</span></div>
+            <div style={{ fontSize: 13, color: '#444', marginBottom: 8 }}>{wallet.address}</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 8 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 4px', fontWeight: 500 }}>Token</th>
+                  <th style={{ textAlign: 'right', padding: '8px 4px', fontWeight: 500 }}>Balance</th>
+                  <th style={{ textAlign: 'right', padding: '8px 4px', fontWeight: 500 }}>USD Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr key={row.symbol + i}>
+                    <td style={{ padding: '8px 4px' }}>{row.symbol}</td>
+                    <td style={{ textAlign: 'right', padding: '8px 4px' }}>{row.balance}</td>
+                    <td style={{ textAlign: 'right', padding: '8px 4px' }}>{row.usd !== undefined ? formatCurrency(row.usd) : '-'}</td>
+                  </tr>
+                ))}
+                <tr style={{ borderTop: '1px solid #e5e7eb', background: '#f9f9f9' }}>
+                  <td style={{ padding: '8px 4px', fontWeight: 700 }}>Total</td>
+                  <td></td>
+                  <td style={{ textAlign: 'right', padding: '8px 4px', fontWeight: 700 }}>{formatCurrency(totalUsd)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 export default MonitoredWallets;
+      setError(null);
+      const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
