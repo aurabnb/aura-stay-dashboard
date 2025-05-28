@@ -1,16 +1,17 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import EnhancedIndex from "./pages/EnhancedIndex";
 import ValueIndicatorPage from "./pages/ValueIndicator";
 import MultisigPage from "./pages/Multisig";
 import CommunityBoardPage from "./pages/CommunityBoard";
 import StakeToEarnPage from "./pages/StakeToEarn";
 import GovernancePage from "./pages/Governance";
 import TradingPage from "./pages/Trading";
+import EnhancedTradingPage from "./pages/EnhancedTrading";
 import InvestmentHubPage from "./pages/InvestmentHub";
 import PropertiesPage from "./pages/Properties";
 import SamsaraPage from "./pages/Samsara";
@@ -21,6 +22,7 @@ import Roadmap from "./pages/Roadmap";
 import Transparency from "./pages/Transparency";
 import NotFound from "./pages/NotFound";
 import FiatPurchase from "./pages/FiatPurchase";
+import TestingPage from "./pages/Testing";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/enhanced" element={<EnhancedIndex />} />
           <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/transparency" element={<Transparency />} />
           <Route path="/value-indicator" element={<ValueIndicatorPage />} />
@@ -40,6 +43,8 @@ const App = () => (
           <Route path="/stake-to-earn" element={<StakeToEarnPage />} />
           <Route path="/governance" element={<GovernancePage />} />
           <Route path="/trading" element={<TradingPage />} />
+          <Route path="/enhanced-trading" element={<EnhancedTradingPage />} />
+          <Route path="/testing" element={<TestingPage />} />
           <Route path="/buy-fiat" element={<FiatPurchase />} />
           <Route path="/investment-hub" element={<InvestmentHubPage />} />
           <Route path="/properties" element={<PropertiesPage />} />
