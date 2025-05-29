@@ -1,44 +1,10 @@
 import { useEffect, useState } from "react";
-import { MONITORED_WALLETS, SOL_MINT, type WalletConfig } from "../config";
+import { MONITORED_WALLETS, SOL_MINT } from "@/constants";
+import { fetchSol, fetchSplTokens, fetchJupiterPrices } from "@/api";
 import {
-  fetchSol,
-  fetchSplTokens,
-  fetchJupiterPrices,
-  type SolAccountResp,
-  type TokenAccountResp,
-} from "../api";
-
-/* ------------------------------------------------------------------------- */
-/*                       Types that WalletCard expects                       */
-/* ------------------------------------------------------------------------- */
-
-export interface LPDetails {
-  poolAddress: string;
-  token1: { symbol: string; amount: number; usdValue: number };
-  token2: { symbol: string; amount: number; usdValue: number };
-  priceRange: { min: number; max: number };
-  totalUsdValue: number;
-}
-
-export interface WalletBalance {
-  token_symbol: string;
-  token_name: string;
-  balance: number;
-  usd_value: number;
-  token_address?: string;
-  is_lp_token: boolean;
-  platform: string;
-  lp_details?: LPDetails;
-}
-
-export interface WalletData {
-  wallet_id: string;
-  name: string;
-  address: string;
-  blockchain: string;
-  balances: WalletBalance[];
-  totalUsdValue: number;
-}
+  WalletData,
+  WalletBalance,
+} from "@/types";
 
 /* ------------------------------------------------------------------------- */
 /*                                 The hook                                  */
@@ -134,4 +100,4 @@ export function useWallets() {
 
   return { wallets, loading, error };
 }
-
+export default useWallets;
