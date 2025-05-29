@@ -1,214 +1,252 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import clsx from "clsx";
+import {
+  DollarSign,
+  TrendingUp,
+  Target,
+  MapPin,
+  Calendar,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { formatUsd } from "@/lib/utils";
+import {
+  FUNDING_WALLET_ADDRESS,
+  SOL_FALLBACK_PRICE_USD,
+  VOLCANO_FUNDING_GOAL,
+} from "@/constants";
+import type { UseTreasuryDataReturn } from "@/hooks/useTreasuryData";
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { TrendingUp, Target, DollarSign, MapPin, Calendar, Users } from 'lucide-react';
-import { useTreasuryData } from '../hooks/useTreasuryData';
+/* -------------------------------------------------------------------------- */
+/*                                COUNT-UP HOOK                               */
+/* -------------------------------------------------------------------------- */
+const useCountUp = (target: number, duration = 800) => {
+  const [val, setVal] = useState(0);
+  const targetRef = useRef(target);
+  useEffect(() => {
+    targetRef.current = target; // handle prop changes
+    const start = performance.now();
+    const tick = (t: number) => {
+      const elapsed = t - start;
+      const pct = Math.min(elapsed / duration, 1);
+      setVal(targetRef.current * pct);
+      if (pct < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return val;
+};
 
-interface TreasuryProgressProps {
-  currentAmount?: number;
+/* -------------------------------------------------------------------------- */
+/*                                COMPONENT                                   */
+/* -------------------------------------------------------------------------- */
+interface Props {
+  treasury: UseTreasuryDataReturn["data"] | undefined;
   targetAmount?: number;
 }
 
-const TreasuryProgress = ({ targetAmount = 100000 }: TreasuryProgressProps) => {
-  const { data } = useTreasuryData();
+const TreasuryProgress: React.FC<Props> = ({
+  treasury,
+  targetAmount = VOLCANO_FUNDING_GOAL,
+}) => {
+  /* ----------------------- crunch the numbers ----------------------- */
+  const { raised, liquid } = useMemo(() => {
+    if (!treasury?.wallets)
+      return { raised: 573_216, liquid: 4_089.983 };
 
-  // Calculate total ever raised: total SOL that has come through the specific funding wallet
-  // For now using current balance as proxy - in real implementation this would track lifetime inflows
-  const calculateTotalRaised = () => {
-    if (!data?.wallets) return 573216; // fallback from the image
-    
-    // Find the specific wallet by address
-    const targetWallet = data.wallets.find(wallet => 
-      wallet.address === 'BRRGD28WnhKvdaHYMZRDc9dGn5LWa7YM5xzww2NRyN5L'
-    );
-    
-    if (!targetWallet) {
-      // If specific wallet not found, look for Project Funding wallets
-      const projectFundingWallets = data.wallets.filter(wallet => 
-        wallet.name.includes('Project Funding')
-      );
-      
-      const totalSol = projectFundingWallets.reduce((sum, wallet) => {
-        const solBalance = wallet.balances.find(b => b.token_symbol === 'SOL');
-        return sum + (solBalance?.balance || 0);
-      }, 0);
-      
-      const solPrice = data.solPrice || 174.33;
-      return totalSol * solPrice;
-    }
-    
-    // Get SOL balance from the specific wallet
-    const solBalance = targetWallet.balances.find(b => b.token_symbol === 'SOL');
-    const solAmount = solBalance?.balance || 0;
-    const solPrice = data.solPrice || 174.33;
-    
-    return solAmount * solPrice;
-  };
+    const p = treasury.solPrice || SOL_FALLBACK_PRICE_USD;
+    const inflowSol =
+      treasury.wallets
+        .find(w => w.address === FUNDING_WALLET_ADDRESS)
+        ?.balances.find(b => b.token_symbol === "SOL")?.balance ?? 0;
 
-  // Calculate total liquid assets: LP tokens + liquid assets from all wallets
-  const calculateTotalLiquid = () => {
-    if (!data?.wallets) return 4089.983; // fallback from the image
-    
-    let totalLiquid = 0;
-    
-    data.wallets.forEach(wallet => {
-      wallet.balances.forEach(balance => {
-        // Include LP tokens
-        if (balance.is_lp_token) {
-          totalLiquid += balance.usd_value || 0;
-        }
-        
-        // Include liquid assets (SOL, ETH, USDC, USDT, AURA, CULT/DCULT)
-        if (['SOL', 'ETH', 'USDC', 'USDT', 'AURA', 'CULT'].includes(balance.token_symbol)) {
-          totalLiquid += balance.usd_value || 0;
-        }
-      });
-    });
-    
-    return totalLiquid;
-  };
+    const fallbackSol = treasury.wallets
+      .filter(w => w.name.includes("Project Funding"))
+      .flatMap(w => w.balances)
+      .filter(b => b.token_symbol === "SOL")
+      .reduce((s, b) => s + (b.balance || 0), 0);
 
-  const totalRaised = calculateTotalRaised();
-  const totalLiquid = calculateTotalLiquid();
-  const goal = targetAmount;
-  const remaining = goal - totalLiquid;
-  const progressPercentage = (totalLiquid / goal) * 100;
+    const raised = (inflowSol || fallbackSol) * p;
 
+    const ls = ["SOL", "ETH", "USDC", "USDT", "AURA", "CULT"];
+    const liquid = treasury.wallets
+      .flatMap(w => w.balances)
+      .filter(b => b.is_lp_token || ls.includes(b.token_symbol))
+      .reduce((s, b) => s + (b.usd_value || 0), 0);
+
+    return { raised, liquid };
+  }, [treasury]);
+
+  const pct       = (liquid / targetAmount) * 100;
+  const remaining = Math.max(0, targetAmount - liquid);
+
+  /* ------------------------- animated numbers ----------------------- */
+  const raisedAnim    = useCountUp(raised);
+  const liquidAnim    = useCountUp(liquid);
+  const remainingAnim = useCountUp(remaining);
+
+  /* ------------------------------ UI ------------------------------ */
   return (
     <Card className="w-full border-none shadow-lg">
       <CardHeader className="text-center pb-6">
         <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-          <Target className="h-6 w-6 text-gray-600" />
+          <Target className="h-6 w-6 text-gray-600 animate-fade-up" />
           Volcano Stay Funding Progress
         </CardTitle>
-        <CardDescription className="text-lg">
-          Track our progress toward fully funding the first AURA eco-stay in Guayabo, Costa Rica
-        </CardDescription>
+        <p className="text-lg text-gray-600">
+          Track our progress toward fully funding the first AURA eco-stay in
+          Guayabo, Costa Rica
+        </p>
       </CardHeader>
+
       <CardContent className="space-y-8">
-        {/* Progress Bar */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-medium">Funding Progress</span>
-            <span className="text-lg text-gray-600 font-semibold">{progressPercentage.toFixed(1)}% Complete</span>
-          </div>
-          <div className="relative">
-            <Progress value={progressPercentage} className="h-4 bg-gray-100" />
-            <div className="absolute top-0 left-0 h-4 bg-gradient-to-r from-gray-700 to-black rounded-full transition-all duration-500" 
-                 style={{ width: `${Math.min(progressPercentage, 100)}%` }} />
-          </div>
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>${totalLiquid.toLocaleString()}</span>
-            <span>${goal.toLocaleString()}</span>
-          </div>
-        </div>
+        {/* progress */}
+        <ProgressBar pct={pct} now={liquidAnim} goal={targetAmount} />
 
-        {/* Stats Grid - Now 4 columns */}
+        {/* stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-semibold text-gray-800">Total Ever Raised</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-700 mb-1">
-              ${totalRaised.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600">Total SOL inflows to funding wallet</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-semibold text-gray-800">Total Liquid</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-700 mb-1">
-              ${totalLiquid.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600">Current liquid assets</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                <Target className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-semibold text-gray-800">Goal</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-700 mb-1">
-              ${goal.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600">Complete build cost</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-semibold text-gray-800">Remaining</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-700 mb-1">
-              ${remaining.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600">Still needed</p>
-          </div>
+          <Tile icon={DollarSign} bg="bg-gray-600"  label="Total Ever Raised" val={raisedAnim}    sub="Total SOL inflows" />
+          <Tile icon={TrendingUp} bg="bg-gray-700"  label="Total Liquid"      val={liquidAnim}    sub="Liquid assets" />
+          <Tile icon={Target}     bg="bg-black"     label="Goal"              val={targetAmount}  sub="Build cost" />
+          <Tile icon={TrendingUp} bg="bg-gray-800"  label="Remaining"         val={remainingAnim} sub="Still needed" />
         </div>
 
-        {/* Project Details */}
-        <div className="bg-gray-50 p-6 rounded-xl border">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="h-5 w-5 text-gray-600" />
-                <span className="font-semibold">Project Location</span>
-              </div>
-              <p className="text-gray-700 mb-2 font-medium">
-                Guayabo, Costa Rica
-              </p>
-              <p className="text-sm text-gray-600">
-                At the edge of Miravalles Volcano with thermal springs and rainforest access
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="h-5 w-5 text-gray-600" />
-                <span className="font-semibold">Timeline</span>
-              </div>
-              <p className="text-gray-700 mb-2 font-medium">
-                Q2 2024 - Q4 2024
-              </p>
-              <p className="text-sm text-gray-600">
-                Construction to completion, with community voting throughout
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* project meta */}
+        <Meta />
 
-        {/* Call to Action */}
-        <div className="text-center space-y-4">
-          <p className="text-gray-600 font-medium">
-            🎯 Current funding includes LP positions, liquid assets, and cross-chain holdings
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a 
-              href="/value-indicator"
-              className="bg-black text-white px-8 py-3 rounded-full font-urbanist hover:bg-gray-800 transition-colors font-medium"
-            >
-              Monitor Treasury Live
-            </a>
-            <button className="border border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-3 rounded-full font-urbanist transition-colors font-medium">
-              Join Build Updates
-            </button>
-          </div>
-        </div>
+        {/* CTA */}
+        <CTA />
       </CardContent>
     </Card>
   );
 };
+
+/* -------------------------------------------------------------------------- */
+/*                         SUB–COMPONENTS / HELPERS                           */
+/* -------------------------------------------------------------------------- */
+const ProgressBar: React.FC<{
+  pct: number;
+  now: number;
+  goal: number;
+}> = ({ pct, now, goal }) => (
+  <div className="space-y-4">
+    <div className="flex justify-between">
+      <span className="text-lg font-medium">Funding Progress</span>
+      <span className="text-lg font-semibold text-gray-600">
+        {pct.toFixed(1)}%
+      </span>
+    </div>
+
+    {/* bar */}
+    <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
+      <div
+        style={{ width: `${Math.min(pct, 100)}%` }}
+        className="absolute left-0 top-0 h-full bg-gradient-to-r from-gray-700 to-black transition-[width] duration-700 ease-out animate-pulse-slow"
+      />
+    </div>
+
+    <div className="flex justify-between text-sm text-gray-500">
+      <span>{formatUsd(now)}</span>
+      <span>{formatUsd(goal)}</span>
+    </div>
+  </div>
+);
+
+const Tile: React.FC<{
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  bg: string;
+  label: string;
+  val: number;
+  sub: string;
+}> = ({ icon: Icon, bg, label, val, sub }) => (
+  <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border transform transition hover:-translate-y-1 hover:shadow-xl group">
+    <div className="flex items-center gap-3 mb-3">
+      <div
+        className={clsx(
+          "w-10 h-10 rounded-lg flex items-center justify-center",
+          bg,
+          "group-hover:scale-110 transition-transform"
+        )}
+      >
+        <Icon className="h-5 w-5 text-white" />
+      </div>
+      <span className="font-semibold text-gray-800">{label}</span>
+    </div>
+    <p className="text-3xl font-bold text-gray-700 mb-1">
+      {formatUsd(val)}
+    </p>
+    <p className="text-sm text-gray-600">{sub}</p>
+  </div>
+);
+
+const Detail: React.FC<{
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  head: string;
+  primary: string;
+  secondary: string;
+}> = ({ icon: Icon, head, primary, secondary }) => (
+  <div>
+    <div className="flex items-center gap-2 mb-2">
+      <Icon className="h-5 w-5 text-gray-600" />
+      <span className="font-semibold">{head}</span>
+    </div>
+    <p className="text-gray-700 font-medium">{primary}</p>
+    <p className="text-xs text-gray-500">{secondary}</p>
+  </div>
+);
+
+const Meta = () => (
+  <div className="bg-gray-50 p-6 rounded-xl border">
+    <div className="grid md:grid-cols-2 gap-6">
+      <Detail
+        icon={MapPin}
+        head="Project Location"
+        primary="Guayabo, Costa Rica"
+        secondary="Edge of Miravalles Volcano, hot springs & rainforest"
+      />
+      <Detail
+        icon={Calendar}
+        head="Timeline"
+        primary="Q2 2024 – Q4 2024"
+        secondary="Construction phase with community voting"
+      />
+    </div>
+  </div>
+);
+
+const CTA = () => (
+  <div className="text-center space-y-4">
+    <p className="text-gray-600 font-medium">
+      🎯 LP rewards, liquid assets & cross-chain holdings power this build
+    </p>
+    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <BtnLink to="/value-indicator" primary>
+        Monitor Treasury Live
+      </BtnLink>
+      <BtnLink to="#" primary={false}>
+        Join Build Updates
+      </BtnLink>
+    </div>
+  </div>
+);
+
+const BtnLink: React.FC<{ to: string; primary?: boolean; children: React.ReactNode }> = ({
+  to,
+  primary = true,
+  children,
+}) => (
+  <Link
+    to={to}
+    className={clsx(
+      "px-8 py-3 rounded-full font-urbanist font-medium transition",
+      primary
+        ? "bg-black text-white hover:bg-gray-800"
+        : "border border-gray-300 text-gray-700 hover:border-gray-400"
+    )}
+  >
+    {children}
+  </Link>
+);
 
 export default TreasuryProgress;

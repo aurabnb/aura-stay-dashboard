@@ -1,24 +1,23 @@
-
-import { useState, useEffect } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react"
+import { toast } from "@/hooks/use-toast"
 
 interface SocialMetrics {
   twitter: {
-    followers: number;
-    isLoading: boolean;
-    error: string | null;
-  };
+    followers: number
+    isLoading: boolean
+    error: string | null
+  }
   telegram: {
-    members: number;
-    isLoading: boolean;
-    error: string | null;
-  };
+    members: number
+    isLoading: boolean
+    error: string | null
+  }
   linkedin: {
-    followers: number;
-    isLoading: boolean;
-    error: string | null;
-  };
-  lastUpdated: Date | null;
+    followers: number
+    isLoading: boolean
+    error: string | null
+  }
+  lastUpdated: Date | null
 }
 
 export const useSocialMetrics = () => {
@@ -26,154 +25,154 @@ export const useSocialMetrics = () => {
     twitter: { followers: 0, isLoading: true, error: null },
     telegram: { members: 0, isLoading: true, error: null },
     linkedin: { followers: 0, isLoading: true, error: null },
-    lastUpdated: null
-  });
+    lastUpdated: null,
+  })
 
   const fetchTwitterFollowers = async () => {
     try {
-      setMetrics(prev => ({
+      setMetrics((prev) => ({
         ...prev,
-        twitter: { ...prev.twitter, isLoading: true, error: null }
-      }));
+        twitter: { ...prev.twitter, isLoading: true, error: null },
+      }))
 
       // Using a proxy service to bypass CORS - RapidAPI Twitter API
-      const response = await fetch('/api/twitter-followers');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch Twitter data');
-      }
-      
-      const data = await response.json();
-      
-      setMetrics(prev => ({
-        ...prev,
-        twitter: { 
-          followers: data.followers || 0, 
-          isLoading: false, 
-          error: null 
-        }
-      }));
+      const response = await fetch("/api/twitter-followers")
 
-    } catch (error) {
-      console.error('Error fetching Twitter followers:', error);
-      setMetrics(prev => ({
+      if (!response.ok) {
+        throw new Error("Failed to fetch Twitter data")
+      }
+
+      const data = await response.json()
+
+      setMetrics((prev) => ({
         ...prev,
-        twitter: { 
-          followers: 0, 
-          isLoading: false, 
-          error: 'Unable to fetch' 
-        }
-      }));
+        twitter: {
+          followers: data.followers || 0,
+          isLoading: false,
+          error: null,
+        },
+      }))
+    } catch (error) {
+      console.error("Error fetching Twitter followers:", error)
+      setMetrics((prev) => ({
+        ...prev,
+        twitter: {
+          followers: 0,
+          isLoading: false,
+          error: "Unable to fetch",
+        },
+      }))
     }
-  };
+  }
 
   const fetchTelegramMembers = async () => {
     try {
-      setMetrics(prev => ({
+      setMetrics((prev) => ({
         ...prev,
-        telegram: { ...prev.telegram, isLoading: true, error: null }
-      }));
+        telegram: { ...prev.telegram, isLoading: true, error: null },
+      }))
 
       // Telegram Bot API to get chat member count
-      const response = await fetch('/api/telegram-members');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch Telegram data');
-      }
-      
-      const data = await response.json();
-      
-      setMetrics(prev => ({
-        ...prev,
-        telegram: { 
-          members: data.members || 0, 
-          isLoading: false, 
-          error: null 
-        }
-      }));
+      const response = await fetch("/api/telegram-members")
 
-    } catch (error) {
-      console.error('Error fetching Telegram members:', error);
-      setMetrics(prev => ({
+      if (!response.ok) {
+        throw new Error("Failed to fetch Telegram data")
+      }
+
+      const data = await response.json()
+
+      setMetrics((prev) => ({
         ...prev,
-        telegram: { 
-          members: 0, 
-          isLoading: false, 
-          error: 'Unable to fetch' 
-        }
-      }));
+        telegram: {
+          members: data.members || 0,
+          isLoading: false,
+          error: null,
+        },
+      }))
+    } catch (error) {
+      console.error("Error fetching Telegram members:", error)
+      setMetrics((prev) => ({
+        ...prev,
+        telegram: {
+          members: 0,
+          isLoading: false,
+          error: "Unable to fetch",
+        },
+      }))
     }
-  };
+  }
 
   const fetchLinkedInFollowers = async () => {
     try {
-      setMetrics(prev => ({
+      setMetrics((prev) => ({
         ...prev,
-        linkedin: { ...prev.linkedin, isLoading: true, error: null }
-      }));
+        linkedin: { ...prev.linkedin, isLoading: true, error: null },
+      }))
 
       // LinkedIn API call
-      const response = await fetch('/api/linkedin-followers');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch LinkedIn data');
-      }
-      
-      const data = await response.json();
-      
-      setMetrics(prev => ({
-        ...prev,
-        linkedin: { 
-          followers: data.followers || 0, 
-          isLoading: false, 
-          error: null 
-        }
-      }));
+      const response = await fetch("/api/linkedin-followers")
 
-    } catch (error) {
-      console.error('Error fetching LinkedIn followers:', error);
-      setMetrics(prev => ({
+      if (!response.ok) {
+        throw new Error("Failed to fetch LinkedIn data")
+      }
+
+      const data = await response.json()
+
+      setMetrics((prev) => ({
         ...prev,
-        linkedin: { 
-          followers: 0, 
-          isLoading: false, 
-          error: 'Unable to fetch' 
-        }
-      }));
+        linkedin: {
+          followers: data.followers || 0,
+          isLoading: false,
+          error: null,
+        },
+      }))
+    } catch (error) {
+      console.error("Error fetching LinkedIn followers:", error)
+      setMetrics((prev) => ({
+        ...prev,
+        linkedin: {
+          followers: 0,
+          isLoading: false,
+          error: "Unable to fetch",
+        },
+      }))
     }
-  };
+  }
 
   const fetchAllMetrics = async () => {
-    console.log('Fetching all social media metrics...');
-    
+    console.log("Fetching all social media metrics...")
+
     await Promise.all([
       fetchTwitterFollowers(),
       fetchTelegramMembers(),
-      fetchLinkedInFollowers()
-    ]);
+      fetchLinkedInFollowers(),
+    ])
 
-    setMetrics(prev => ({
+    setMetrics((prev) => ({
       ...prev,
-      lastUpdated: new Date()
-    }));
+      lastUpdated: new Date(),
+    }))
 
     toast({
       title: "Social Metrics Updated",
       description: "Successfully fetched latest follower counts",
-    });
-  };
+    })
+  }
 
   useEffect(() => {
-    fetchAllMetrics();
-    
+    fetchAllMetrics()
+
     // Update every 10 minutes
-    const interval = setInterval(fetchAllMetrics, 10 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(fetchAllMetrics, 10 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   return {
     metrics,
     refreshMetrics: fetchAllMetrics,
-    isLoading: metrics.twitter.isLoading || metrics.telegram.isLoading || metrics.linkedin.isLoading
-  };
-};
+    isLoading:
+      metrics.twitter.isLoading ||
+      metrics.telegram.isLoading ||
+      metrics.linkedin.isLoading,
+  }
+}
