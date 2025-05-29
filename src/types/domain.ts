@@ -1,8 +1,13 @@
+/* ------------------------------------------------------------------
+   Project-level (frontend) models derived from API data
+-------------------------------------------------------------------*/
 
 export interface WalletConfig {
   name: string;
   address: string;
 }
+
+/* ---------- LP-aware wallet breakdown ---------- */
 
 export interface LPDetails {
   poolAddress: string;
@@ -32,37 +37,21 @@ export interface WalletData {
   totalUsdValue: number;
 }
 
-export interface TreasuryMetrics {
-  totalMarketCap: number;
-  volatileAssets: number;
-  hardAssets: number;
-  lastUpdated: string;
+/* ---------- misc dashboard / hook helpers ---------- */
+
+export interface ApiStatus {
+  solPrice: "loading" | "success" | "error";
+  wallets: "loading" | "success" | "error";
+  auraMarketCap: "loading" | "success" | "error";
 }
 
 export interface ConsolidatedData {
-  treasury: TreasuryMetrics;
+  treasury: {
+    totalMarketCap: number;
+    volatileAssets: number;
+    hardAssets: number;
+    lastUpdated: string;
+  };
   wallets: WalletData[];
   solPrice: number;
 }
-
-export interface ApiStatus {
-  solPrice: 'loading' | 'success' | 'error';
-  wallets: 'loading' | 'success' | 'error';
-  auraMarketCap: 'loading' | 'success' | 'error';
-}
-
-
-/* -----------------------------  API  TYPES  ----------------------------- */
-export interface SolAccountResp { lamports: number }
-
-export interface TokenAmount { uiAmount: number }
-
-export interface TokenAccountResp {
-  tokenAddress: string;
-  tokenSymbol?: string;
-  tokenName?: string;
-  tokenAmount: TokenAmount;
-  usd?: number;
-}
-
-export type JupiterPriceResp = Record<string, { price: number }>;
