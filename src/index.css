@@ -87,3 +87,9 @@
     font-family: 'Urbanist', sans-serif;
   }
 }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: .9 }
+  50%      { opacity: .4 }
+}
+.animate-pulse-slow { animation: pulse-slow 2.4s ease-in-out infinite; }

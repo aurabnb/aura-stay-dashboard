@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import clsx from "clsx";
 import {
@@ -18,58 +18,80 @@ import {
 } from "@/constants";
 import type { UseTreasuryDataReturn } from "@/hooks/useTreasuryData";
 
-/* ------------------------------------------------------------------ */
-/*                                 API                                */
-/* ------------------------------------------------------------------ */
-interface TreasuryProgressProps {
+/* -------------------------------------------------------------------------- */
+/*                                COUNT-UP HOOK                               */
+/* -------------------------------------------------------------------------- */
+const useCountUp = (target: number, duration = 800) => {
+  const [val, setVal] = useState(0);
+  const targetRef = useRef(target);
+  useEffect(() => {
+    targetRef.current = target; // handle prop changes
+    const start = performance.now();
+    const tick = (t: number) => {
+      const elapsed = t - start;
+      const pct = Math.min(elapsed / duration, 1);
+      setVal(targetRef.current * pct);
+      if (pct < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return val;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                COMPONENT                                   */
+/* -------------------------------------------------------------------------- */
+interface Props {
   treasury: UseTreasuryDataReturn["data"] | undefined;
   targetAmount?: number;
 }
 
-/* ------------------------------------------------------------------ */
-/*                              Component                             */
-/* ------------------------------------------------------------------ */
-const TreasuryProgress: React.FC<TreasuryProgressProps> = ({
+const TreasuryProgress: React.FC<Props> = ({
   treasury,
   targetAmount = VOLCANO_FUNDING_GOAL,
 }) => {
-  /* ------------- heavy calculations (memoised) ------------- */
-  const { totalRaised, totalLiquid } = useMemo(() => {
-    if (!treasury?.wallets) return { totalRaised: 573_216, totalLiquid: 4_089.983 };
+  /* ----------------------- crunch the numbers ----------------------- */
+  const { raised, liquid } = useMemo(() => {
+    if (!treasury?.wallets)
+      return { raised: 573_216, liquid: 4_089.983 };
 
-    const solPrice = treasury.solPrice || SOL_FALLBACK_PRICE_USD;
-
-    // ever raised
-    const inflowWallet = treasury.wallets.find(w => w.address === FUNDING_WALLET_ADDRESS);
-    const inflowSol    = inflowWallet?.balances.find(b => b.token_symbol === "SOL")?.balance ?? 0;
+    const p = treasury.solPrice || SOL_FALLBACK_PRICE_USD;
+    const inflowSol =
+      treasury.wallets
+        .find(w => w.address === FUNDING_WALLET_ADDRESS)
+        ?.balances.find(b => b.token_symbol === "SOL")?.balance ?? 0;
 
     const fallbackSol = treasury.wallets
       .filter(w => w.name.includes("Project Funding"))
       .flatMap(w => w.balances)
       .filter(b => b.token_symbol === "SOL")
-      .reduce((sum, b) => sum + (b.balance || 0), 0);
+      .reduce((s, b) => s + (b.balance || 0), 0);
 
-    const totalRaised = (inflowSol || fallbackSol) * solPrice;
+    const raised = (inflowSol || fallbackSol) * p;
 
-    // liquid assets
-    const liquidSyms = ["SOL", "ETH", "USDC", "USDT", "AURA", "CULT"];
-    const totalLiquid = treasury.wallets
+    const ls = ["SOL", "ETH", "USDC", "USDT", "AURA", "CULT"];
+    const liquid = treasury.wallets
       .flatMap(w => w.balances)
-      .filter(b => b.is_lp_token || liquidSyms.includes(b.token_symbol))
-      .reduce((sum, b) => sum + (b.usd_value || 0), 0);
+      .filter(b => b.is_lp_token || ls.includes(b.token_symbol))
+      .reduce((s, b) => s + (b.usd_value || 0), 0);
 
-    return { totalRaised, totalLiquid };
+    return { raised, liquid };
   }, [treasury]);
 
-  const remaining = targetAmount - totalLiquid;
-  const pct       = (totalLiquid / targetAmount) * 100;
+  const pct       = (liquid / targetAmount) * 100;
+  const remaining = Math.max(0, targetAmount - liquid);
 
-  /* ------------------------------- UI ------------------------------- */
+  /* ------------------------- animated numbers ----------------------- */
+  const raisedAnim    = useCountUp(raised);
+  const liquidAnim    = useCountUp(liquid);
+  const remainingAnim = useCountUp(remaining);
+
+  /* ------------------------------ UI ------------------------------ */
   return (
     <Card className="w-full border-none shadow-lg">
       <CardHeader className="text-center pb-6">
         <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-          <Target className="h-6 w-6 text-gray-600" />
+          <Target className="h-6 w-6 text-gray-600 animate-fade-up" />
           Volcano Stay Funding Progress
         </CardTitle>
         <p className="text-lg text-gray-600">
@@ -79,140 +101,152 @@ const TreasuryProgress: React.FC<TreasuryProgressProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-8">
-        {/* progress bar */}
-        <ProgressSection pct={pct} totalLiquid={totalLiquid} targetAmount={targetAmount} />
+        {/* progress */}
+        <ProgressBar pct={pct} now={liquidAnim} goal={targetAmount} />
 
-        {/* stats grid */}
+        {/* stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatTile icon={DollarSign} iconBg="bg-gray-600"  title="Total Ever Raised" value={totalRaised}  sub="Total SOL inflows" />
-          <StatTile icon={TrendingUp} iconBg="bg-gray-700" title="Total Liquid"       value={totalLiquid} sub="Current liquid assets" />
-          <StatTile icon={Target}     iconBg="bg-black"     title="Goal"              value={targetAmount} sub="Complete build cost" />
-          <StatTile icon={TrendingUp} iconBg="bg-gray-800" title="Remaining"         value={remaining}   sub="Still needed" />
+          <Tile icon={DollarSign} bg="bg-gray-600"  label="Total Ever Raised" val={raisedAnim}    sub="Total SOL inflows" />
+          <Tile icon={TrendingUp} bg="bg-gray-700"  label="Total Liquid"      val={liquidAnim}    sub="Liquid assets" />
+          <Tile icon={Target}     bg="bg-black"     label="Goal"              val={targetAmount}  sub="Build cost" />
+          <Tile icon={TrendingUp} bg="bg-gray-800"  label="Remaining"         val={remainingAnim} sub="Still needed" />
         </div>
 
-        {/* project details */}
-        <ProjectDetails />
+        {/* project meta */}
+        <Meta />
 
         {/* CTA */}
-        <CtaSection />
+        <CTA />
       </CardContent>
     </Card>
   );
 };
 
-/* ------------------------------------------------------------------ */
-/*                        sub-components / helpers                    */
-/* ------------------------------------------------------------------ */
-
-const ProgressSection: React.FC<{ pct: number; totalLiquid: number; targetAmount: number }> = ({ pct, totalLiquid, targetAmount }) => (
+/* -------------------------------------------------------------------------- */
+/*                         SUB–COMPONENTS / HELPERS                           */
+/* -------------------------------------------------------------------------- */
+const ProgressBar: React.FC<{
+  pct: number;
+  now: number;
+  goal: number;
+}> = ({ pct, now, goal }) => (
   <div className="space-y-4">
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between">
       <span className="text-lg font-medium">Funding Progress</span>
-      <span aria-live="polite" className="text-lg text-gray-600 font-semibold">
-        {pct.toFixed(1)}% Complete
+      <span className="text-lg font-semibold text-gray-600">
+        {pct.toFixed(1)}%
       </span>
     </div>
-    <div className="relative">
-      <Progress value={pct} className="h-4 bg-gray-100" />
+
+    {/* bar */}
+    <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
       <div
-        className="absolute top-0 left-0 h-4 bg-gradient-to-r from-gray-700 to-black rounded-full"
         style={{ width: `${Math.min(pct, 100)}%` }}
+        className="absolute left-0 top-0 h-full bg-gradient-to-r from-gray-700 to-black transition-[width] duration-700 ease-out animate-pulse-slow"
       />
     </div>
+
     <div className="flex justify-between text-sm text-gray-500">
-      <span>{formatUsd(totalLiquid)}</span>
-      <span>{formatUsd(targetAmount)}</span>
+      <span>{formatUsd(now)}</span>
+      <span>{formatUsd(goal)}</span>
     </div>
   </div>
 );
 
-const StatTile: React.FC<{
+const Tile: React.FC<{
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  iconBg: string;
-  title: string;
-  value: number;
+  bg: string;
+  label: string;
+  val: number;
   sub: string;
-}> = ({ icon: Icon, iconBg, title, value, sub }) => (
-  <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border">
+}> = ({ icon: Icon, bg, label, val, sub }) => (
+  <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border transform transition hover:-translate-y-1 hover:shadow-xl group">
     <div className="flex items-center gap-3 mb-3">
-      <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center", iconBg)}>
+      <div
+        className={clsx(
+          "w-10 h-10 rounded-lg flex items-center justify-center",
+          bg,
+          "group-hover:scale-110 transition-transform"
+        )}
+      >
         <Icon className="h-5 w-5 text-white" />
       </div>
-      <span className="font-semibold text-gray-800">{title}</span>
+      <span className="font-semibold text-gray-800">{label}</span>
     </div>
-    <p className="text-3xl font-bold text-gray-700 mb-1">{formatUsd(value)}</p>
+    <p className="text-3xl font-bold text-gray-700 mb-1">
+      {formatUsd(val)}
+    </p>
     <p className="text-sm text-gray-600">{sub}</p>
   </div>
 );
 
-const DetailTile: React.FC<{
+const Detail: React.FC<{
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  title: string;
+  head: string;
   primary: string;
   secondary: string;
-}> = ({ icon: Icon, title, primary, secondary }) => (
+}> = ({ icon: Icon, head, primary, secondary }) => (
   <div>
-    <div className="flex items-center gap-2 mb-3">
+    <div className="flex items-center gap-2 mb-2">
       <Icon className="h-5 w-5 text-gray-600" />
-      <span className="font-semibold">{title}</span>
+      <span className="font-semibold">{head}</span>
     </div>
-    <p className="text-gray-700 mb-2 font-medium">{primary}</p>
-    <p className="text-sm text-gray-600">{secondary}</p>
+    <p className="text-gray-700 font-medium">{primary}</p>
+    <p className="text-xs text-gray-500">{secondary}</p>
   </div>
 );
 
-const ProjectDetails = () => (
+const Meta = () => (
   <div className="bg-gray-50 p-6 rounded-xl border">
     <div className="grid md:grid-cols-2 gap-6">
-      <DetailTile
+      <Detail
         icon={MapPin}
-        title="Project Location"
+        head="Project Location"
         primary="Guayabo, Costa Rica"
-        secondary="Edge of Miravalles Volcano with thermal springs & rainforest"
+        secondary="Edge of Miravalles Volcano, hot springs & rainforest"
       />
-      <DetailTile
+      <Detail
         icon={Calendar}
-        title="Timeline"
+        head="Timeline"
         primary="Q2 2024 – Q4 2024"
-        secondary="Construction with community voting throughout"
+        secondary="Construction phase with community voting"
       />
     </div>
   </div>
 );
 
-const LinkButton: React.FC<{ to: string; variant?: "primary"; children: React.ReactNode }> = ({
+const CTA = () => (
+  <div className="text-center space-y-4">
+    <p className="text-gray-600 font-medium">
+      🎯 LP rewards, liquid assets & cross-chain holdings power this build
+    </p>
+    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <BtnLink to="/value-indicator" primary>
+        Monitor Treasury Live
+      </BtnLink>
+      <BtnLink to="#" primary={false}>
+        Join Build Updates
+      </BtnLink>
+    </div>
+  </div>
+);
+
+const BtnLink: React.FC<{ to: string; primary?: boolean; children: React.ReactNode }> = ({
   to,
-  variant = "primary",
+  primary = true,
   children,
 }) => (
   <Link
     to={to}
     className={clsx(
-      "px-8 py-3 rounded-full font-urbanist font-medium transition-colors",
-      variant === "primary"
+      "px-8 py-3 rounded-full font-urbanist font-medium transition",
+      primary
         ? "bg-black text-white hover:bg-gray-800"
         : "border border-gray-300 text-gray-700 hover:border-gray-400"
     )}
   >
     {children}
   </Link>
-);
-
-const CtaSection = () => (
-  <div className="text-center space-y-4">
-    <p className="text-gray-600 font-medium">
-      🎯 Current funding includes LP positions, liquid assets, and cross-chain holdings
-    </p>
-    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-      <LinkButton to="/value-indicator">Monitor Treasury Live</LinkButton>
-      <button
-        type="button"
-        className="border border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-3 rounded-full font-urbanist transition-colors font-medium"
-      >
-        Join Build Updates
-      </button>
-    </div>
-  </div>
 );
 
 export default TreasuryProgress;
