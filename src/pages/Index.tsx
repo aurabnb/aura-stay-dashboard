@@ -1,13 +1,16 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 
 import Header from "@/components/Header"
+import OnboardingFlow from "@/components/OnboardingFlow"
 import TreasuryProgress from "@/components/TreasuryProgress"
 import TreasuryProgressSkeleton from "@/components/TreasuryProgressSkeleton"
 import FundingBreakdown from "@/components/FundingBreakdown"
 import VolcanoStayShowcase from "@/components/VolcanoStayShowcase"
 import AuraRoadmapTracker from "@/components/AuraRoadmapTracker"
 import AuraStats from "@/components/AuraStats"
+import CommunityGrowthMetrics from "@/components/CommunityGrowthMetrics"
+import LiveBurnMetrics from "@/components/LiveBurnMetrics"
 
 import { useTreasuryData } from "@/hooks/useTreasuryData"
 
@@ -16,6 +19,24 @@ import { useTreasuryData } from "@/hooks/useTreasuryData"
 /* -------------------------------------------------------------------------- */
 const Index: React.FC = () => {
   const { data, loading, error } = useTreasuryData()
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    // Check if user is new (first visit)
+    const hasSeenOnboarding = localStorage.getItem('aura_onboarding_completed')
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true)
+    }
+  }, [])
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('aura_onboarding_completed', 'true')
+    setShowOnboarding(false)
+  }
+
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false)
+  }
 
   return (
     <div className="min-h-screen bg-white font-urbanist">
@@ -46,18 +67,20 @@ const Index: React.FC = () => {
             />
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button
-                type="button"
-                className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 shadow-lg"
+              <a
+                href="https://t.me/aurabnb"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 shadow-lg inline-block text-center"
               >
                 Join the Movement
-              </button>
-              <button
-                type="button"
-                className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105"
+              </a>
+              <Link
+                to="/roadmap"
+                className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 inline-block text-center"
               >
-                Explore the Vision
-              </button>
+                View Roadmap
+              </Link>
             </div>
           </section>
 
@@ -67,7 +90,7 @@ const Index: React.FC = () => {
               Redefining Hospitality Through Blockchain
             </h2>
             <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-              AURA isn't just about accommodation—it’s about creating a new
+              AURA isn't just about accommodation—it's about creating a new
               paradigm where travelers become stakeholders, communities benefit
               directly, and every stay contributes to a sustainable future.
               We're building more than properties; we're building a movement.
@@ -85,6 +108,24 @@ const Index: React.FC = () => {
               </p>
             </div>
             <AuraStats />
+          </section>
+
+          {/* ---------------------- Community Growth ----------------------- */}
+          <section className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-12">
+            <CommunityGrowthMetrics />
+          </section>
+
+          {/* ----------------------- 2% Burn System ----------------------- */}
+          <section>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Revolutionary Token Economics
+              </h2>
+              <p className="text-lg text-gray-600">
+                Automated burn and redistribution system powering sustainable growth
+              </p>
+            </div>
+            <LiveBurnMetrics />
           </section>
 
           {/* ---------------------- Treasury Progress ----------------------- */}
@@ -117,7 +158,7 @@ const Index: React.FC = () => {
                 Meet Your First Investment
               </h2>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                An eco-luxury experience at the edge of Costa Rica’s Miravalles
+                An eco-luxury experience at the edge of Costa Rica's Miravalles
                 Volcano
               </p>
             </div>
@@ -226,22 +267,32 @@ const Index: React.FC = () => {
               co-owner in this revolutionary hospitality ecosystem.
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button
-                type="button"
-                className="bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105"
+              <Link
+                to="/trading"
+                className="bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 inline-block text-center"
               >
                 Buy $AURA Token
-              </button>
-              <button
-                type="button"
-                className="border-2 border-white hover:bg-white hover:text-black text-white px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105"
+              </Link>
+              <a
+                href="https://linktr.ee/aurabnb"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-2 border-white hover:bg-white hover:text-black text-white px-10 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 inline-block text-center"
               >
                 Read Whitepaper
-              </button>
+              </a>
             </div>
           </section>
         </div>
       </main>
+
+      {/* Onboarding Flow */}
+      {showOnboarding && (
+        <OnboardingFlow
+          onComplete={handleOnboardingComplete}
+          onClose={handleOnboardingClose}
+        />
+      )}
     </div>
   )
 }

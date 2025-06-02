@@ -13,6 +13,8 @@ import JupiterPriceAPI from './TradingDashboard/JupiterPriceAPI';
 import JupiterAdvancedSwap from './TradingDashboard/JupiterAdvancedSwap';
 import JupiterTokenList from './TradingDashboard/JupiterTokenList';
 import StakingSection from './TradingDashboard/StakingSection';
+import OneLiquidityManager from './OneLiquidityManager';
+import { log } from '@/lib/logger';
 
 interface Token {
   symbol: string;
@@ -94,7 +96,7 @@ const TradingDashboard = () => {
   ];
 
   const handleTrade = () => {
-    console.log(`${tradeType}ing ${tradeAmount} ${selectedToken}`);
+    log.dev(`Trading ${tradeAmount} ${selectedToken}`, { tradeType, tradeAmount, selectedToken }, 'TradingDashboard');
     const token = tokens.find(t => t.symbol === selectedToken);
     if (token?.jupiterUrl) {
       window.open(token.jupiterUrl, '_blank');
@@ -201,6 +203,7 @@ const TradingDashboard = () => {
         </TabsContent>
         
         <TabsContent value="liquidity" className="space-y-6">
+          <OneLiquidityManager />
           <LiquidityPools 
             liquidityPools={liquidityPools}
             onAddLiquidity={handleAddLiquidity}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, Wallet, Clock, Gift, Star } from 'lucide-react';
+import { log } from '@/lib/logger';
 
 const StakeToEarnDashboard = () => {
   const [stakeAmount, setStakeAmount] = useState('');
@@ -20,17 +21,17 @@ const StakeToEarnDashboard = () => {
   ];
 
   const handleStake = () => {
-    console.log('Staking:', stakeAmount);
+    log.dev('Staking tokens', { stakeAmount }, 'StakeToEarn');
     // Implementation for staking
   };
 
   const handleUnstake = () => {
-    console.log('Unstaking');
+    log.dev('Unstaking tokens', {}, 'StakeToEarn');
     // Implementation for unstaking
   };
 
   const handleClaimRewards = () => {
-    console.log('Claiming rewards');
+    log.dev('Claiming rewards', {}, 'StakeToEarn');
     // Implementation for claiming rewards
   };
 

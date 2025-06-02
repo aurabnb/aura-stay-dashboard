@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { log } from '@/lib/logger';
 
 interface TreasuryMetrics {
   totalMarketCap: number;
@@ -25,23 +26,23 @@ const ValueIndicator = () => {
 
   const fetchData = async () => {
     try {
-      console.log('Fetching consolidated treasury data...');
+      log.dev('Fetching consolidated treasury data', {}, 'ValueIndicator');
       setError(null);
       const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
       
       if (fetchError) throw fetchError;
       
-      console.log('Received treasury data:', responseData);
+      log.dev('Received treasury data', responseData, 'ValueIndicator');
       
       // Check if the response has the expected structure
       if (!responseData || !responseData.treasury) {
-        console.error('Invalid response structure:', responseData);
+        log.error('Invalid response structure', responseData, 'ValueIndicator');
         throw new Error('Invalid response structure from server');
       }
       
       setData(responseData);
     } catch (err) {
-      console.error('Error fetching treasury data:', err);
+      log.error('Error fetching treasury data', err, 'ValueIndicator');
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
       // Set default values on error
       setData({
@@ -64,7 +65,7 @@ const ValueIndicator = () => {
     try {
       await fetchData();
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      log.error('Error refreshing data', error, 'ValueIndicator');
     } finally {
       setRefreshing(false);
     }

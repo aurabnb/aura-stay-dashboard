@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ExternalLink } from 'lucide-react';
@@ -10,6 +9,18 @@ interface ExpenseTableProps {
 }
 
 const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses }) => {
+  // Calculate running totals
+  let cumulativeTotal = 0;
+  const expensesWithTotals = expenses.map(expense => {
+    if (expense.usdValueAtTime) {
+      cumulativeTotal += expense.usdValueAtTime;
+    }
+    return {
+      ...expense,
+      cumulativeTotal
+    };
+  });
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -21,12 +32,13 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses }) => {
             <TableHead>SOL Amount</TableHead>
             <TableHead>SOL Price</TableHead>
             <TableHead>USD Value</TableHead>
+            <TableHead className="text-right">Cumulative Total</TableHead>
             {expenses.some(e => e.amount) && <TableHead>Notes</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenses.length > 0 ? (
-            expenses.map((expense, index) => {
+          {expensesWithTotals.length > 0 ? (
+            expensesWithTotals.map((expense, index) => {
               const transactionLinkData = formatTransactionLink(expense.transaction);
               
               return (
@@ -67,6 +79,9 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses }) => {
                       </span>
                     ) : '-'}
                   </TableCell>
+                  <TableCell className="text-right font-bold">
+                    {formatCurrency(expense.cumulativeTotal)}
+                  </TableCell>
                   {expenses.some(e => e.amount) && (
                     <TableCell>
                       {expense.amount && (
@@ -79,7 +94,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses }) => {
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                 No expense data available. Click refresh to fetch latest data.
               </TableCell>
             </TableRow>

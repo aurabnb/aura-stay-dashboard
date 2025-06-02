@@ -181,6 +181,7 @@ const Header: React.FC = () => {
             items={[
               { to: "/roadmap", label: "Roadmap" },
               { to: "/transparency", label: "Transparency" },
+              { to: "/volcano-house", label: "Volcano House" },
             ]}
           />
 
@@ -191,6 +192,8 @@ const Header: React.FC = () => {
             items={[
               { to: "/value-indicator", label: "Treasury Monitor" },
               { to: "/trading", label: "Trading Hub" },
+              { to: "/burn-redistribution", label: "2% Burn System" },
+              { to: "/wallet-hub", label: "Wallet Hub" },
             ]}
           />
 
@@ -219,9 +222,12 @@ const Header: React.FC = () => {
           >
             Buy with Fiat
           </button>
-          <button className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium transition-colors">
+          <Link
+            to="/trading"
+            className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium transition-colors inline-block text-center"
+          >
             Buy $AURA
-          </button>
+          </Link>
         </div>
 
         {/* ------------------------ mobile toggle ------------------------- */}
@@ -250,6 +256,9 @@ const Header: React.FC = () => {
               <MobileLink to="/transparency" onClick={() => setMobileOpen(false)}>
                 Transparency
               </MobileLink>
+              <MobileLink to="/volcano-house" onClick={() => setMobileOpen(false)}>
+                Volcano House
+              </MobileLink>
             </MobileGroup>
 
             <MobileGroup label="Finance">
@@ -258,6 +267,18 @@ const Header: React.FC = () => {
               </MobileLink>
               <MobileLink to="/trading" onClick={() => setMobileOpen(false)}>
                 Trading Hub
+              </MobileLink>
+              <MobileLink to="/burn-redistribution" onClick={() => setMobileOpen(false)}>
+                2% Burn System
+              </MobileLink>
+              <MobileLink to="/wallet-hub" onClick={() => setMobileOpen(false)}>
+                Wallet Hub
+              </MobileLink>
+              <MobileLink to="/analytics" onClick={() => setMobileOpen(false)}>
+                Analytics
+              </MobileLink>
+              <MobileLink to="/multisig" onClick={() => setMobileOpen(false)}>
+                Multisig
               </MobileLink>
             </MobileGroup>
 
@@ -285,9 +306,12 @@ const Header: React.FC = () => {
             >
               Buy with Fiat
             </button>
-            <button className="bg-black hover:bg-gray-800 text-white w-full py-3 rounded-full text-sm font-medium">
+            <Link
+              to="/trading"
+              className="bg-black hover:bg-gray-800 text-white w-full py-3 rounded-full text-sm font-medium"
+            >
               Buy $AURA
-            </button>
+            </Link>
           </div>
         </div>
       )}

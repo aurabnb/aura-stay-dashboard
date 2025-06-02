@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
-import MultisigDashboard from '../components/MultisigDashboard';
+import AdvancedAnalytics from '../components/AdvancedAnalytics';
 import { usePerformanceTracking } from '@/services/performanceMonitor';
 
-const MultisigPage = () => {
+const AnalyticsPage = () => {
   const { trackPageView } = usePerformanceTracking();
 
   useEffect(() => {
-    trackPageView('Multisig');
+    trackPageView('Analytics');
   }, [trackPageView]);
 
   return (
@@ -17,18 +17,18 @@ const MultisigPage = () => {
         <div className="space-y-8">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold text-black mb-6 font-urbanist leading-tight">
-              Multisig Wallet
+              Advanced Analytics
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-urbanist leading-relaxed">
-              Secure 3-of-5 multisignature wallet for foundation funding with complete transparency and transaction tracking
+              Deep insights into the AuraBNB ecosystem with real-time data, predictive models, and comprehensive portfolio analytics
             </p>
           </div>
           
-          <MultisigDashboard />
+          <AdvancedAnalytics />
         </div>
       </main>
     </div>
   );
 };
 
-export default MultisigPage;
+export default AnalyticsPage; 

@@ -140,7 +140,7 @@ export const useSocialMetrics = () => {
   }
 
   const fetchAllMetrics = async () => {
-    console.log("Fetching all social media metrics...")
+    // Fetching social media metrics
 
     await Promise.all([
       fetchTwitterFollowers(),

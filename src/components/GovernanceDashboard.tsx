@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Vote, Users, Calendar, TrendingUp, AlertTriangle, Shield } from 'lucide-react';
+import { log } from '@/lib/logger';
 
 interface Proposal {
   id: string;
@@ -22,13 +22,17 @@ interface Proposal {
 
 const GovernanceDashboard = () => {
   const [userVotingPower] = useState(1250);
+  const [userStakedAmount] = useState(800); // Amount of tokens staked by user
   const [hasVoted, setHasVoted] = useState<Record<string, boolean>>({});
   
   // Token supply and voting calculations
   const totalTokenSupply = 100000000; // 100M tokens
   const maxVotingPowerPerAccount = totalTokenSupply * 0.02; // 2% max
-  const effectiveVotingPower = Math.min(userVotingPower, maxVotingPowerPerAccount);
+  
+  // Only staked tokens count for voting power
+  const effectiveVotingPower = Math.min(userStakedAmount, maxVotingPowerPerAccount);
   const votingPowerPercentage = (effectiveVotingPower / totalTokenSupply) * 100;
+  const isEligibleToVote = userStakedAmount > 0;
 
   const proposals: Proposal[] = [
     {
@@ -71,7 +75,7 @@ const GovernanceDashboard = () => {
 
   const handleVote = (proposalId: string, vote: 'for' | 'against') => {
     setHasVoted(prev => ({ ...prev, [proposalId]: true }));
-    console.log(`Voted ${vote} on proposal ${proposalId} with ${effectiveVotingPower} voting power`);
+    log.dev(`Voted ${vote} on proposal ${proposalId}`, { proposalId, vote, effectiveVotingPower }, 'Governance');
   };
 
   const getCategoryColor = (category: string) => {
@@ -105,7 +109,9 @@ const GovernanceDashboard = () => {
               <div>
                 <p className="text-sm text-gray-600">Your Voting Power</p>
                 <p className="text-2xl font-bold">{effectiveVotingPower.toLocaleString()}</p>
-                <p className="text-xs text-gray-500">{votingPowerPercentage.toFixed(3)}% of supply</p>
+                <p className="text-xs text-gray-500">
+                  {votingPowerPercentage.toFixed(3)}% • {userStakedAmount.toLocaleString()} staked
+                </p>
               </div>
             </div>
           </CardContent>
@@ -157,6 +163,26 @@ const GovernanceDashboard = () => {
               <div>
                 <p className="text-sm font-medium text-orange-800">
                   Voting Power Capped: You hold {userVotingPower.toLocaleString()} tokens, but voting power is limited to 2% of total supply ({maxVotingPowerPerAccount.toLocaleString()} tokens) to prevent governance concentration.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Staking Requirement Notice */}
+      {!isEligibleToVote && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 text-red-600" />
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Staking Required: You must stake AURA tokens to participate in governance voting. 
+                  Only staked tokens count toward your voting power.
+                </p>
+                <p className="text-xs text-red-700 mt-1">
+                  Visit the Trading Hub → Staking section to stake your tokens and unlock voting privileges.
                 </p>
               </div>
             </div>
@@ -217,27 +243,45 @@ const GovernanceDashboard = () => {
 
                   {!hasVoted[proposal.id] && proposal.status === 'active' && (
                     <div className="space-y-3">
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <Shield className="h-4 w-4 inline mr-1" />
-                          Your vote will count as {effectiveVotingPower.toLocaleString()} votes (1 token = 1 vote)
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        <Button 
-                          onClick={() => handleVote(proposal.id, 'for')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Vote For ({effectiveVotingPower.toLocaleString()})
-                        </Button>
-                        <Button 
-                          onClick={() => handleVote(proposal.id, 'against')}
-                          variant="outline"
-                          className="border-red-600 text-red-600 hover:bg-red-50"
-                        >
-                          Vote Against ({effectiveVotingPower.toLocaleString()})
-                        </Button>
-                      </div>
+                      {isEligibleToVote ? (
+                        <>
+                          <div className="bg-blue-50 p-3 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <Shield className="h-4 w-4 inline mr-1" />
+                              Your vote will count as {effectiveVotingPower.toLocaleString()} votes (from {userStakedAmount.toLocaleString()} staked tokens)
+                            </p>
+                          </div>
+                          <div className="flex gap-3">
+                            <Button 
+                              onClick={() => handleVote(proposal.id, 'for')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Vote For ({effectiveVotingPower.toLocaleString()})
+                            </Button>
+                            <Button 
+                              onClick={() => handleVote(proposal.id, 'against')}
+                              variant="outline"
+                              className="border-red-600 text-red-600 hover:bg-red-50"
+                            >
+                              Vote Against ({effectiveVotingPower.toLocaleString()})
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="bg-red-50 p-3 rounded-lg">
+                          <p className="text-sm text-red-800">
+                            <Shield className="h-4 w-4 inline mr-1" />
+                            You must stake AURA tokens to vote on this proposal
+                          </p>
+                          <Button 
+                            variant="outline"
+                            className="mt-2 border-red-600 text-red-600"
+                            onClick={() => window.open('/trading', '_blank')}
+                          >
+                            Go to Staking →
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
 

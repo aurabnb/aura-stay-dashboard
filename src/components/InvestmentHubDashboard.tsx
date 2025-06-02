@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building, TrendingUp, Gift, Hammer, MapPin } from 'lucide-react';
+import { log } from '@/lib/logger';
 
 interface Property {
   id: string;
@@ -117,11 +118,11 @@ const InvestmentHubDashboard = () => {
   ];
 
   const handleInvest = (propertyId: string) => {
-    console.log(`Investing $${investmentAmount} in property ${propertyId}`);
+    log.dev(`Investing $${investmentAmount} in property ${propertyId}`, { propertyId, investmentAmount }, 'InvestmentHub');
   };
 
   const handleUseRewards = (token: string, amount: number) => {
-    console.log(`Using ${amount} ${token} rewards for investment`);
+    log.dev(`Using ${amount} ${token} rewards for investment`, { token, amount }, 'InvestmentHub');
   };
 
   const getStatusColor = (status: string) => {
