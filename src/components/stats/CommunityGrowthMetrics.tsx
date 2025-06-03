@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Users, MessageCircle, Heart, Share2, TrendingUp, RefreshCw, ExternalLink, Calendar } from 'lucide-react';
+import { Users, MessageCircle, Heart, Share2, TrendingUp, RefreshCw, ExternalLink, Calendar, Wifi, WifiOff } from 'lucide-react';
 
 interface CommunityMetric {
   platform: string;
@@ -23,17 +23,29 @@ interface GrowthData {
   linkedin: number;
 }
 
+interface ApiResponse {
+  twitter: { followers: number; growth: number };
+  telegram: { members: number; growth: number };
+  linkedin: { followers: number; growth: number };
+  lastUpdated: string;
+}
+
 export function CommunityGrowthMetrics() {
   const [isClient, setIsClient] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [metrics, setMetrics] = useState<CommunityMetric[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
 
-  const metrics: CommunityMetric[] = [
+  // Initialize with fallback data
+  const fallbackMetrics: CommunityMetric[] = [
     {
       platform: 'Twitter',
       current: 2847,
       growth: 12.3,
-      icon: <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs">T</div>,
+      icon: <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">X</div>,
       color: 'text-blue-600',
       url: 'https://twitter.com/aura_bnb'
     },
@@ -41,7 +53,7 @@ export function CommunityGrowthMetrics() {
       platform: 'Telegram',
       current: 1284,
       growth: 18.7,
-      icon: <div className="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center text-white text-xs">T</div>,
+      icon: <div className="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center text-white text-xs font-bold">T</div>,
       color: 'text-cyan-600',
       url: 'https://t.me/aura_bnb'
     },
@@ -49,7 +61,7 @@ export function CommunityGrowthMetrics() {
       platform: 'LinkedIn',
       current: 892,
       growth: 9.4,
-      icon: <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs">L</div>,
+      icon: <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">L</div>,
       color: 'text-indigo-600',
       url: 'https://linkedin.com/company/aura-bnb'
     }
@@ -64,24 +76,114 @@ export function CommunityGrowthMetrics() {
     { date: 'Jun', twitter: 2847, telegram: 1284, linkedin: 892 }
   ];
 
-  const totalFollowers = metrics.reduce((sum, metric) => sum + metric.current, 0);
-  const averageGrowth = metrics.reduce((sum, metric) => sum + metric.growth, 0) / metrics.length;
+  // Fetch real-time community metrics
+  const fetchCommunityMetrics = async () => {
+    try {
+      setError(null);
+      const response = await fetch('/api/community-metrics', {
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data: ApiResponse = await response.json();
+      
+      // Update metrics with real data
+      const updatedMetrics = [
+        {
+          ...fallbackMetrics[0],
+          current: data.twitter.followers,
+          growth: data.twitter.growth
+        },
+        {
+          ...fallbackMetrics[1],
+          current: data.telegram.members,
+          growth: data.telegram.growth
+        },
+        {
+          ...fallbackMetrics[2],
+          current: data.linkedin.followers,
+          growth: data.linkedin.growth
+        }
+      ];
+
+      setMetrics(updatedMetrics);
+      setLastUpdated(new Date(data.lastUpdated));
+      setIsOnline(true);
+
+    } catch (error) {
+      console.error('Failed to fetch community metrics:', error);
+      setError('Failed to fetch real-time data');
+      setIsOnline(false);
+      // Use fallback data on error
+      setMetrics(fallbackMetrics);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchCommunityMetrics();
+    setIsRefreshing(false);
+  };
 
   useEffect(() => {
     setIsClient(true);
+    
+    // Initial fetch
+    fetchCommunityMetrics();
+    
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(fetchCommunityMetrics, 5 * 60 * 1000);
+    
+    // Online/offline detection
+    const handleOnline = () => {
+      setIsOnline(true);
+      fetchCommunityMetrics();
+    };
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setLastUpdated(new Date());
-    setIsRefreshing(false);
-  };
+  const totalFollowers = metrics.reduce((sum, metric) => sum + metric.current, 0);
+  const averageGrowth = metrics.length > 0 
+    ? metrics.reduce((sum, metric) => sum + metric.growth, 0) / metrics.length 
+    : 0;
 
   const formatDate = (date: Date) => {
     return date.toISOString().replace('T', ' ').substr(0, 19);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-96"></div>
+          </div>
+          <div className="h-10 bg-gray-200 rounded w-24"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -89,12 +191,29 @@ export function CommunityGrowthMetrics() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Community Growth</h2>
-          <p className="text-muted-foreground">Track our community expansion across platforms</p>
+          <p className="text-muted-foreground flex items-center gap-2">
+            Track our community expansion across platforms
+            {isOnline ? (
+              <Wifi className="h-4 w-4 text-green-600" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-red-600" />
+            )}
+          </p>
         </div>
-        <Button onClick={handleRefresh} variant="outline" disabled={isRefreshing}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {error && (
+            <Badge variant="destructive" className="text-xs">
+              Using cached data
+            </Badge>
+          )}
+          <Badge variant={isOnline ? "default" : "secondary"} className="text-xs">
+            {isOnline ? "Live" : "Offline"}
+          </Badge>
+          <Button onClick={handleRefresh} variant="outline" disabled={isRefreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Overview Stats */}
@@ -151,14 +270,16 @@ export function CommunityGrowthMetrics() {
                   </div>
                   <CardTitle className="text-lg">{metric.platform}</CardTitle>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(metric.url, '_blank')}
-                  className="h-8 w-8 p-0"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.open(metric.url, '_blank')}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -166,8 +287,10 @@ export function CommunityGrowthMetrics() {
                 <div>
                   <p className="text-3xl font-bold">{metric.current.toLocaleString()}</p>
                   <div className="flex items-center gap-1 mt-1">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                    <span className="text-green-600 font-medium">+{metric.growth}%</span>
+                    <TrendingUp className={`h-4 w-4 ${metric.growth >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                    <span className={`font-medium ${metric.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {metric.growth >= 0 ? '+' : ''}{metric.growth.toFixed(1)}%
+                    </span>
                     <span className="text-gray-500 text-sm">this month</span>
                   </div>
                 </div>
@@ -175,7 +298,7 @@ export function CommunityGrowthMetrics() {
                 <div className="pt-2">
                   <div className="flex justify-between text-sm text-gray-600 mb-1">
                     <span>Growth Target</span>
-                    <span>{((metric.growth / 20) * 100).toFixed(0)}%</span>
+                    <span>{Math.min(((Math.abs(metric.growth) / 20) * 100), 100).toFixed(0)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
@@ -184,7 +307,7 @@ export function CommunityGrowthMetrics() {
                         metric.platform === 'Telegram' ? 'from-cyan-500 to-cyan-600' :
                         'from-indigo-500 to-indigo-600'
                       }`}
-                      style={{ width: `${Math.min((metric.growth / 20) * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((Math.abs(metric.growth) / 20) * 100), 100)}%` }}
                     />
                   </div>
                 </div>
@@ -293,6 +416,9 @@ export function CommunityGrowthMetrics() {
           <Calendar className="h-4 w-4" />
           <span>
             Last updated: {isClient ? formatDate(lastUpdated) : 'Loading...'}
+          </span>
+          <span className="text-xs">
+            (Auto-refreshes every 5 minutes)
           </span>
         </div>
       </div>

@@ -153,43 +153,39 @@ export function Header() {
               )}
             </div>
 
-            {/* projects dropdown */}
-            <div className="relative">
+            {/* Projects dropdown */}
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setProjectOpen(!projectOpen);
-                }}
-                className="flex items-center text-sm font-medium text-gray-600 hover:text-black transition-colors"
+                className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                  projectOpen ? "text-black" : "text-gray-600 hover:text-black"
+                }`}
+                onClick={() => setProjectOpen(!projectOpen)}
               >
                 Projects
-                <ChevronDown className="ml-1 h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
               </button>
               {projectOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
+                  <Link
+                    href="/roadmap"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setProjectOpen(false)}
+                  >
+                    Roadmap
+                  </Link>
                   <Link
                     href="/volcano-house"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setProjectOpen(false)}
                   >
                     Volcano House
                   </Link>
                   <Link
                     href="/properties"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setProjectOpen(false)}
                   >
                     All Properties
-                  </Link>
-                  <Link
-                    href="/investment-hub"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Investment Hub
-                  </Link>
-                  <Link
-                    href="/roadmap"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Roadmap
                   </Link>
                 </div>
               )}

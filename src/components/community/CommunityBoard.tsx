@@ -186,14 +186,6 @@ export function CommunityBoard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Community Board</h1>
-        <p className="text-muted-foreground">
-          Engage with the Aura Foundation community, share ideas, and participate in discussions.
-        </p>
-      </div>
-
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Submit Message Section */}
         <div className="lg:col-span-1">

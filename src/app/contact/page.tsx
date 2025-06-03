@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { Mail, MessageCircle, Twitter, Globe } from 'lucide-react'
 
 export default function ContactPage() {
@@ -9,7 +10,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white font-urbanist">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8 pt-20">
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8 pt-28">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Contact AURA
@@ -97,6 +98,13 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   )
+}
+
+export const metadata = {
+  title: 'Contact | Aura Stay Dashboard',
+  description: 'Get in touch with our team for partnerships, inquiries, or to learn more about joining the AURA community.',
 } 

@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { StakingSection } from '@/components/trading/StakingSection'
 
 function StakingLoadingSkeleton() {
@@ -24,19 +26,25 @@ function StakingLoadingSkeleton() {
 
 export default function StakingPage() {
   return (
-    <div className="container mx-auto py-8">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">AURA Staking</h1>
-          <p className="text-muted-foreground">
-            Stake AURA tokens to earn rewards from the 2% burn redistribution mechanism
-          </p>
+    <div className="min-h-screen bg-white">
+      <Header />
+      
+      <div className="container mx-auto py-8 pt-28">
+        <div className="space-y-6">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">AURA Staking</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Stake AURA tokens to earn rewards from the 2% burn redistribution mechanism
+            </p>
+          </div>
+          
+          <Suspense fallback={<StakingLoadingSkeleton />}>
+            <StakingSection />
+          </Suspense>
         </div>
-        
-        <Suspense fallback={<StakingLoadingSkeleton />}>
-          <StakingSection />
-        </Suspense>
       </div>
+
+      <Footer />
     </div>
   )
 }

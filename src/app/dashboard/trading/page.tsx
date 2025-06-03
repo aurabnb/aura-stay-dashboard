@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { TradingDashboard } from '@/components/dashboards/TradingDashboard'
 import { EnhancedTradingDashboard } from '@/components/trading/EnhancedTradingDashboard'
 import { StakingSection } from '@/components/trading/StakingSection'
@@ -26,16 +28,31 @@ function TradingLoadingSkeleton() {
 
 export default function TradingPage() {
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <Suspense fallback={<TradingLoadingSkeleton />}>
-        <EnhancedTradingDashboard />
-      </Suspense>
+    <div className="min-h-screen bg-white">
+      <Header />
       
-      <Suspense fallback={
-        <div className="h-96 bg-gray-200 rounded-lg animate-pulse" />
-      }>
-        <StakingSection />
-      </Suspense>
+      <div className="container mx-auto px-4 py-8 pt-28 space-y-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Trading Hub
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Advanced trading tools with real-time analytics and portfolio management
+          </p>
+        </div>
+        
+        <Suspense fallback={<TradingLoadingSkeleton />}>
+          <EnhancedTradingDashboard />
+        </Suspense>
+        
+        <Suspense fallback={
+          <div className="h-96 bg-gray-200 rounded-lg animate-pulse" />
+        }>
+          <StakingSection />
+        </Suspense>
+      </div>
+
+      <Footer />
     </div>
   )
 }

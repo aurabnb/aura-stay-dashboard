@@ -14,6 +14,7 @@ import { CommunityGrowthMetrics } from '@/components/stats/CommunityGrowthMetric
 import { LiveBurnMetrics } from '@/components/stats/LiveBurnMetrics'
 import { PropertyShowcase } from '@/components/home/PropertyShowcase'
 import { useTreasuryData } from '@/hooks/useTreasuryData'
+import { Footer } from '@/components/Footer'
 
 export default function Home() {
   const { data, loading, error } = useTreasuryData()
@@ -304,6 +305,8 @@ export default function Home() {
           onClose={handleOnboardingClose}
         />
       )}
+
+      <Footer />
     </div>
   )
 }

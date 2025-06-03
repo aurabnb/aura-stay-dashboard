@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { PropertyShowcase } from '@/components/property/PropertyShowcase'
 
 function PropertiesLoading() {
@@ -33,19 +35,30 @@ function PropertiesLoading() {
 
 export default function PropertiesPage() {
   return (
-    <div className="container mx-auto py-8">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Properties</h1>
-          <p className="text-muted-foreground">
-            Discover unique eco-conscious stays around the world
-          </p>
+    <div className="min-h-screen bg-white">
+      <Header />
+      
+      <div className="container mx-auto py-8 pt-28">
+        <div className="space-y-6">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Properties</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover unique eco-conscious stays around the world
+            </p>
+          </div>
+          
+          <Suspense fallback={<PropertiesLoading />}>
+            <PropertyShowcase />
+          </Suspense>
         </div>
-        
-        <Suspense fallback={<PropertiesLoading />}>
-          <PropertyShowcase />
-        </Suspense>
       </div>
+
+      <Footer />
     </div>
   )
+}
+
+export const metadata = {
+  title: 'Properties | Aura Stay Dashboard',
+  description: 'Discover unique eco-conscious stays around the world.',
 } 

@@ -2,13 +2,14 @@
 
 import React from 'react'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 
 export default function BlogPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-16 pt-28">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             AURA Blog
@@ -27,6 +28,13 @@ export default function BlogPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   )
+}
+
+export const metadata = {
+  title: 'Blog | Aura Stay Dashboard',
+  description: 'Latest updates, insights, and stories from the AURA community.',
 } 

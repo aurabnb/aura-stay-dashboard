@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { TreasuryDashboard } from '@/components/TreasuryDashboard'
 import { MultisigDashboard } from '@/components/multisig/MultisigDashboard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -28,23 +30,38 @@ export const metadata = {
 
 export default function TreasuryPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Suspense fallback={<TreasuryLoadingSkeleton />}>
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overview">Treasury Overview</TabsTrigger>
-            <TabsTrigger value="multisig">Multisig Wallet</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview">
-            <TreasuryDashboard />
-          </TabsContent>
-          
-          <TabsContent value="multisig">
-            <MultisigDashboard />
-          </TabsContent>
-        </Tabs>
-      </Suspense>
+    <div className="min-h-screen bg-white">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8 pt-28">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Treasury Management
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Comprehensive treasury and multisig wallet management for the Aura Foundation
+          </p>
+        </div>
+        
+        <Suspense fallback={<TreasuryLoadingSkeleton />}>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="overview">Treasury Overview</TabsTrigger>
+              <TabsTrigger value="multisig">Multisig Wallet</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview">
+              <TreasuryDashboard />
+            </TabsContent>
+            
+            <TabsContent value="multisig">
+              <MultisigDashboard />
+            </TabsContent>
+          </Tabs>
+        </Suspense>
+      </div>
+
+      <Footer />
     </div>
   )
 } 

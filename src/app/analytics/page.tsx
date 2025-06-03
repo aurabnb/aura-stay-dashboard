@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { AdvancedAnalytics } from '@/components/analytics/AdvancedAnalytics'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -23,11 +25,24 @@ function AnalyticsLoadingSkeleton() {
 export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Header />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Analytics Dashboard
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Comprehensive insights into AURA ecosystem performance and community metrics
+          </p>
+        </div>
+        
         <Suspense fallback={<AnalyticsLoadingSkeleton />}>
           <AdvancedAnalytics />
         </Suspense>
       </div>
+
+      <Footer />
     </div>
   )
 } 

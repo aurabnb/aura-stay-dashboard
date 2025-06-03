@@ -203,6 +203,17 @@ model AnalyticsEvent {
   @@map("analytics_events")
 }
 
+model CommunityMetrics {
+  id        String   @id @default(cuid())
+  platform  String   // 'twitter', 'telegram', 'linkedin'
+  followers Int
+  growth    Float
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([platform, createdAt])
+  @@map("community_metrics")
+}
+
 // Enums
 enum ProposalCategory {
   TREASURY
