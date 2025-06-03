@@ -90,13 +90,12 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* ---------------------------- brand ----------------------------- */}
-          <Link href="/" className="flex items-center space-x-3">
+          <Link href="/">
             <img
               src="/lovable-uploads/99705421-813e-4d11-89a5-90bffaa2147a.png"
               alt="AURA logo"
               className="h-8 w-auto"
             />
-            <span className="text-xl font-bold text-gray-900">AURA</span>
           </Link>
 
           {/* ---------------------------- nav links ------------------------- */}

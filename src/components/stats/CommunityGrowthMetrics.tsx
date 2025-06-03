@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Users, MessageCircle, Heart, Share2, TrendingUp, RefreshCw, ExternalLink } from 'lucide-react';
+import { Users, MessageCircle, Heart, Share2, TrendingUp, RefreshCw, ExternalLink, Calendar } from 'lucide-react';
 
 interface CommunityMetric {
   platform: string;
@@ -24,81 +24,77 @@ interface GrowthData {
 }
 
 export function CommunityGrowthMetrics() {
-  const [loading, setLoading] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [isClient, setIsClient] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const metrics: CommunityMetric[] = [
     {
       platform: 'Twitter',
-      current: 2834,
-      growth: 12.5,
-      icon: <Share2 className="h-5 w-5" />,
+      current: 2847,
+      growth: 12.3,
+      icon: <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs">T</div>,
       color: 'text-blue-600',
-      url: 'https://twitter.com/Aura_bnb'
+      url: 'https://twitter.com/aura_bnb'
     },
     {
       platform: 'Telegram',
-      current: 1247,
-      growth: 8.3,
-      icon: <MessageCircle className="h-5 w-5" />,
+      current: 1284,
+      growth: 18.7,
+      icon: <div className="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center text-white text-xs">T</div>,
       color: 'text-cyan-600',
-      url: 'https://t.me/aurabnb'
+      url: 'https://t.me/aura_bnb'
     },
     {
       platform: 'LinkedIn',
-      current: 456,
-      growth: 15.2,
-      icon: <Users className="h-5 w-5" />,
+      current: 892,
+      growth: 9.4,
+      icon: <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs">L</div>,
       color: 'text-indigo-600',
-      url: 'https://www.linkedin.com/company/aura-bnb/'
+      url: 'https://linkedin.com/company/aura-bnb'
     }
   ];
 
   const growthData: GrowthData[] = [
-    { date: 'Jan', twitter: 1200, telegram: 800, linkedin: 200 },
-    { date: 'Feb', twitter: 1450, telegram: 920, linkedin: 250 },
-    { date: 'Mar', twitter: 1700, telegram: 1050, linkedin: 300 },
-    { date: 'Apr', twitter: 2100, telegram: 1150, linkedin: 350 },
-    { date: 'May', twitter: 2500, telegram: 1200, linkedin: 400 },
-    { date: 'Jun', twitter: 2834, telegram: 1247, linkedin: 456 }
+    { date: 'Jan', twitter: 1200, telegram: 450, linkedin: 300 },
+    { date: 'Feb', twitter: 1450, telegram: 580, linkedin: 380 },
+    { date: 'Mar', twitter: 1750, telegram: 720, linkedin: 450 },
+    { date: 'Apr', twitter: 2100, telegram: 890, linkedin: 580 },
+    { date: 'May', twitter: 2450, telegram: 1050, linkedin: 720 },
+    { date: 'Jun', twitter: 2847, telegram: 1284, linkedin: 892 }
   ];
-
-  const handleRefresh = async () => {
-    setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setLastUpdated(new Date());
-    setLoading(false);
-  };
 
   const totalFollowers = metrics.reduce((sum, metric) => sum + metric.current, 0);
   const averageGrowth = metrics.reduce((sum, metric) => sum + metric.growth, 0) / metrics.length;
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setLastUpdated(new Date());
+    setIsRefreshing(false);
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toISOString().replace('T', ' ').substr(0, 19);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Community Growth</h2>
-          <p className="text-gray-600">
-            Track our growing community across all platforms
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight">Community Growth</h2>
+          <p className="text-muted-foreground">Track our community expansion across platforms</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <TrendingUp className="h-3 w-3 mr-1" />
-            Growing
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
+        <Button onClick={handleRefresh} variant="outline" disabled={isRefreshing}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Overview Stats */}
@@ -293,7 +289,12 @@ export function CommunityGrowthMetrics() {
 
       {/* Last Updated */}
       <div className="text-center text-sm text-gray-500">
-        Last updated: {lastUpdated.toLocaleString()}
+        <div className="flex items-center justify-center gap-2">
+          <Calendar className="h-4 w-4" />
+          <span>
+            Last updated: {isClient ? formatDate(lastUpdated) : 'Loading...'}
+          </span>
+        </div>
       </div>
     </div>
   );
