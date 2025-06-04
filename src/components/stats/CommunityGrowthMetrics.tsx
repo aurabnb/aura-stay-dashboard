@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Users, MessageCircle, Heart, Share2, TrendingUp, RefreshCw, ExternalLink, Calendar, Wifi, WifiOff, Twitter, Linkedin } from 'lucide-react';
+import { Users, MessageCircle, Heart, Share2, TrendingUp, RefreshCw, ExternalLink, Calendar, Wifi, WifiOff, Twitter, Linkedin, Clock } from 'lucide-react';
 import { useSocialMetrics } from '@/hooks/useOptimizedApi';
 import { MobileCard, MobileGrid, MobileSkeleton } from '@/components/ui/mobile-optimized';
 
@@ -162,16 +162,55 @@ export function CommunityGrowthMetrics() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    // Use consistent formatting to prevent hydration issues
+    if (!mounted) return 'Loading...';
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${month}/${day}/${year} ${hours}:${minutes}`;
   };
 
-  // Loading skeleton for initial load
-  if (!mounted || isLoading) {
+  // Prevent hydration issues by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div>
+            <MobileSkeleton variant="text" className="w-48 sm:w-64 h-6 sm:h-8 mb-2" />
+            <MobileSkeleton variant="text" className="w-72 sm:w-96 h-4" />
+          </div>
+          <MobileSkeleton variant="rectangular" className="w-20 h-8 sm:h-10" />
+        </div>
+
+        {/* Summary skeleton */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-6">
+          <MobileCard className="p-4 sm:p-6">
+            <MobileSkeleton variant="text" className="w-20 h-4 mb-2" />
+            <MobileSkeleton variant="text" className="w-24 h-6 sm:h-8" />
+          </MobileCard>
+          <MobileCard className="p-4 sm:p-6">
+            <MobileSkeleton variant="text" className="w-20 h-4 mb-2" />
+            <MobileSkeleton variant="text" className="w-24 h-6 sm:h-8" />
+          </MobileCard>
+        </div>
+
+        {/* Metrics skeleton */}
+        <MobileGrid cols={{ default: 1, sm: 2, lg: 3 }} gap={4}>
+          {[...Array(3)].map((_, i) => (
+            <MetricCard key={i} metric={fallbackMetrics[i]} isLoading={true} />
+          ))}
+        </MobileGrid>
+      </div>
+    );
+  }
+
+  // Loading skeleton for API calls
+  if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6">
         {/* Header skeleton */}
@@ -213,9 +252,9 @@ export function CommunityGrowthMetrics() {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
             Community Growth
             {error ? (
-              <WifiOff className="h-5 w-5 text-red-500" title="Offline - showing cached data" />
+              <WifiOff className="h-5 w-5 text-red-500" aria-label="Offline - showing cached data" />
             ) : (
-              <Wifi className="h-5 w-5 text-green-500" title="Live data" />
+              <Wifi className="h-5 w-5 text-green-500" aria-label="Live data" />
             )}
           </h2>
           <p className="text-sm sm:text-base text-gray-600 max-w-3xl">
@@ -272,7 +311,7 @@ export function CommunityGrowthMetrics() {
       </MobileGrid>
 
       {/* Status and Last Updated */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-gray-500 space-y-2 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-gray-500 space-y-2 sm:space-y-0" suppressHydrationWarning>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500'}`} />
@@ -283,7 +322,7 @@ export function CommunityGrowthMetrics() {
           )}
         </div>
         
-        {lastFetch && (
+        {lastFetch && mounted && (
           <div className="flex items-center space-x-1">
             <Clock className="h-3 w-3" />
             <span>Updated {formatDate(lastFetch)}</span>

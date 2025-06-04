@@ -73,9 +73,13 @@ export function useOptimizedApi<T>(
   const fetchData = useCallback(async (isBackground = false) => {
     if (!url || !enabled) return
 
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
+    // Cancel previous request with complete error suppression
+    if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+      try {
+        abortControllerRef.current.abort()
+      } catch (error) {
+        // Completely suppress all abort-related errors
+      }
     }
 
     const abortController = new AbortController()
@@ -96,18 +100,27 @@ export function useOptimizedApi<T>(
 
       const result = await optimizer.fetch<T>(url, requestOptions)
 
+      // Only update state if request wasn't aborted
       if (!abortController.signal.aborted) {
         setData(result)
         setLastFetch(new Date())
         setIsStale(false)
         onSuccess?.(result)
       }
-    } catch (err) {
-      if (!abortController.signal.aborted) {
-        const error = err instanceof Error ? err : new Error('Fetch failed')
-        setError(error)
-        onError?.(error)
+    } catch (err: any) {
+      // Handle ALL abort-related scenarios silently
+      if (abortController.signal.aborted || 
+          (err && (err.name === 'AbortError' || 
+                   String(err).includes('aborted') || 
+                   String(err).includes('abort')))) {
+        // Request was cancelled - this is normal, don't treat as error
+        return
       }
+      
+      // Only handle actual errors, not cancellations
+      const error = err instanceof Error ? err : new Error('Fetch failed')
+      setError(error)
+      onError?.(error)
     } finally {
       if (!abortController.signal.aborted && !isBackground) {
         setLoading(false)
@@ -121,8 +134,11 @@ export function useOptimizedApi<T>(
       try {
         const optimizer = getOptimizer()
         await optimizer.backgroundRefresh(url, { cacheTTL: staleTime })
-      } catch (error) {
-        console.warn('Background fetch failed:', error)
+      } catch (error: any) {
+        // Suppress ALL abort-related errors in background requests
+        if (!String(error).includes('abort') && error?.name !== 'AbortError') {
+          console.warn('Background fetch failed:', error)
+        }
       }
     }
   }, [background, url, getOptimizer, staleTime])
@@ -133,8 +149,11 @@ export function useOptimizedApi<T>(
       try {
         const optimizer = getOptimizer()
         await optimizer.preload(url, { cacheTTL: staleTime })
-      } catch (error) {
-        console.warn('Preload failed:', error)
+      } catch (error: any) {
+        // Suppress ALL abort-related errors in preload requests
+        if (!String(error).includes('abort') && error?.name !== 'AbortError') {
+          console.warn('Preload failed:', error)
+        }
       }
     }
   }, [preload, url, getOptimizer, staleTime])
@@ -190,8 +209,12 @@ export function useOptimizedApi<T>(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
+      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+        try {
+          abortControllerRef.current.abort()
+        } catch (error) {
+          // Completely suppress cleanup abort errors
+        }
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current)

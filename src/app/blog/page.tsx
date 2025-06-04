@@ -32,9 +32,4 @@ export default function BlogPage() {
       <Footer />
     </div>
   )
-}
-
-export const metadata = {
-  title: 'Blog | Aura Stay Dashboard',
-  description: 'Latest updates, insights, and stories from the AURA community.',
 } 

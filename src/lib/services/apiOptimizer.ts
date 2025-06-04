@@ -118,8 +118,9 @@ class ApiOptimizer {
 
     // Request deduplication
     if (this.config.enableRequestDeduplication && !options?.skipDeduplication) {
-      if (this.requestQueue[cacheKey]) {
-        const result = await this.requestQueue[cacheKey]
+      const existingRequest = this.requestQueue[cacheKey]
+      if (existingRequest) {
+        const result = await existingRequest
         
         // Track performance for deduped request
         if (this.config.enablePerformanceTracking) {
@@ -132,6 +133,11 @@ class ApiOptimizer {
 
     // Create optimized request
     const requestPromise = this.retry(async () => {
+      // Check if request was aborted before making the call
+      if (options?.signal?.aborted) {
+        throw new Error('Request was cancelled')
+      }
+
       const requestOptions: RequestInit = {
         ...options,
         headers: {
@@ -141,33 +147,62 @@ class ApiOptimizer {
         }
       }
 
-      const response = await fetch(url, requestOptions)
-      
-      if (!response.ok) {
-        const error = new Error(`HTTP ${response.status}: ${response.statusText}`)
+      try {
+        const response = await fetch(url, requestOptions)
         
-        // Track API error
+        // Check if aborted after fetch
+        if (options?.signal?.aborted) {
+          throw new Error('Request was cancelled')
+        }
+        
+        if (!response.ok) {
+          const error = new Error(`HTTP ${response.status}: ${response.statusText}`)
+          
+          // Track API error
+          if (this.config.enablePerformanceTracking) {
+            trackError(error, url)
+            trackApiCall(url, startTime, false, cacheHit)
+          }
+          
+          throw error
+        }
+
+        const data = await response.json()
+        
+        // Check if aborted after parsing
+        if (options?.signal?.aborted) {
+          throw new Error('Request was cancelled')
+        }
+        
+        // Cache successful responses
+        if (!options?.skipCache) {
+          this.setCache(cacheKey, data, options?.cacheTTL)
+        }
+        
+        // Track successful API call
         if (this.config.enablePerformanceTracking) {
-          trackError(error, url)
+          trackApiCall(url, startTime, true, cacheHit)
+        }
+        
+        return data
+      } catch (error: any) {
+        // Handle abort signals gracefully
+        if (options?.signal?.aborted || 
+            error?.name === 'AbortError' || 
+            String(error).includes('cancelled') ||
+            String(error).includes('abort')) {
+          // Don't track cancelled requests as errors
+          throw new Error('Request was cancelled')
+        }
+        
+        // Track actual errors
+        if (this.config.enablePerformanceTracking) {
+          trackError(error instanceof Error ? error : new Error(String(error)), url)
           trackApiCall(url, startTime, false, cacheHit)
         }
         
         throw error
       }
-
-      const data = await response.json()
-      
-      // Cache successful responses
-      if (!options?.skipCache) {
-        this.setCache(cacheKey, data, options?.cacheTTL)
-      }
-      
-      // Track successful API call
-      if (this.config.enablePerformanceTracking) {
-        trackApiCall(url, startTime, true, cacheHit)
-      }
-      
-      return data
     })
 
     // Store in request queue for deduplication
@@ -178,8 +213,11 @@ class ApiOptimizer {
       requestPromise.finally(() => {
         delete this.requestQueue[cacheKey]
       }).catch(error => {
-        // Track errors from failed requests
-        if (this.config.enablePerformanceTracking) {
+        // Only track non-cancellation errors
+        if (this.config.enablePerformanceTracking && 
+            !String(error).includes('cancelled') && 
+            !String(error).includes('abort') &&
+            error?.name !== 'AbortError') {
           trackError(error instanceof Error ? error : new Error(String(error)), url)
           trackApiCall(url, startTime, false, cacheHit)
         }

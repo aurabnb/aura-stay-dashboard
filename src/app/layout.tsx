@@ -43,13 +43,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#000000" />
       </head>
-      <body className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans antialiased">
+      <body className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans antialiased" suppressHydrationWarning>
         <ClientProviders>
           <div className="relative min-h-screen">
             {/* Background Effects */}

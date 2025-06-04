@@ -102,9 +102,4 @@ export default function ContactPage() {
       <Footer />
     </div>
   )
-}
-
-export const metadata = {
-  title: 'Contact | Aura Stay Dashboard',
-  description: 'Get in touch with our team for partnerships, inquiries, or to learn more about joining the AURA community.',
 } 

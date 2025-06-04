@@ -26,7 +26,7 @@ export const CustomWalletButton: React.FC<CustomWalletButtonProps> = ({
 
   const handleWalletSelect = async (walletName: string) => {
     try {
-      select(walletName);
+      select(walletName as any); // Type assertion for wallet adapter compatibility
       setWalletOptionsOpen(false);
     } catch (error: any) {
       toast({
