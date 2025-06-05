@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { CustomWalletButton } from '@/components/wallet/CustomWalletButton';
 import { useNotificationsWithWallet } from '@/hooks/useNotifications';
+import { SearchButton } from '@/components/search/SearchButton';
 
 /* -------------------------------------------------------------------------- */
 /*                                   Header                                   */
@@ -230,6 +231,13 @@ export function Header() {
 
           {/* -------------------------- actions ----------------------------- */}
           <div className="hidden lg:flex items-center gap-4">
+            {/* Global Search */}
+            <SearchButton 
+              variant="compact" 
+              placeholder="Search properties, governance..."
+              className="w-64"
+            />
+
             <WalletSection
               connected={connected}
               publicKey={publicKey}
