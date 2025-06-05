@@ -80,7 +80,6 @@ const nextConfig = {
   ...(process.env.VERCEL && {
     trailingSlash: false,
     experimental: {
-      ...nextConfig.experimental,
       esmExternals: 'loose',
     },
   }),
