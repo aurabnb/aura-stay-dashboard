@@ -23,8 +23,8 @@
     "typescript"
   ],
   "engines": {
-    "node": ">=24.1.0",
-    "npm": ">=11.0.0"
+    "node": "22.x",
+    "npm": ">=10.0.0"
   },
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" NEXT_TELEMETRY_DISABLED=1 next dev",
