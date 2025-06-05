@@ -66,14 +66,20 @@ const navigationItems = [
 ]
 
 const dashboardMenuItems = [
+  { name: 'Main Dashboard', href: '/dashboard', description: 'Central control panel', icon: LayoutDashboard },
+  { name: 'User Dashboard', href: '/user-dashboard', description: 'Personal portfolio & activity', icon: Wallet },
   { name: 'Analytics', href: '/analytics', description: 'Advanced metrics & insights', icon: BarChart3 },
+  { name: 'Dashboard Analytics', href: '/dashboard/analytics', description: 'Detailed dashboard analytics', icon: BarChart3 },
   { name: 'Trading', href: '/dashboard/trading', description: 'DEX & market data', icon: TrendingUp },
-  { name: 'Burn Tracking', href: '/burn-tracking', description: 'Token burn & redistribution', icon: Flame },
-  { name: 'Expense Tracker', href: '/expense-tracker', description: 'Treasury expense tracking', icon: Receipt },
-  { name: 'Wallet', href: '/dashboard/wallet', description: 'Portfolio management', icon: Wallet },
   { name: 'Treasury', href: '/dashboard/treasury', description: 'Treasury monitoring', icon: PieChart },
   { name: 'Staking', href: '/dashboard/staking', description: 'Stake & earn rewards', icon: Coins },
   { name: 'Governance', href: '/dashboard/governance', description: 'DAO proposals & voting', icon: Users },
+  { name: 'Community', href: '/dashboard/community', description: 'Community engagement', icon: MessageSquare },
+  { name: 'Investment Hub', href: '/dashboard/investment', description: 'Investment opportunities', icon: TrendingUp },
+  { name: 'Wallet Management', href: '/dashboard/wallet', description: 'Portfolio management', icon: Wallet },
+  { name: 'Properties', href: '/dashboard/properties', description: 'Property management', icon: Building2 },
+  { name: 'Burn Tracking', href: '/burn-tracking', description: 'Token burn & redistribution', icon: Flame },
+  { name: 'Expense Tracker', href: '/expense-tracker', description: 'Treasury expense tracking', icon: Receipt },
 ]
 
 const propertyMenuItems = [

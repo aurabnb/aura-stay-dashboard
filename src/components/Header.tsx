@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { CustomWalletButton } from '@/components/wallet/CustomWalletButton';
+import { useNotificationsWithWallet } from '@/hooks/useNotifications';
 
 /* -------------------------------------------------------------------------- */
 /*                                   Header                                   */
@@ -25,6 +26,7 @@ export function Header() {
 
   /* ----------------------------- wallet state ------------------------------ */
   const { connected, publicKey, disconnect } = useWallet();
+  const notifications = useNotificationsWithWallet();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -235,6 +237,22 @@ export function Header() {
               openInExplorer={openInExplorer}
               disconnectWallet={disconnectWallet}
             />
+
+            {/* Notification Test Button (Development Only) */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                onClick={() => {
+                  notifications.notifySuccess(
+                    'Test Notification',
+                    'This is a test notification from the header!'
+                  )
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                title="Test Notifications"
+              >
+                🔔 Test
+              </button>
+            )}
 
             <button
               onClick={handleBuyWithFiat}
