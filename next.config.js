@@ -1,32 +1,30 @@
 // Critical polyfills - must run before any other code
 (function() {
-  // Ensure global exists
-  if (typeof global === 'undefined') {
+  // Load the polyfill script immediately
+  try {
+    require('./scripts/polyfill.js');
+  } catch (error) {
+    // Fallback polyfills if script can't be loaded
+    if (typeof global !== 'undefined') {
+      if (typeof global.self === 'undefined') {
+        global.self = global;
+      }
+      if (typeof global.window === 'undefined') {
+        global.window = global;
+      }
+      // Pre-initialize webpack chunk
+      if (!global.self.webpackChunk_N_E) {
+        global.self.webpackChunk_N_E = [];
+      }
+    }
+    
     if (typeof globalThis !== 'undefined') {
-      globalThis.global = globalThis;
-    }
-  }
-  
-  // Ensure self exists
-  if (typeof self === 'undefined') {
-    if (typeof globalThis !== 'undefined') {
-      globalThis.self = globalThis;
-    } else if (typeof global !== 'undefined') {
-      global.self = global;
-    }
-  }
-  
-  // Additional safety checks
-  if (typeof global !== 'undefined' && typeof global.self === 'undefined') {
-    global.self = global;
-  }
-  
-  if (typeof globalThis !== 'undefined') {
-    if (typeof globalThis.self === 'undefined') {
-      globalThis.self = globalThis;
-    }
-    if (typeof globalThis.window === 'undefined') {
-      globalThis.window = globalThis;
+      if (typeof globalThis.self === 'undefined') {
+        globalThis.self = globalThis;
+      }
+      if (typeof globalThis.global === 'undefined') {
+        globalThis.global = globalThis;
+      }
     }
   }
 })();
@@ -133,8 +131,11 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Remove the custom plugin as it's causing webpack runtime issues
-    // We'll use a different approach for the self reference fix
+    // Add inline polyfill plugin for server builds
+    if (isServer) {
+      const InlinePolyfillPlugin = require('./webpack-plugins/inline-polyfill-plugin');
+      config.plugins.push(new InlinePolyfillPlugin());
+    }
     
     // Development optimizations
     if (dev) {
