@@ -129,17 +129,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
       </head>
       <body className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans antialiased" suppressHydrationWarning>
-        <ErrorBoundary
-          onError={(error, errorInfo) => {
-            // Log error to monitoring service
-            console.error('Application error:', error, errorInfo)
-            
-            // In production, send to error reporting service
-            if (process.env.NODE_ENV === 'production') {
-              // Send to Sentry, LogRocket, etc.
-            }
-          }}
-        >
+        <ErrorBoundary>
           <ClientProviders>
             <div className="relative min-h-screen">
               {/* Background Effects */}

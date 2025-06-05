@@ -132,6 +132,7 @@ dev.log
 *.bak
 *.backup
 *~
+api.backup/
 
 # Cache
 .cache/

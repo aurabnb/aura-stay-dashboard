@@ -27,28 +27,32 @@ if (typeof globalThis !== 'undefined') {
 }
 
 const apiPath = path.join(process.cwd(), 'src/app/api');
-const apiBackupPath = path.join(process.cwd(), 'src/app/api.backup');
+const apiBackupPath = path.join(process.cwd(), 'api.backup');
 
 console.log('🔧 Starting static build with API route handling...');
 
 // Function to rename API folder
 function disableApiRoutes() {
   if (fs.existsSync(apiPath)) {
-    console.log('📁 Temporarily disabling API routes for static export...');
+    console.log('📁 Temporarily moving API routes outside app directory...');
+    // Ensure backup directory doesn't exist first
+    if (fs.existsSync(apiBackupPath)) {
+      fs.rmSync(apiBackupPath, { recursive: true, force: true });
+    }
     fs.renameSync(apiPath, apiBackupPath);
-    console.log('✅ API routes disabled');
+    console.log('✅ API routes moved outside app directory');
   }
 }
 
 // Function to restore API folder
 function restoreApiRoutes() {
   if (fs.existsSync(apiBackupPath)) {
-    console.log('📁 Restoring API routes...');
+    console.log('📁 Restoring API routes to app directory...');
     if (fs.existsSync(apiPath)) {
       fs.rmSync(apiPath, { recursive: true, force: true });
     }
     fs.renameSync(apiBackupPath, apiPath);
-    console.log('✅ API routes restored');
+    console.log('✅ API routes restored to src/app/api');
   }
 }
 
