@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,11 +35,41 @@ import {
 } from 'lucide-react'
 import { useWallet } from '@/hooks/enhanced-hooks'
 import { useClipboard } from '@/hooks/enhanced-hooks'
-import { WalletConnectModal } from '@/components/wallet/WalletConnectModal'
-import { PortfolioOverview } from '@/components/wallet/PortfolioOverview'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingOverlay, SkeletonStats } from '@/components/ui/loading'
-import { analytics } from '@/lib/analytics'
+
+// Dynamic imports for components that may cause SSR issues
+const WalletConnectModal = dynamic(
+  () => import('@/components/wallet/WalletConnectModal').then(mod => ({ default: mod.WalletConnectModal })),
+  { 
+    ssr: false,
+    loading: () => <div className="animate-pulse">Loading wallet modal...</div>
+  }
+)
+
+const PortfolioOverview = dynamic(
+  () => import('@/components/wallet/PortfolioOverview').then(mod => ({ default: mod.PortfolioOverview })),
+  { 
+    ssr: false,
+    loading: () => <div className="animate-pulse h-64 bg-gray-100 rounded-lg"></div>
+  }
+)
+
+// Create a safe analytics object for SSR
+let analytics: any
+if (typeof window !== 'undefined') {
+  import('@/lib/analytics').then((mod) => {
+    analytics = mod.analytics
+  })
+} else {
+  analytics = { 
+    page: () => {}, 
+    trackFeatureUsage: () => {}, 
+    trackWalletConnection: () => {}, 
+    trackError: () => {}, 
+    track: () => {} 
+  }
+}
 
 export default function UserDashboard() {
   const { connection, connect, disconnect, balance, isConnecting, isLoadingBalance } = useWallet()
@@ -49,8 +80,10 @@ export default function UserDashboard() {
 
   // Track page view
   useEffect(() => {
-    analytics.page('User Dashboard')
-    analytics.trackFeatureUsage('user_dashboard')
+    if (typeof window !== 'undefined' && analytics) {
+      analytics.page?.('User Dashboard')
+      analytics.trackFeatureUsage?.('user_dashboard')
+    }
   }, [])
 
   // Redirect to connect wallet if not connected
@@ -64,23 +97,23 @@ export default function UserDashboard() {
     try {
       await connect(walletType)
       setShowConnectModal(false)
-      analytics.trackWalletConnection(walletType, true)
+      analytics?.trackWalletConnection?.(walletType, true)
     } catch (error) {
       console.error('Wallet connection failed:', error)
-      analytics.trackWalletConnection(walletType, false)
-      analytics.trackError('Wallet connection failed', 'user_dashboard')
+      analytics?.trackWalletConnection?.(walletType, false)
+      analytics?.trackError?.('Wallet connection failed', 'user_dashboard')
     }
   }
 
   const handleDisconnect = () => {
     disconnect()
-    analytics.track('wallet_disconnected', { timestamp: Date.now() })
+    analytics?.track?.('wallet_disconnected', { timestamp: Date.now() })
   }
 
   const copyAddress = () => {
     if (connection?.address) {
       copy(connection.address)
-      analytics.track('address_copied', { timestamp: Date.now() })
+      analytics?.track?.('address_copied', { timestamp: Date.now() })
     }
   }
 

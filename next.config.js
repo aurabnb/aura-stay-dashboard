@@ -100,6 +100,15 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Load browser polyfills for SSR
+    if (isServer) {
+      try {
+        require('./src/lib/browser-polyfills');
+      } catch (e) {
+        // Polyfills file might not exist yet, ignore error
+      }
+    }
+    
     // Development optimizations
     if (dev) {
       config.optimization = {
@@ -132,8 +141,8 @@ const nextConfig = {
         assert: false,
         os: false,
         path: false,
-        buffer: false,
-        process: false,
+        buffer: require.resolve('buffer'),
+        process: require.resolve('process/browser'),
       };
       
       config.plugins.push(
@@ -142,7 +151,48 @@ const nextConfig = {
         })
       );
       
-      // Removed ProvidePlugin to avoid browserify dependencies
+      // Add global polyfills for browser APIs
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          'self': 'globalThis',
+          'global': 'globalThis',
+          'window': '(typeof window !== "undefined" ? window : globalThis)',
+          'document': '(typeof document !== "undefined" ? document : {})',
+          'navigator': '(typeof navigator !== "undefined" ? navigator : { userAgent: "Node.js" })',
+          'localStorage': '(typeof localStorage !== "undefined" ? localStorage : { getItem: () => null, setItem: () => {}, removeItem: () => {}, clear: () => {}, length: 0, key: () => null })',
+        })
+      );
+      
+      // Add ProvidePlugin for browser globals
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          global: 'global',
+          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+        })
+      );
+    }
+
+    // Server-side configuration to handle wallet adapters and browser-specific modules
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push({
+        '@solana/wallet-adapter-phantom': 'commonjs @solana/wallet-adapter-phantom',
+        '@solana/wallet-adapter-solflare': 'commonjs @solana/wallet-adapter-solflare',
+        '@solana/wallet-adapter-backpack': 'commonjs @solana/wallet-adapter-backpack',
+        '@solana/wallet-adapter-coin98': 'commonjs @solana/wallet-adapter-coin98',
+        'canvas': 'canvas',
+        'jsdom': 'jsdom',
+      });
+    }
+    
+    // Additional polyfills for server-side compilation
+    if (isServer) {
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          'self': 'global',
+        })
+      );
     }
     
     // Bundle analyzer in development (only when explicitly requested)
