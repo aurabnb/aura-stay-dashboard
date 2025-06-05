@@ -70,7 +70,11 @@ try {
   
   console.log('✅ Static build completed successfully!');
   
-  // Post-build: Patch any remaining self references
+  // Post-build: Copy routes manifest for Vercel compatibility
+  console.log('🔧 Setting up Vercel compatibility...');
+  setupVercelCompatibility();
+  
+  // Post-build: Patch any remaining self references  
   console.log('🔧 Patching generated files...');
   patchGeneratedFiles();
   
@@ -80,6 +84,37 @@ try {
 } finally {
   // Always restore API routes, even if build fails
   restoreApiRoutes();
+}
+
+// Function to setup Vercel compatibility
+function setupVercelCompatibility() {
+  try {
+    const outDir = path.join(process.cwd(), 'out');
+    const routesManifestSource = path.join(process.cwd(), 'public/routes-manifest.json');
+    const routesManifestDest = path.join(outDir, 'routes-manifest.json');
+    
+    // Ensure out directory exists
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+    
+    // Copy routes manifest if it exists
+    if (fs.existsSync(routesManifestSource)) {
+      fs.copyFileSync(routesManifestSource, routesManifestDest);
+      console.log('✅ Routes manifest copied for Vercel compatibility');
+    } else {
+      console.log('⚠️  Routes manifest not found, Vercel will use defaults');
+    }
+    
+    // Create _next directory for static assets
+    const nextDir = path.join(outDir, '_next');
+    if (!fs.existsSync(nextDir)) {
+      fs.mkdirSync(nextDir, { recursive: true });
+    }
+    
+  } catch (error) {
+    console.warn('⚠️  Failed to setup Vercel compatibility:', error.message);
+  }
 }
 
 // Function to patch generated files

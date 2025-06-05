@@ -1,0 +1,81 @@
+{
+  "version": 3,
+  "pages404": true,
+  "basePath": "",
+  "redirects": [],
+  "rewrites": [],
+  "headers": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^\\/$"
+    },
+    {
+      "page": "/admin", 
+      "regex": "^\\/admin$"
+    },
+    {
+      "page": "/analytics",
+      "regex": "^\\/analytics$"
+    },
+    {
+      "page": "/blog",
+      "regex": "^\\/blog$"
+    },
+    {
+      "page": "/burn-tracking",
+      "regex": "^\\/burn-tracking$"
+    },
+    {
+      "page": "/buy-fiat",
+      "regex": "^\\/buy-fiat$"
+    },
+    {
+      "page": "/contact",
+      "regex": "^\\/contact$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^\\/dashboard$"
+    },
+    {
+      "page": "/expense-tracker",
+      "regex": "^\\/expense-tracker$"
+    },
+    {
+      "page": "/investment-hub",
+      "regex": "^\\/investment-hub$"
+    },
+    {
+      "page": "/notion",
+      "regex": "^\\/notion$"
+    },
+    {
+      "page": "/projects",
+      "regex": "^\\/projects$"
+    },
+    {
+      "page": "/properties",
+      "regex": "^\\/properties$"
+    },
+    {
+      "page": "/roadmap",
+      "regex": "^\\/roadmap$"
+    },
+    {
+      "page": "/user-dashboard",
+      "regex": "^\\/user-dashboard$"
+    },
+    {
+      "page": "/validation",
+      "regex": "^\\/validation$"
+    },
+    {
+      "page": "/volcano-house",
+      "regex": "^\\/volcano-house$"
+    }
+  ],
+  "dynamicRoutes": [],
+  "dataRoutes": [],
+  "i18n": null
+} 
