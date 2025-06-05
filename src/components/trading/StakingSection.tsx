@@ -21,8 +21,12 @@ export function StakingSection() {
   const [stakedAmount, setStakedAmount] = useState(800) // User's staked amount
   const [stakingRewards, setStakingRewards] = useState(12.5) // User's pending rewards
   const [burnMetrics, setBurnMetrics] = useState<BurnMetrics | null>(null) // Real burn data
+  const [stakeTaxPreview, setStakeTaxPreview] = useState<any>(null)
+  const [unstakeTaxPreview, setUnstakeTaxPreview] = useState<any>(null)
+  const [rewardTaxPreview, setRewardTaxPreview] = useState<any>(null)
   const [isStaking, setIsStaking] = useState(false)
   const [isUnstaking, setIsUnstaking] = useState(false)
+  const [isCalculatingTax, setIsCalculatingTax] = useState(false)
   const { toast } = useToast()
 
   // Mock burn metrics data
@@ -35,6 +39,118 @@ export function StakingSection() {
     }
     setBurnMetrics(mockMetrics)
   }, [])
+
+  // Calculate staking tax preview
+  const calculateStakeTax = async (amount: number) => {
+    if (amount <= 0) {
+      setStakeTaxPreview(null)
+      return
+    }
+
+    setIsCalculatingTax(true)
+    try {
+      const response = await fetch('/api/admin/staking-tax', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userWallet: 'demo_wallet_123', // In production, get from connected wallet
+          amount: amount,
+          operation: 'stake'
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setStakeTaxPreview(data)
+      }
+    } catch (error) {
+      console.error('Error calculating stake tax:', error)
+    } finally {
+      setIsCalculatingTax(false)
+    }
+  }
+
+  // Calculate unstaking tax preview
+  const calculateUnstakeTax = async () => {
+    if (stakedAmount <= 0) {
+      setUnstakeTaxPreview(null)
+      return
+    }
+
+    setIsCalculatingTax(true)
+    try {
+      const response = await fetch('/api/admin/staking-tax', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userWallet: 'demo_wallet_123',
+          amount: stakedAmount,
+          operation: 'unstake'
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setUnstakeTaxPreview(data)
+      }
+    } catch (error) {
+      console.error('Error calculating unstake tax:', error)
+    } finally {
+      setIsCalculatingTax(false)
+    }
+  }
+
+  // Calculate reward claiming tax preview
+  const calculateRewardTax = async () => {
+    if (stakingRewards <= 0) {
+      setRewardTaxPreview(null)
+      return
+    }
+
+    setIsCalculatingTax(true)
+    try {
+      const response = await fetch('/api/admin/staking-tax', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userWallet: 'demo_wallet_123',
+          amount: stakingRewards,
+          operation: 'claim_rewards'
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setRewardTaxPreview(data)
+      }
+    } catch (error) {
+      console.error('Error calculating reward tax:', error)
+    } finally {
+      setIsCalculatingTax(false)
+    }
+  }
+
+  // Auto-calculate tax when stake amount changes
+  useEffect(() => {
+    if (stakeAmount && parseFloat(stakeAmount) > 0) {
+      const timer = setTimeout(() => calculateStakeTax(parseFloat(stakeAmount)), 500)
+      return () => clearTimeout(timer)
+    } else {
+      setStakeTaxPreview(null)
+    }
+  }, [stakeAmount])
+
+  // Calculate unstake tax preview when component mounts
+  useEffect(() => {
+    calculateUnstakeTax()
+    calculateRewardTax()
+  }, [stakedAmount, stakingRewards])
 
   const handleStake = async () => {
     if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
@@ -243,48 +359,131 @@ export function StakingSection() {
                   Max
                 </Button>
               </div>
+              {/* Tax Preview for Staking */}
+              {stakeTaxPreview && !stakeTaxPreview.isExempt && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
+                  <h4 className="text-sm font-semibold text-orange-800">Staking Tax Preview</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-orange-700">Stake Amount:</span>
+                      <span className="font-semibold">{stakeTaxPreview.grossAmount} AURA</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-orange-700">Tax ({stakeTaxPreview.taxRate}%):</span>
+                      <span className="font-semibold text-blue-600">-{stakeTaxPreview.taxAmount.toFixed(4)} AURA</span>
+                    </div>
+                    <div className="flex justify-between col-span-2 border-t border-orange-300 pt-2">
+                      <span className="text-orange-700 font-semibold">Net Staked:</span>
+                      <span className="font-bold text-green-600">{stakeTaxPreview.netAmount.toFixed(4)} AURA</span>
+                    </div>
+                    <div className="col-span-2 text-xs text-blue-600 bg-blue-100 rounded p-2 mt-2">
+                      💰 Tax goes to reward pool - redistributed to all stakers!
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {stakeTaxPreview?.isExempt && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">
+                    <strong>Tax Exempt:</strong> {stakeTaxPreview.exemptReason}
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-4">
                 <Button 
                   className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-urbanist"
                   onClick={handleStake}
-                  disabled={isStaking}
+                  disabled={isStaking || isCalculatingTax}
                 >
-                  {isStaking ? 'Staking...' : 'Stake AURA'}
+                  {isStaking ? 'Staking...' : isCalculatingTax ? 'Calculating...' : 'Stake AURA'}
                 </Button>
                 {stakedAmount > 0 && (
                   <Button 
                     variant="outline"
                     className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
                     onClick={handleUnstake}
-                    disabled={isUnstaking}
+                    disabled={isUnstaking || isCalculatingTax}
                   >
-                    {isUnstaking ? 'Unstaking...' : 'Unstake All'}
+                    {isUnstaking ? 'Unstaking...' : isCalculatingTax ? 'Calculating...' : 'Unstake All'}
                   </Button>
                 )}
               </div>
               {stakingRewards > 0 && (
-                <Button 
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-urbanist"
-                  onClick={handleClaimRewards}
-                >
-                  Claim Rewards ({stakingRewards.toFixed(4)} AURA)
-                </Button>
+                <>
+                  {/* Tax Preview for Rewards */}
+                  {rewardTaxPreview && !rewardTaxPreview.isExempt && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                      <h4 className="text-sm font-semibold text-blue-800">Reward Claim Tax Preview</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-blue-700">Gross Rewards:</span>
+                          <span className="font-semibold">{rewardTaxPreview.grossAmount.toFixed(4)} AURA</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-blue-700">Tax ({rewardTaxPreview.taxRate}%):</span>
+                          <span className="font-semibold text-purple-600">-{rewardTaxPreview.taxAmount.toFixed(4)} AURA</span>
+                        </div>
+                        <div className="flex justify-between col-span-2 border-t border-blue-300 pt-2">
+                          <span className="text-blue-700 font-semibold">Net Received:</span>
+                          <span className="font-bold text-green-600">{rewardTaxPreview.netAmount.toFixed(4)} AURA</span>
+                        </div>
+                        <div className="col-span-2 text-xs text-purple-600 bg-purple-100 rounded p-2 mt-2">
+                          🔄 Tax recycles back as future rewards for all stakers
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {rewardTaxPreview?.isExempt && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                      <p className="text-xs text-green-800">
+                        <strong>Tax Exempt:</strong> {rewardTaxPreview.exemptReason}
+                      </p>
+                    </div>
+                  )}
+
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-urbanist"
+                    onClick={handleClaimRewards}
+                    disabled={isCalculatingTax}
+                  >
+                    {isCalculatingTax ? 'Calculating...' : `Claim Rewards (${stakingRewards.toFixed(4)} AURA)`}
+                  </Button>
+                </>
               )}
             </div>
           </div>
 
-          {/* Revenue Split Info */}
+          {/* Tax Redistribution Info */}
           <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-4 rounded-xl border border-purple-200">
             <h4 className="font-semibold text-purple-900 mb-2 font-urbanist flex items-center gap-2">
               <Info className="h-5 w-5" />
-              How 2% Burn Redistribution Works
+              Staking Rewards + Tax Redistribution
             </h4>
-            <ul className="text-sm text-purple-800 space-y-1">
-              <li>• 2% of all buy/sell transactions are burned and redistributed to stakers</li>
-              <li>• Rewards are distributed 4 times per day proportionally to your stake</li>
-              <li>• No lock-up period - unstake anytime without penalties</li>
-              <li>• System is upgradeable for future Airbnb property payment integration</li>
-            </ul>
+            <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+              <div>
+                <span className="text-purple-700">Base APY:</span>
+                <span className="font-semibold ml-2 text-purple-900">8.0%</span>
+              </div>
+              <div>
+                <span className="text-blue-700">Tax Boost:</span>
+                <span className="font-semibold ml-2 text-blue-900">+2.4%</span>
+              </div>
+            </div>
+            <div className="bg-white/70 p-3 rounded-lg border border-purple-200 mb-3">
+              <p className="text-sm font-semibold text-purple-900 mb-2">💰 Tax Redistribution Model:</p>
+              <ul className="text-xs text-purple-800 space-y-1">
+                <li>• Stake Tax (1%) → Added to reward pool</li>
+                <li>• Unstake Tax (2%) → Added to reward pool</li>
+                <li>• Reward Tax (1.5%) → Added to reward pool</li>
+                <li>• All taxes redistributed to stakers every 6 hours</li>
+              </ul>
+            </div>
+            <p className="text-sm text-green-700 font-semibold">
+              🚀 The more people stake/unstake, the higher your rewards become!
+            </p>
           </div>
 
           {/* Live Burn Metrics */}

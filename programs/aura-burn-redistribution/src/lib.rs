@@ -8,78 +8,67 @@ declare_id!("3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe");
 pub mod aura_burn_redistribution {
     use super::*;
 
-    /// Initialize the burn redistribution program
+    /// Initialize the staking program with tax configuration
     pub fn initialize(
         ctx: Context<Initialize>,
-        burn_percentage: u16, // Basis points (200 = 2%)
         redistribution_frequency: i64, // Seconds (21600 = 6 hours)
+        stake_tax_rate: u16,           // Basis points (100 = 1%)
+        unstake_tax_rate: u16,         // Basis points (200 = 2%) 
+        reward_tax_rate: u16,          // Basis points (150 = 1.5%)
     ) -> Result<()> {
         let global_state = &mut ctx.accounts.global_state;
         global_state.authority = ctx.accounts.authority.key();
-        global_state.burn_percentage = burn_percentage;
         global_state.redistribution_frequency = redistribution_frequency;
-        global_state.total_burned = 0;
+        global_state.stake_tax_rate = stake_tax_rate;
+        global_state.unstake_tax_rate = unstake_tax_rate;
+        global_state.reward_tax_rate = reward_tax_rate;
         global_state.total_staked = 0;
+        global_state.total_tax_collected = 0;
         global_state.last_distribution = Clock::get()?.unix_timestamp;
         global_state.distribution_round = 0;
         global_state.is_paused = false;
         
         emit!(ProgramInitialized {
             authority: global_state.authority,
-            burn_percentage,
+            stake_tax_rate,
+            unstake_tax_rate,
+            reward_tax_rate,
             redistribution_frequency,
         });
 
         Ok(())
     }
 
-    /// Process a transaction with 2% burn
-    pub fn process_transaction(
-        ctx: Context<ProcessTransaction>,
-        amount: u64,
+    /// Update tax rates (only authority)
+    pub fn update_tax_rates(
+        ctx: Context<UpdateTaxRates>,
+        stake_tax_rate: u16,
+        unstake_tax_rate: u16,
+        reward_tax_rate: u16,
     ) -> Result<()> {
         let global_state = &mut ctx.accounts.global_state;
         
-        // Check if program is paused
-        require!(!global_state.is_paused, ErrorCode::ProgramPaused);
+        // Validate tax rates (max 10% = 1000 basis points)
+        require!(stake_tax_rate <= 1000, ErrorCode::TaxRateTooHigh);
+        require!(unstake_tax_rate <= 1000, ErrorCode::TaxRateTooHigh);
+        require!(reward_tax_rate <= 1000, ErrorCode::TaxRateTooHigh);
         
-        // Calculate burn amount (2% = 200 basis points)
-        let burn_amount = (amount as u128)
-            .checked_mul(global_state.burn_percentage as u128)
-            .ok_or(ErrorCode::MathOverflow)?
-            .checked_div(10000)
-            .ok_or(ErrorCode::MathOverflow)? as u64;
-
-        // Transfer tokens from user to burn pool
-        let transfer_instruction = Transfer {
-            from: ctx.accounts.user_token_account.to_account_info(),
-            to: ctx.accounts.burn_pool.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
-        };
+        global_state.stake_tax_rate = stake_tax_rate;
+        global_state.unstake_tax_rate = unstake_tax_rate;
+        global_state.reward_tax_rate = reward_tax_rate;
         
-        let transfer_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            transfer_instruction,
-        );
-        
-        token::transfer(transfer_ctx, burn_amount)?;
-
-        // Update global state
-        global_state.total_burned = global_state.total_burned
-            .checked_add(burn_amount)
-            .ok_or(ErrorCode::MathOverflow)?;
-
-        emit!(TransactionProcessed {
-            user: ctx.accounts.user.key(),
-            original_amount: amount,
-            burn_amount,
-            total_burned: global_state.total_burned,
+        emit!(TaxRatesUpdated {
+            authority: ctx.accounts.authority.key(),
+            stake_tax_rate,
+            unstake_tax_rate,
+            reward_tax_rate,
+            timestamp: Clock::get()?.unix_timestamp,
         });
 
         Ok(())
     }
 
-    /// Stake AURA tokens to earn redistribution rewards
+    /// Stake AURA tokens with tax deduction
     pub fn stake_tokens(
         ctx: Context<StakeTokens>,
         amount: u64,
@@ -90,7 +79,18 @@ pub mod aura_burn_redistribution {
         require!(!global_state.is_paused, ErrorCode::ProgramPaused);
         require!(amount > 0, ErrorCode::InvalidAmount);
 
-        // Transfer tokens from user to staking pool
+        // Calculate stake tax
+        let tax_amount = (amount as u128)
+            .checked_mul(global_state.stake_tax_rate as u128)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(10000)
+            .ok_or(ErrorCode::MathOverflow)? as u64;
+            
+        let net_stake_amount = amount
+            .checked_sub(tax_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
+
+        // Transfer total amount from user to staking pool
         let transfer_instruction = Transfer {
             from: ctx.accounts.user_token_account.to_account_info(),
             to: ctx.accounts.staking_pool.to_account_info(),
@@ -104,22 +104,29 @@ pub mod aura_burn_redistribution {
         
         token::transfer(transfer_ctx, amount)?;
 
-        // Update staking account
+        // Tax stays in staking pool for redistribution to stakers
+        // No need to transfer tax - it automatically becomes part of reward pool
+
+        // Update staking account (only net amount counts toward staking)
         staking_account.owner = ctx.accounts.user.key();
         staking_account.staked_amount = staking_account.staked_amount
-            .checked_add(amount)
+            .checked_add(net_stake_amount)
             .ok_or(ErrorCode::MathOverflow)?;
         staking_account.last_reward_claim = Clock::get()?.unix_timestamp;
-        staking_account.pending_rewards = 0;
 
         // Update global state
         global_state.total_staked = global_state.total_staked
-            .checked_add(amount)
+            .checked_add(net_stake_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
+        global_state.total_tax_collected = global_state.total_tax_collected
+            .checked_add(tax_amount)
             .ok_or(ErrorCode::MathOverflow)?;
 
         emit!(TokensStaked {
             user: ctx.accounts.user.key(),
-            amount,
+            gross_amount: amount,
+            tax_amount,
+            net_staked_amount: net_stake_amount,
             total_staked: staking_account.staked_amount,
             global_total_staked: global_state.total_staked,
         });
@@ -127,7 +134,7 @@ pub mod aura_burn_redistribution {
         Ok(())
     }
 
-    /// Unstake AURA tokens
+    /// Unstake AURA tokens with tax deduction
     pub fn unstake_tokens(
         ctx: Context<UnstakeTokens>,
         amount: u64,
@@ -139,16 +146,27 @@ pub mod aura_burn_redistribution {
         require!(amount > 0, ErrorCode::InvalidAmount);
         require!(staking_account.staked_amount >= amount, ErrorCode::InsufficientStaked);
 
+        // Calculate unstake tax
+        let tax_amount = (amount as u128)
+            .checked_mul(global_state.unstake_tax_rate as u128)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(10000)
+            .ok_or(ErrorCode::MathOverflow)? as u64;
+            
+        let net_unstake_amount = amount
+            .checked_sub(tax_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
+
         // Calculate pending rewards before unstaking
         calculate_pending_rewards(staking_account, global_state)?;
 
-        // Transfer tokens back to user
         let seeds = &[
             b"staking_pool".as_ref(),
             &[ctx.bumps.staking_pool],
         ];
         let signer = &[&seeds[..]];
 
+        // Transfer net amount back to user
         let transfer_instruction = Transfer {
             from: ctx.accounts.staking_pool.to_account_info(),
             to: ctx.accounts.user_token_account.to_account_info(),
@@ -161,7 +179,9 @@ pub mod aura_burn_redistribution {
             signer,
         );
         
-        token::transfer(transfer_ctx, amount)?;
+        token::transfer(transfer_ctx, net_unstake_amount)?;
+
+        // Tax remains in staking pool to increase reward pool for all stakers
 
         // Update staking account
         staking_account.staked_amount = staking_account.staked_amount
@@ -172,10 +192,15 @@ pub mod aura_burn_redistribution {
         global_state.total_staked = global_state.total_staked
             .checked_sub(amount)
             .ok_or(ErrorCode::MathOverflow)?;
+        global_state.total_tax_collected = global_state.total_tax_collected
+            .checked_add(tax_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
 
         emit!(TokensUnstaked {
             user: ctx.accounts.user.key(),
-            amount,
+            gross_amount: amount,
+            tax_amount,
+            net_received_amount: net_unstake_amount,
             remaining_staked: staking_account.staked_amount,
             global_total_staked: global_state.total_staked,
         });
@@ -183,7 +208,75 @@ pub mod aura_burn_redistribution {
         Ok(())
     }
 
-    /// Distribute rewards to stakers (called every 6 hours)
+    /// Claim accumulated rewards with tax deduction
+    pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
+        let global_state = &mut ctx.accounts.global_state;
+        let staking_account = &mut ctx.accounts.staking_account;
+        
+        require!(!global_state.is_paused, ErrorCode::ProgramPaused);
+        
+        // Calculate pending rewards
+        calculate_pending_rewards(staking_account, global_state)?;
+        
+        let gross_reward_amount = staking_account.pending_rewards;
+        require!(gross_reward_amount > 0, ErrorCode::NoRewardsToClaim);
+
+        // Calculate reward tax
+        let tax_amount = (gross_reward_amount as u128)
+            .checked_mul(global_state.reward_tax_rate as u128)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(10000)
+            .ok_or(ErrorCode::MathOverflow)? as u64;
+            
+        let net_reward_amount = gross_reward_amount
+            .checked_sub(tax_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
+
+        let seeds = &[
+            b"staking_pool".as_ref(),
+            &[ctx.bumps.staking_pool],
+        ];
+        let signer = &[&seeds[..]];
+
+        // Transfer net rewards to user
+        let transfer_instruction = Transfer {
+            from: ctx.accounts.staking_pool.to_account_info(),
+            to: ctx.accounts.user_token_account.to_account_info(),
+            authority: ctx.accounts.staking_pool.to_account_info(),
+        };
+        
+        let transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            transfer_instruction,
+            signer,
+        );
+        
+        token::transfer(transfer_ctx, net_reward_amount)?;
+
+        // Tax remains in staking pool to boost rewards for all stakers
+
+        // Update global tax collection
+        global_state.total_tax_collected = global_state.total_tax_collected
+            .checked_add(tax_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
+
+        // Reset pending rewards
+        staking_account.pending_rewards = 0;
+        staking_account.last_reward_claim = Clock::get()?.unix_timestamp;
+
+        emit!(RewardsClaimed {
+            user: ctx.accounts.user.key(),
+            gross_reward_amount,
+            tax_amount,
+            net_reward_amount,
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+
+        Ok(())
+    }
+
+    /// Distribute rewards to stakers (called periodically)
+    /// This includes both the natural yield AND the tax collected from all staking operations
     pub fn distribute_rewards(ctx: Context<DistributeRewards>) -> Result<()> {
         let global_state = &mut ctx.accounts.global_state;
         let clock = Clock::get()?;
@@ -195,9 +288,22 @@ pub mod aura_burn_redistribution {
         );
         require!(global_state.total_staked > 0, ErrorCode::NoStakers);
 
-        // Calculate reward per token
-        let reward_per_token = if global_state.total_staked > 0 {
-            (global_state.total_burned as u128)
+        // Calculate base reward per token (natural staking yield)
+        let base_reward_per_token = if global_state.total_staked > 0 {
+            // Base yield: 8% APY distributed proportionally
+            let time_elapsed = clock.unix_timestamp - global_state.last_distribution;
+            let annual_rate = 800; // 8% = 800 basis points
+            let seconds_per_year = 365 * 24 * 60 * 60;
+            
+            (global_state.total_staked as u128)
+                .checked_mul(annual_rate as u128)
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_mul(time_elapsed as u128)
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_div(10000)
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_div(seconds_per_year)
+                .ok_or(ErrorCode::MathOverflow)?
                 .checked_mul(1_000_000) // Scale for precision
                 .ok_or(ErrorCode::MathOverflow)?
                 .checked_div(global_state.total_staked as u128)
@@ -206,67 +312,35 @@ pub mod aura_burn_redistribution {
             0
         };
 
+        // Calculate tax bonus per token (redistributed tax rewards)
+        let tax_bonus_per_token = if global_state.total_staked > 0 && global_state.total_tax_collected > 0 {
+            (global_state.total_tax_collected as u128)
+                .checked_mul(1_000_000) // Scale for precision
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_div(global_state.total_staked as u128)
+                .ok_or(ErrorCode::MathOverflow)? as u64
+        } else {
+            0
+        };
+
+        let total_reward_per_token = base_reward_per_token + tax_bonus_per_token;
+
         // Update global state
         global_state.last_distribution = clock.unix_timestamp;
         global_state.distribution_round = global_state.distribution_round
             .checked_add(1)
             .ok_or(ErrorCode::MathOverflow)?;
         
-        // Reset burn pool for next cycle
-        global_state.total_burned = 0;
+        // Reset tax collection counter for next cycle
+        let distributed_tax = global_state.total_tax_collected;
+        global_state.total_tax_collected = 0;
 
         emit!(RewardsDistributed {
             distribution_round: global_state.distribution_round,
-            reward_per_token,
+            reward_per_token: total_reward_per_token,
+            tax_redistributed: distributed_tax,
             total_stakers: global_state.total_staked,
             timestamp: clock.unix_timestamp,
-        });
-
-        Ok(())
-    }
-
-    /// Claim accumulated rewards
-    pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
-        let global_state = &ctx.accounts.global_state;
-        let staking_account = &mut ctx.accounts.staking_account;
-        
-        require!(!global_state.is_paused, ErrorCode::ProgramPaused);
-        
-        // Calculate pending rewards
-        calculate_pending_rewards(staking_account, global_state)?;
-        
-        let reward_amount = staking_account.pending_rewards;
-        require!(reward_amount > 0, ErrorCode::NoRewardsToClaim);
-
-        // Transfer rewards from burn pool to user
-        let seeds = &[
-            b"burn_pool".as_ref(),
-            &[ctx.bumps.burn_pool],
-        ];
-        let signer = &[&seeds[..]];
-
-        let transfer_instruction = Transfer {
-            from: ctx.accounts.burn_pool.to_account_info(),
-            to: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.burn_pool.to_account_info(),
-        };
-        
-        let transfer_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            transfer_instruction,
-            signer,
-        );
-        
-        token::transfer(transfer_ctx, reward_amount)?;
-
-        // Reset pending rewards
-        staking_account.pending_rewards = 0;
-        staking_account.last_reward_claim = Clock::get()?.unix_timestamp;
-
-        emit!(RewardsClaimed {
-            user: ctx.accounts.user.key(),
-            amount: reward_amount,
-            timestamp: Clock::get()?.unix_timestamp,
         });
 
         Ok(())
@@ -306,14 +380,23 @@ fn calculate_pending_rewards(
 ) -> Result<()> {
     // Simplified reward calculation - in production, this would be more sophisticated
     let time_staked = Clock::get()?.unix_timestamp - staking_account.last_reward_claim;
-    let daily_rewards = (staking_account.staked_amount as u128)
-        .checked_mul(global_state.total_burned as u128)
+    
+    // Calculate rewards based on time and staked amount (example: 12% APY)
+    let annual_reward_rate = 1200; // 12% = 1200 basis points
+    let seconds_per_year = 365 * 24 * 60 * 60;
+    
+    let time_based_reward = (staking_account.staked_amount as u128)
+        .checked_mul(annual_reward_rate as u128)
         .ok_or(ErrorCode::MathOverflow)?
-        .checked_div(global_state.total_staked as u128)
+        .checked_mul(time_staked as u128)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(10000)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(seconds_per_year)
         .ok_or(ErrorCode::MathOverflow)? as u64;
     
     staking_account.pending_rewards = staking_account.pending_rewards
-        .checked_add(daily_rewards)
+        .checked_add(time_based_reward)
         .ok_or(ErrorCode::MathOverflow)?;
     
     Ok(())
@@ -323,10 +406,12 @@ fn calculate_pending_rewards(
 #[account]
 pub struct GlobalState {
     pub authority: Pubkey,
-    pub burn_percentage: u16,
     pub redistribution_frequency: i64,
-    pub total_burned: u64,
+    pub stake_tax_rate: u16,        // Basis points (100 = 1%)
+    pub unstake_tax_rate: u16,      // Basis points  
+    pub reward_tax_rate: u16,       // Basis points
     pub total_staked: u64,
+    pub total_tax_collected: u64,
     pub last_distribution: i64,
     pub distribution_round: u64,
     pub is_paused: bool,
@@ -359,24 +444,16 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
-pub struct ProcessTransaction<'info> {
-    #[account(mut, seeds = [b"global_state"], bump)]
-    pub global_state: Account<'info, GlobalState>,
-    
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    #[account(mut)]
-    pub user_token_account: Account<'info, TokenAccount>,
-    
+pub struct UpdateTaxRates<'info> {
     #[account(
         mut,
-        seeds = [b"burn_pool"],
-        bump
+        seeds = [b"global_state"],
+        bump,
+        has_one = authority
     )]
-    pub burn_pool: Account<'info, TokenAccount>,
+    pub global_state: Account<'info, GlobalState>,
     
-    pub token_program: Program<'info, Token>,
+    pub authority: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -439,16 +516,8 @@ pub struct UnstakeTokens<'info> {
 }
 
 #[derive(Accounts)]
-pub struct DistributeRewards<'info> {
-    #[account(mut, seeds = [b"global_state"], bump)]
-    pub global_state: Account<'info, GlobalState>,
-    
-    pub authority: Signer<'info>,
-}
-
-#[derive(Accounts)]
 pub struct ClaimRewards<'info> {
-    #[account(seeds = [b"global_state"], bump)]
+    #[account(mut, seeds = [b"global_state"], bump)]
     pub global_state: Account<'info, GlobalState>,
     
     #[account(
@@ -466,12 +535,20 @@ pub struct ClaimRewards<'info> {
     
     #[account(
         mut,
-        seeds = [b"burn_pool"],
+        seeds = [b"staking_pool"],
         bump
     )]
-    pub burn_pool: Account<'info, TokenAccount>,
+    pub staking_pool: Account<'info, TokenAccount>,
     
     pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct DistributeRewards<'info> {
+    #[account(mut, seeds = [b"global_state"], bump)]
+    pub global_state: Account<'info, GlobalState>,
+    
+    pub authority: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -504,22 +581,27 @@ pub struct ResumeProgram<'info> {
 #[event]
 pub struct ProgramInitialized {
     pub authority: Pubkey,
-    pub burn_percentage: u16,
+    pub stake_tax_rate: u16,
+    pub unstake_tax_rate: u16,
+    pub reward_tax_rate: u16,
     pub redistribution_frequency: i64,
 }
 
 #[event]
-pub struct TransactionProcessed {
-    pub user: Pubkey,
-    pub original_amount: u64,
-    pub burn_amount: u64,
-    pub total_burned: u64,
+pub struct TaxRatesUpdated {
+    pub authority: Pubkey,
+    pub stake_tax_rate: u16,
+    pub unstake_tax_rate: u16,
+    pub reward_tax_rate: u16,
+    pub timestamp: i64,
 }
 
 #[event]
 pub struct TokensStaked {
     pub user: Pubkey,
-    pub amount: u64,
+    pub gross_amount: u64,
+    pub tax_amount: u64,
+    pub net_staked_amount: u64,
     pub total_staked: u64,
     pub global_total_staked: u64,
 }
@@ -527,23 +609,28 @@ pub struct TokensStaked {
 #[event]
 pub struct TokensUnstaked {
     pub user: Pubkey,
-    pub amount: u64,
+    pub gross_amount: u64,
+    pub tax_amount: u64,
+    pub net_received_amount: u64,
     pub remaining_staked: u64,
     pub global_total_staked: u64,
+}
+
+#[event]
+pub struct RewardsClaimed {
+    pub user: Pubkey,
+    pub gross_reward_amount: u64,
+    pub tax_amount: u64,
+    pub net_reward_amount: u64,
+    pub timestamp: i64,
 }
 
 #[event]
 pub struct RewardsDistributed {
     pub distribution_round: u64,
     pub reward_per_token: u64,
+    pub tax_redistributed: u64,
     pub total_stakers: u64,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct RewardsClaimed {
-    pub user: Pubkey,
-    pub amount: u64,
     pub timestamp: i64,
 }
 
@@ -576,4 +663,6 @@ pub enum ErrorCode {
     NoStakers,
     #[msg("No rewards to claim")]
     NoRewardsToClaim,
+    #[msg("Tax rate too high (max 10%)")]
+    TaxRateTooHigh,
 } 

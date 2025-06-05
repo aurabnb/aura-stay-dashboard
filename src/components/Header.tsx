@@ -149,6 +149,13 @@ export function Header() {
                   >
                     Expense Tracker
                   </Link>
+                  <hr className="border-gray-200 my-2" />
+                  <Link
+                    href="/admin"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 font-semibold"
+                  >
+                    🔧 Admin Dashboard
+                  </Link>
                 </div>
               )}
             </div>
@@ -300,6 +307,14 @@ export function Header() {
                 onClick={() => setMobileOpen(false)}
               >
                 Contact
+              </Link>
+              <hr className="border-gray-200 my-2" />
+              <Link
+                href="/admin"
+                className="block text-sm font-medium text-orange-600"
+                onClick={() => setMobileOpen(false)}
+              >
+                🔧 Admin Dashboard
               </Link>
 
               <div className="pt-4 border-t border-gray-200 space-y-3">

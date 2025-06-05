@@ -135,7 +135,8 @@ class ApiOptimizer {
     const requestPromise = this.retry(async () => {
       // Check if request was aborted before making the call
       if (options?.signal?.aborted) {
-        throw new Error('Request was cancelled')
+        console.warn('Request aborted before fetch:', url)
+        return null as T
       }
 
       const requestOptions: RequestInit = {
@@ -152,7 +153,8 @@ class ApiOptimizer {
         
         // Check if aborted after fetch
         if (options?.signal?.aborted) {
-          throw new Error('Request was cancelled')
+          console.warn('Request aborted after fetch:', url)
+          return null as T
         }
         
         if (!response.ok) {
@@ -171,7 +173,8 @@ class ApiOptimizer {
         
         // Check if aborted after parsing
         if (options?.signal?.aborted) {
-          throw new Error('Request was cancelled')
+          console.warn('Request aborted after parsing:', url)
+          return null as T
         }
         
         // Cache successful responses
@@ -192,7 +195,8 @@ class ApiOptimizer {
             String(error).includes('cancelled') ||
             String(error).includes('abort')) {
           // Don't track cancelled requests as errors
-          throw new Error('Request was cancelled')
+          console.warn('Request cancelled gracefully:', url)
+          return null as T
         }
         
         // Track actual errors

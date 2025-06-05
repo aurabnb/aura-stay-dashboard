@@ -6,6 +6,7 @@ import TradePanel from './TradePanel'
 import JupiterPriceAPI from './JupiterPriceAPI'
 import JupiterSwapWidget from './JupiterSwapWidget'
 import JupiterAdvancedSwap from './JupiterAdvancedSwap'
+import { EnhancedSwapWidget } from './EnhancedSwapWidget'
 import PriceChart from './PriceChart'
 import EnhancedTokenList from './EnhancedTokenList'
 import AdvancedPortfolioTracker from './AdvancedPortfolioTracker'
@@ -178,7 +179,7 @@ const EnhancedTradingDashboard = () => {
             </div>
             
             <div className="space-y-8">
-              <JupiterAdvancedSwap />
+              <EnhancedSwapWidget />
               <JupiterPriceAPI />
             </div>
           </div>
