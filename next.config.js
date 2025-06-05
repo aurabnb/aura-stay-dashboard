@@ -1,7 +1,35 @@
-// Global polyfill for self to prevent SSR issues
-if (typeof global !== 'undefined' && typeof self === 'undefined') {
-  global.self = global;
-}
+// Critical polyfills - must run before any other code
+(function() {
+  // Ensure global exists
+  if (typeof global === 'undefined') {
+    if (typeof globalThis !== 'undefined') {
+      globalThis.global = globalThis;
+    }
+  }
+  
+  // Ensure self exists
+  if (typeof self === 'undefined') {
+    if (typeof globalThis !== 'undefined') {
+      globalThis.self = globalThis;
+    } else if (typeof global !== 'undefined') {
+      global.self = global;
+    }
+  }
+  
+  // Additional safety checks
+  if (typeof global !== 'undefined' && typeof global.self === 'undefined') {
+    global.self = global;
+  }
+  
+  if (typeof globalThis !== 'undefined') {
+    if (typeof globalThis.self === 'undefined') {
+      globalThis.self = globalThis;
+    }
+    if (typeof globalThis.window === 'undefined') {
+      globalThis.window = globalThis;
+    }
+  }
+})();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -105,6 +133,8 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Remove the custom plugin as it's causing webpack runtime issues
+    // We'll use a different approach for the self reference fix
     
     // Development optimizations
     if (dev) {
