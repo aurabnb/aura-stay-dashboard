@@ -189,6 +189,35 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Ultra-minimal configuration for static export
+    if (process.env.STATIC_EXPORT) {
+      console.log('🔧 Using minimal webpack config for static export');
+      
+      // Skip all server-side webpack modifications for static export
+      if (isServer) {
+        return config;
+      }
+      
+      // Minimal client-side fallbacks only
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+      
+      return config;
+    }
+    
     // Simplified configuration for Vercel deployment
     if (process.env.VERCEL) {
       // Minimal webpack changes for Vercel
@@ -376,8 +405,12 @@ const nextConfig = {
   
   // Experimental features optimized for Node.js 24
   experimental: {
-    // Disable features that might cause SSR issues
-    ...(process.env.VERCEL ? {
+    // Static export configuration
+    ...(process.env.STATIC_EXPORT ? {
+      // Minimal config for static export
+      optimizeCss: false,
+      webpackBuildWorker: false,
+    } : process.env.VERCEL ? {
       // Minimal config for Vercel
       optimizeCss: false,
       webpackBuildWorker: false,
