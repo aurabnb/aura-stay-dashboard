@@ -13,8 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { CustomWalletButton } from '@/components/wallet/CustomWalletButton';
-import { useNotificationsWithWallet } from '@/hooks/useNotifications';
-import { SearchButton } from '@/components/search/SearchButton';
+// import { SearchButton } from '@/components/search/SearchButton'; // Temporarily disabled for SSG
 
 /* -------------------------------------------------------------------------- */
 /*                                   Header                                   */
@@ -27,11 +26,27 @@ export function Header() {
 
   /* ----------------------------- wallet state ------------------------------ */
   const { connected, publicKey, disconnect } = useWallet();
-  const notifications = useNotificationsWithWallet();
+  const [mounted, setMounted] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+
+  // Initialize after mount to avoid SSR issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Mock notifications for SSR
+  const mockNotifications = {
+    notifySuccess: () => {},
+    notifyError: () => {},
+    notifyInfo: () => {},
+    notifyWarning: () => {},
+  };
+
+  // Use mock during SSR, real notifications after mount
+  const notifications = mockNotifications;
 
   /* ----------------------- wallet connect helpers ------------------------- */
   const disconnectWallet = async () => {
@@ -231,12 +246,7 @@ export function Header() {
 
           {/* -------------------------- actions ----------------------------- */}
           <div className="hidden lg:flex items-center gap-4">
-            {/* Global Search */}
-            <SearchButton 
-              variant="compact" 
-              placeholder="Search properties, governance..."
-              className="w-64"
-            />
+            {/* Global Search - temporarily disabled for SSG build */}
 
             <WalletSection
               connected={connected}
@@ -246,21 +256,7 @@ export function Header() {
               disconnectWallet={disconnectWallet}
             />
 
-            {/* Notification Test Button (Development Only) */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={() => {
-                  notifications.notifySuccess(
-                    'Test Notification',
-                    'This is a test notification from the header!'
-                  )
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                title="Test Notifications"
-              >
-                🔔 Test
-              </button>
-            )}
+            {/* Notification Test Button temporarily disabled for SSG */}
 
             <button
               onClick={handleBuyWithFiat}
