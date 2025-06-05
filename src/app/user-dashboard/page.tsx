@@ -35,7 +35,7 @@ import {
   Flame,
   Layers
 } from 'lucide-react'
-import { useWallet } from '@/hooks/enhanced-hooks'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useClipboard } from '@/hooks/enhanced-hooks'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingOverlay, SkeletonStats } from '@/components/ui/loading'
@@ -47,6 +47,12 @@ const WalletConnectModal = dynamic(
     ssr: false,
     loading: () => <div className="animate-pulse">Loading wallet modal...</div>
   }
+)
+
+// Alternative: Use standard Solana wallet button  
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then(mod => ({ default: mod.WalletMultiButton })),
+  { ssr: false }
 )
 
 const PortfolioOverview = dynamic(
@@ -74,11 +80,12 @@ if (typeof window !== 'undefined') {
 }
 
 export default function UserDashboard() {
-  const { connection, connect, disconnect, balance, isConnecting, isLoadingBalance } = useWallet()
+  const { connected, publicKey, disconnect, wallet, connecting, select, wallets } = useWallet()
   const { copy, isCopied } = useClipboard()
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [hideBalances, setHideBalances] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  const [isLoadingBalance] = useState(false) // TODO: Implement actual balance loading
 
   // Track page view
   useEffect(() => {
@@ -88,16 +95,30 @@ export default function UserDashboard() {
     }
   }, [])
 
-  // Redirect to connect wallet if not connected
+  // Show connect modal if not connected (but only after component mounts)
   useEffect(() => {
-    if (!connection?.isConnected) {
+    if (!connected) {
       setShowConnectModal(true)
+    } else {
+      setShowConnectModal(false)
     }
-  }, [connection])
+  }, [connected])
 
   const handleWalletConnect = async (walletType: string) => {
     try {
-      await connect(walletType)
+      // Map wallet type to actual wallet name
+      const walletNameMap: Record<string, string> = {
+        'phantom': 'Phantom',
+        'solflare': 'Solflare', 
+        'backpack': 'Backpack',
+        'coin98': 'Coin98'
+      }
+      
+      const walletName = walletNameMap[walletType]
+      if (walletName) {
+        select(walletName as any)
+      }
+      
       setShowConnectModal(false)
       analytics?.trackWalletConnection?.(walletType, true)
     } catch (error) {
@@ -113,17 +134,18 @@ export default function UserDashboard() {
   }
 
   const copyAddress = () => {
-    if (connection?.address) {
-      copy(connection.address)
+    if (publicKey) {
+      copy(publicKey.toString())
       analytics?.track?.('address_copied', { timestamp: Date.now() })
     }
   }
 
   const formatAddress = (address: string) => {
+    if (!address) return ''
     return `${address.slice(0, 4)}...${address.slice(-4)}`
   }
 
-  if (!connection?.isConnected) {
+  if (!connected) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <Header />
@@ -131,7 +153,7 @@ export default function UserDashboard() {
           isOpen={showConnectModal}
           onClose={() => setShowConnectModal(false)}
           onConnect={handleWalletConnect}
-          isConnecting={isConnecting}
+          isConnecting={connecting}
         />
         
         {/* Landing prompt for non-connected users */}
@@ -174,7 +196,7 @@ export default function UserDashboard() {
               <div className="flex items-center space-x-4">
                 <h1 className="text-2xl font-bold text-gray-900">AURA Dashboard</h1>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {connection.walletType?.charAt(0).toUpperCase() + connection.walletType?.slice(1)}
+                  {wallet?.adapter?.name || 'Wallet'}
                 </Badge>
               </div>
               
@@ -183,7 +205,7 @@ export default function UserDashboard() {
                 <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="text-sm font-medium">
-                    {formatAddress(connection.address)}
+                    {formatAddress(publicKey?.toString() || '')}
                   </span>
                   <Button
                     variant="ghost"
