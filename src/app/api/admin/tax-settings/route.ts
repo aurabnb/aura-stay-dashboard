@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Received settings update:', body)
 
     // Validate required fields
-    const requiredFields = ['swapTaxRate', 'buyTaxRate', 'sellTaxRate', 'stakeTaxRate', 'unstakeTaxRate', 'rewardTaxRate', 'taxWalletAddress']
+    const requiredFields: (keyof TaxSettings)[] = ['swapTaxRate', 'buyTaxRate', 'sellTaxRate', 'stakeTaxRate', 'unstakeTaxRate', 'rewardTaxRate', 'taxWalletAddress']
     for (const field of requiredFields) {
       if (body[field] === undefined || body[field] === null) {
         return NextResponse.json(

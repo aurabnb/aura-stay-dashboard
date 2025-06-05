@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Staking operation details:', body)
 
     // Validate required fields
-    const requiredFields = ['userWallet', 'amount', 'operation']
+    const requiredFields: (keyof StakingTaxRequest)[] = ['userWallet', 'amount', 'operation']
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(

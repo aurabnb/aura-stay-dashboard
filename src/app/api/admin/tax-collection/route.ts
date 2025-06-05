@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Swap details:', body)
 
     // Validate required fields
-    const requiredFields = ['userWallet', 'fromToken', 'toToken', 'swapAmount', 'tradingPair', 'transactionType']
+    const requiredFields: (keyof SwapTaxRequest)[] = ['userWallet', 'fromToken', 'toToken', 'swapAmount', 'tradingPair', 'transactionType']
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
