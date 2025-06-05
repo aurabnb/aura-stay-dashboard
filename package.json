@@ -31,6 +31,7 @@
     "dev:fast": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" NEXT_TELEMETRY_DISABLED=1 GENERATE_SOURCEMAP=false next dev",
     "dev:turbo": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" NEXT_TELEMETRY_DISABLED=1 next dev --turbo",
     "build": "cross-env NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=\"--max-old-space-size=8192 --require ./scripts/polyfill.js\" next build && node scripts/patch-vendors.js",
+    "build:vercel": "cross-env NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=\"--max-old-space-size=4096 --require ./scripts/polyfill.js\" SKIP_ENV_VALIDATION=true next build",
     "build:analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",

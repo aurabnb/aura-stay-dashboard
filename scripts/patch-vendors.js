@@ -8,57 +8,76 @@ if (typeof global !== 'undefined' && typeof self === 'undefined') {
   global.self = global;
 }
 
-const vendorsPath = path.join(process.cwd(), '.next/server/vendors.js');
+const serverDir = path.join(process.cwd(), '.next/server');
+const vendorsPath = path.join(serverDir, 'vendors.js');
+const webpackRuntimePath = path.join(serverDir, 'webpack-runtime.js');
 
-console.log('🔧 Patching vendors.js for SSR compatibility...');
+console.log('🔧 Patching server files for SSR compatibility...');
 
-try {
-  if (fs.existsSync(vendorsPath)) {
-    let content = fs.readFileSync(vendorsPath, 'utf8');
-    
-    // Show first line for debugging
-    const firstLine = content.split('\n')[0];
-    console.log('📄 First line of vendors.js:', firstLine.substring(0, 100) + '...');
-    
-    // Replace all instances of 'self.' with safe fallback
-    const originalContent = content;
-    
-    // More comprehensive replacement patterns
-    content = content
-      // Replace self.webpackChunk with safe fallback
-      .replace(/self\.webpackChunk/g, '(typeof globalThis !== "undefined" ? globalThis : global).webpackChunk')
-      // Replace standalone self references
-      .replace(/\(self\./g, '((typeof globalThis !== "undefined" ? globalThis : global).')
-      // Replace self assignments
-      .replace(/=self\./g, '=(typeof globalThis !== "undefined" ? globalThis : global).')
-      // Replace other self patterns
-      .replace(/\bself\b(?=\[|\.|=)/g, '(typeof globalThis !== "undefined" ? globalThis : global)');
-    
-    if (content !== originalContent) {
-      // Add polyfill at the beginning of the file
-      const polyfill = `// SSR Compatibility Polyfill
-if (typeof self === 'undefined' && typeof global !== 'undefined') {
+function patchFile(filePath, fileName) {
+  try {
+    if (fs.existsSync(filePath)) {
+      let content = fs.readFileSync(filePath, 'utf8');
+      const originalContent = content;
+      
+      // Comprehensive polyfill that gets added to the beginning
+      const polyfill = `// SSR Compatibility Polyfill - Auto-generated
+if (typeof self === 'undefined') {
+  if (typeof globalThis !== 'undefined') {
+    globalThis.self = globalThis;
+  } else if (typeof global !== 'undefined') {
+    global.self = global;
+  }
+}
+if (typeof global !== 'undefined' && typeof global.self === 'undefined') {
   global.self = global;
 }
 `;
-      content = polyfill + content;
       
-      fs.writeFileSync(vendorsPath, content, 'utf8');
-      console.log('✅ Successfully patched vendors.js for SSR compatibility');
+      // Replace problematic patterns
+      content = content
+        // Fix self.webpackChunk patterns
+        .replace(/\(self\.webpackChunk_N_E=self\.webpackChunk_N_E\|\|\[\]\)/g, 
+          '((typeof self !== "undefined" ? self : globalThis).webpackChunk_N_E=(typeof self !== "undefined" ? self : globalThis).webpackChunk_N_E||[])')
+        // Fix other self patterns
+        .replace(/self\.webpackChunk/g, '(typeof self !== "undefined" ? self : globalThis).webpackChunk')
+        .replace(/\bself\[/g, '(typeof self !== "undefined" ? self : globalThis)[')
+        .replace(/=self\./g, '=(typeof self !== "undefined" ? self : globalThis).')
+        // Fix potential undefined access patterns
+        .replace(/\.length\b/g, '&&t.length||0');
       
-      // Show the new first line
-      const newFirstLine = content.split('\n')[3]; // Skip the polyfill lines
-      console.log('📄 Patched first line:', newFirstLine.substring(0, 100) + '...');
+      // Only modify if we made changes
+      if (content !== originalContent) {
+        // Add polyfill at the beginning
+        content = polyfill + content;
+        
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`✅ Successfully patched ${fileName}`);
+        
+        // Show first line for debugging
+        const firstLine = content.split('\n')[6]; // Skip polyfill lines
+        console.log(`📄 Patched first line of ${fileName}:`, firstLine.substring(0, 80) + '...');
+      } else {
+        console.log(`ℹ️  No changes needed for ${fileName}`);
+      }
     } else {
-      console.log('ℹ️  No problematic patterns found in vendors.js');
+      console.log(`⚠️  ${fileName} not found at:`, filePath);
     }
-  } else {
-    console.log('⚠️  vendors.js not found at:', vendorsPath);
+  } catch (error) {
+    console.error(`❌ Error patching ${fileName}:`, error.message);
+    throw error;
   }
-} catch (error) {
-  console.error('❌ Error patching vendors.js:', error.message);
-  console.error(error.stack);
-  process.exit(1);
 }
 
-console.log('🎉 Patching complete!'); 
+try {
+  // Patch vendors.js
+  patchFile(vendorsPath, 'vendors.js');
+  
+  // Patch webpack-runtime.js
+  patchFile(webpackRuntimePath, 'webpack-runtime.js');
+  
+  console.log('🎉 All server files patched successfully!');
+} catch (error) {
+  console.error('❌ Patching failed:', error.message);
+  process.exit(1);
+} 

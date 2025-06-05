@@ -33,8 +33,17 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Output configuration for Docker deployment
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Output configuration for production deployment
+  output: process.env.VERCEL ? undefined : (process.env.NODE_ENV === 'production' ? 'standalone' : undefined),
+  
+  // Disable problematic features during Vercel build
+  ...(process.env.VERCEL && {
+    trailingSlash: false,
+    experimental: {
+      ...nextConfig.experimental,
+      esmExternals: 'loose',
+    },
+  }),
   
   // Performance optimizations
   compress: true,
@@ -131,11 +140,8 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Add inline polyfill plugin for server builds
-    if (isServer) {
-      const InlinePolyfillPlugin = require('./webpack-plugins/inline-polyfill-plugin');
-      config.plugins.push(new InlinePolyfillPlugin());
-    }
+    // Remove webpack plugin to avoid compilation issues
+    // Polyfills are now handled via --require flag and post-build patches
     
     // Development optimizations
     if (dev) {
