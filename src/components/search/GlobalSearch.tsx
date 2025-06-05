@@ -253,8 +253,8 @@ export function GlobalSearch({ isOpen, onClose, placeholder = "Search everything
 
         return { ...item, relevanceScore: score }
       })
-      .filter(item => item.relevanceScore > 0)
-      .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+      .filter(item => item.relevanceScore! > 0)
+      .sort((a, b) => b.relevanceScore! - a.relevanceScore!)
       .slice(0, maxResults)
 
     return results
@@ -457,7 +457,7 @@ export function GlobalSearch({ isOpen, onClose, placeholder = "Search everything
                       </div>
                       
                       {results.map((result, index) => {
-                        const globalIndex = searchResults.indexOf(result)
+                        const globalIndex = searchResults.findIndex(r => r.id === result.id)
                         const isSelected = globalIndex === selectedIndex
                         
                         return (
