@@ -23,10 +23,12 @@ const nextConfig = {
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 31536000, // 1 year
-    dangerouslyAllowSVG: false,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    domains: ['localhost', 'aurabnb.com', 'lovable-uploads'],
+    dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    domains: ['api.coingecko.com', 'assets.coingecko.com'],
+    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
   },
   
   // Security headers (only in production to speed up development)
@@ -45,16 +47,32 @@ const nextConfig = {
               value: 'nosniff',
             },
             {
-              key: 'X-XSS-Protection',
-              value: '1; mode=block',
-            },
-            {
               key: 'Referrer-Policy',
               value: 'strict-origin-when-cross-origin',
             },
             {
               key: 'Permissions-Policy',
-              value: 'geolocation=(), microphone=(), camera=()',
+              value: 'camera=(), microphone=(), geolocation=()',
+            },
+            {
+              key: 'X-XSS-Protection',
+              value: '1; mode=block',
+            },
+            {
+              key: 'Strict-Transport-Security',
+              value: 'max-age=31536000; includeSubDomains',
+            },
+            {
+              key: 'Content-Security-Policy',
+              value: [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live",
+                "style-src 'self' 'unsafe-inline'",
+                "img-src 'self' data: https: blob:",
+                "font-src 'self' data:",
+                "connect-src 'self' https: wss:",
+                "frame-src 'self' https:",
+              ].join('; '),
             },
           ],
         },
@@ -81,7 +99,7 @@ const nextConfig = {
   }),
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
-  webpack: (config, { isServer, webpack, dev }) => {
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Development optimizations
     if (dev) {
       config.optimization = {
@@ -107,11 +125,15 @@ const nextConfig = {
         tls: false,
         crypto: require.resolve("crypto-browserify"),
         stream: require.resolve("stream-browserify"),
+        url: require.resolve('url'),
+        zlib: require.resolve("browserify-zlib"),
+        http: require.resolve('stream-http'),
+        https: require.resolve('https-browserify'),
+        assert: require.resolve("assert"),
+        os: require.resolve('os-browserify'),
+        path: require.resolve('path-browserify'),
         buffer: require.resolve("buffer"),
         process: require.resolve("process/browser"),
-        zlib: require.resolve("browserify-zlib"),
-        assert: require.resolve("assert"),
-        util: require.resolve("util"),
       };
       
       config.plugins.push(
@@ -139,6 +161,34 @@ const nextConfig = {
       );
     }
     
+    // Optimize chunking strategy
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: 10,
+            reuseExistingChunk: true,
+          },
+          solana: {
+            test: /[\\/]node_modules[\\/](@solana|@coral-xyz)[\\/]/,
+            name: 'solana',
+            priority: 20,
+            reuseExistingChunk: true,
+          },
+          ui: {
+            test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
+            name: 'ui',
+            priority: 15,
+            reuseExistingChunk: true,
+          },
+        },
+      },
+    };
+    
     return config;
   },
   
@@ -146,12 +196,27 @@ const nextConfig = {
   env: {
     ANCHOR_PROVIDER_URL: process.env.ANCHOR_PROVIDER_URL || "http://127.0.0.1:8899",
     ANCHOR_WALLET: process.env.ANCHOR_WALLET || "~/.config/solana/id.json",
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
   // Experimental features optimized for Node.js 24
   experimental: {
-    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+    optimizeCss: true,
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      'recharts',
+      'framer-motion'
+    ],
     webpackBuildWorker: true,
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   
   // Turbopack configuration (stable in Next.js 15) - disabled for now to improve startup time
@@ -169,7 +234,7 @@ const nextConfig = {
     async redirects() {
       return [
         {
-          source: '/dashboard',
+          source: '/home',
           destination: '/',
           permanent: true,
         },
@@ -200,6 +265,29 @@ const nextConfig = {
       },
     },
   }),
+  
+  // Compression and Caching
+  poweredByHeader: false,
+  
+  // Asset Optimization
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/assets' : '',
+  
+  // Redirect and Rewrites
+  async rewrites() {
+    return [
+      {
+        source: '/api/health',
+        destination: '/api/health',
+      },
+    ];
+  },
+  
+  // Logging
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
 };
 
 module.exports = nextConfig;
