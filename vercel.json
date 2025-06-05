@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": ".next",
+  "buildCommand": "npm run build:static",
+  "outputDirectory": "out",
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["iad1", "sfo1"],
@@ -15,7 +15,7 @@
       "NODE_OPTIONS": "--max-old-space-size=4096",
       "FORCE_GLOBAL_POLYFILLS": "true",
       "SKIP_ENV_VALIDATION": "true",
-      "VERCEL": "1"
+      "STATIC_EXPORT": "1"
     }
   },
   "functions": {

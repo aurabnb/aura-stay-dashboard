@@ -74,7 +74,13 @@ const nextConfig = {
   reactStrictMode: true,
   
   // Output configuration for production deployment
-  output: process.env.VERCEL ? undefined : (process.env.NODE_ENV === 'production' ? 'standalone' : undefined),
+  output: process.env.STATIC_EXPORT ? 'export' : (process.env.VERCEL ? undefined : (process.env.NODE_ENV === 'production' ? 'standalone' : undefined)),
+  
+  // Configuration for static export
+  ...(process.env.STATIC_EXPORT && {
+    trailingSlash: true, // Required for static export
+    skipTrailingSlashRedirect: true,
+  }),
   
   // Disable problematic features during Vercel build
   ...(process.env.VERCEL && {
@@ -101,13 +107,17 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    domains: ['localhost', 'aurabnb.com', 'lovable-uploads'],
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
+    ...(process.env.STATIC_EXPORT ? {
+      unoptimized: true, // Required for static export
+    } : {
+      formats: ['image/webp', 'image/avif'],
+      deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+      imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+      domains: ['localhost', 'aurabnb.com', 'lovable-uploads'],
+      dangerouslyAllowSVG: true,
+      contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+      minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
+    }),
   },
   
   // Security headers (only in production to speed up development)
@@ -179,10 +189,37 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Remove webpack plugin to avoid compilation issues
-    // Polyfills are now handled via --require flag and post-build patches
+    // Simplified configuration for Vercel deployment
+    if (process.env.VERCEL) {
+      // Minimal webpack changes for Vercel
+      if (!isServer) {
+        config.resolve.fallback = {
+          ...config.resolve.fallback,
+          fs: false,
+          net: false,
+          tls: false,
+          crypto: false,
+          stream: false,
+          url: false,
+          zlib: false,
+          http: false,
+          https: false,
+          assert: false,
+          os: false,
+          path: false,
+        };
+      }
+      
+      // Simple externals for server
+      if (isServer) {
+        config.externals = config.externals || [];
+        config.externals.push('@solana/wallet-adapter');
+      }
+      
+      return config;
+    }
     
-    // Development optimizations
+    // Full configuration for local development
     if (dev) {
       config.optimization = {
         ...config.optimization,
@@ -339,22 +376,23 @@ const nextConfig = {
   
   // Experimental features optimized for Node.js 24
   experimental: {
-    optimizeCss: true,
-    optimizePackageImports: [
-      'lucide-react',
-      '@radix-ui/react-icons',
-      'recharts',
-      'framer-motion'
-    ],
-    webpackBuildWorker: true,
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
+    // Disable features that might cause SSR issues
+    ...(process.env.VERCEL ? {
+      // Minimal config for Vercel
+      optimizeCss: false,
+      webpackBuildWorker: false,
+      esmExternals: 'loose',
+    } : {
+      // Full config for local development
+      optimizeCss: true,
+      optimizePackageImports: [
+        'lucide-react',
+        '@radix-ui/react-icons',
+        'recharts',
+        'framer-motion'
+      ],
+      webpackBuildWorker: true,
+    }),
   },
   
   // Turbopack configuration (stable in Next.js 15) - disabled for now to improve startup time
