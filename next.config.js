@@ -1,30 +1,70 @@
 // Critical polyfills - must run before any other code
 (function() {
-  // Load the polyfill script immediately
-  try {
-    require('./scripts/polyfill.js');
-  } catch (error) {
-    // Fallback polyfills if script can't be loaded
-    if (typeof global !== 'undefined') {
-      if (typeof global.self === 'undefined') {
-        global.self = global;
-      }
-      if (typeof global.window === 'undefined') {
-        global.window = global;
-      }
-      // Pre-initialize webpack chunk
-      if (!global.self.webpackChunk_N_E) {
-        global.self.webpackChunk_N_E = [];
-      }
-    }
-    
+  // Comprehensive polyfills for SSR compatibility
+  
+  // Ensure global exists
+  if (typeof global === 'undefined') {
     if (typeof globalThis !== 'undefined') {
-      if (typeof globalThis.self === 'undefined') {
-        globalThis.self = globalThis;
-      }
-      if (typeof globalThis.global === 'undefined') {
-        globalThis.global = globalThis;
-      }
+      globalThis.global = globalThis;
+    }
+  }
+  
+  // Ensure self exists in all contexts
+  if (typeof global !== 'undefined') {
+    if (typeof global.self === 'undefined') {
+      Object.defineProperty(global, 'self', {
+        value: global,
+        writable: true,
+        enumerable: false,
+        configurable: true
+      });
+    }
+    if (typeof global.window === 'undefined') {
+      Object.defineProperty(global, 'window', {
+        value: global,
+        writable: true,
+        enumerable: false,
+        configurable: true
+      });
+    }
+    // Pre-initialize webpack chunk to prevent undefined errors
+    if (!global.webpackChunk_N_E) {
+      global.webpackChunk_N_E = [];
+    }
+    if (global.self && !global.self.webpackChunk_N_E) {
+      global.self.webpackChunk_N_E = [];
+    }
+  }
+  
+  // Ensure globalThis compatibility
+  if (typeof globalThis !== 'undefined') {
+    if (typeof globalThis.self === 'undefined') {
+      Object.defineProperty(globalThis, 'self', {
+        value: globalThis,
+        writable: true,
+        enumerable: false,
+        configurable: true
+      });
+    }
+    if (typeof globalThis.global === 'undefined') {
+      Object.defineProperty(globalThis, 'global', {
+        value: globalThis,
+        writable: true,
+        enumerable: false,
+        configurable: true
+      });
+    }
+    if (!globalThis.webpackChunk_N_E) {
+      globalThis.webpackChunk_N_E = [];
+    }
+  }
+  
+  // Additional Node.js environment safety
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    // We're in Node.js, ensure browser globals are safely defined
+    const safeGlobal = global || globalThis;
+    if (safeGlobal && typeof safeGlobal.self === 'undefined') {
+      safeGlobal.self = safeGlobal;
     }
   }
 })();
