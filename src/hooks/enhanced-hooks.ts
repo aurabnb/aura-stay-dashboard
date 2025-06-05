@@ -11,7 +11,8 @@ import type {
   StakingPosition,
   TreasuryData,
   AnalyticsData,
-  WalletConnection
+  WalletConnection,
+  TokenBalance
 } from '@/types/enhanced'
 
 // ============================================================================
@@ -32,7 +33,11 @@ export function useLocalStorage<T>(
     onError?: (error: Error) => void
   }
 ) {
-  const { serializer = JSON, onError } = options || {}
+  const serializer = options?.serializer || {
+    read: (value: string) => JSON.parse(value),
+    write: (value: T) => JSON.stringify(value)
+  }
+  const onError = options?.onError
   
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -205,18 +210,14 @@ export function useApi<T>(
     enabled?: boolean
     refetchInterval?: number
     staleTime?: number
-    cacheTime?: number
-    onSuccess?: (data: T) => void
-    onError?: (error: Error) => void
+    gcTime?: number
   }
 ) {
   const {
     enabled = true,
     refetchInterval,
     staleTime = 5 * 60 * 1000, // 5 minutes
-    cacheTime = 10 * 60 * 1000, // 10 minutes
-    onSuccess,
-    onError
+    gcTime = 10 * 60 * 1000, // 10 minutes
   } = options || {}
 
   return useQuery({
@@ -235,9 +236,7 @@ export function useApi<T>(
     enabled,
     refetchInterval,
     staleTime,
-    cacheTime,
-    onSuccess,
-    onError,
+    gcTime,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
@@ -265,7 +264,7 @@ export function usePaginatedData<T>(
       }
       return response.json()
     },
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   })
 
   // Prefetch next page
@@ -596,7 +595,7 @@ export function useFormState<T extends Record<string, any>>(
     }
   }, [values, touched, validation])
 
-  const setTouched = useCallback((field: keyof T) => {
+  const setFieldTouched = useCallback((field: keyof T) => {
     setTouched(prev => ({ ...prev, [field]: true }))
     if (validation) {
       const fieldErrors = validation(values)
@@ -622,7 +621,7 @@ export function useFormState<T extends Record<string, any>>(
     errors,
     touched,
     setValue,
-    setTouched,
+    setTouched: setFieldTouched,
     validate,
     reset,
     isValid: Object.values(errors).every(error => !error),

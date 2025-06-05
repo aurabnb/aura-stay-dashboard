@@ -72,29 +72,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 // USER & AUTHENTICATION TYPES
 // ============================================================================
 
-export interface User {
-  id: string
-  wallet?: string
-  email?: string
-  username?: string
-  avatar?: string
-  role: UserRole
-  preferences: UserPreferences
-  metadata?: Record<string, any>
-  isEmailVerified: boolean
-  isWalletVerified: boolean
-  lastLoginAt?: string
-} & Timestamps
-
 export type UserRole = 'user' | 'admin' | 'moderator' | 'premium'
-
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system'
-  language: string
-  currency: string
-  notifications: NotificationSettings
-  privacy: PrivacySettings
-}
 
 export interface NotificationSettings {
   email: boolean
@@ -109,6 +87,28 @@ export interface PrivacySettings {
   showPortfolio: boolean
   showActivity: boolean
   allowAnalytics: boolean
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system'
+  language: string
+  currency: string
+  notifications: NotificationSettings
+  privacy: PrivacySettings
+}
+
+export interface User extends Timestamps {
+  id: string
+  wallet?: string
+  email?: string
+  username?: string
+  avatar?: string
+  role: UserRole
+  preferences: UserPreferences
+  metadata?: Record<string, any>
+  isEmailVerified: boolean
+  isWalletVerified: boolean
+  lastLoginAt?: string
 }
 
 export interface AuthSession {
@@ -384,7 +384,7 @@ export interface AllocationTarget {
   rebalanceNeeded: boolean
 }
 
-export interface Expense {
+export interface Expense extends Timestamps {
   id: string
   category: ExpenseCategory
   description: string
@@ -396,7 +396,7 @@ export interface Expense {
   status: ExpenseStatus
   approvedBy?: string
   metadata?: Record<string, any>
-} & Timestamps
+}
 
 export type ExpenseCategory = 'development' | 'marketing' | 'operations' | 'legal' | 'infrastructure' | 'other'
 export type ExpenseStatus = 'pending' | 'approved' | 'rejected' | 'paid'
@@ -405,7 +405,7 @@ export type ExpenseStatus = 'pending' | 'approved' | 'rejected' | 'paid'
 // GOVERNANCE & DAO TYPES
 // ============================================================================
 
-export interface Proposal {
+export interface Proposal extends Timestamps {
   id: string
   title: string
   description: string
@@ -417,7 +417,7 @@ export interface Proposal {
   execution?: ProposalExecution
   timeline: ProposalTimeline
   metadata?: Record<string, any>
-} & Timestamps
+}
 
 export type ProposalStatus = 'draft' | 'active' | 'passed' | 'rejected' | 'executed' | 'cancelled'
 export type ProposalType = 'parameter' | 'treasury' | 'upgrade' | 'grant' | 'custom'
@@ -711,13 +711,7 @@ export interface ErrorReport {
 }
 
 // ============================================================================
-// EXPORT ALL TYPES
+// ENHANCED TYPES COMPLETE
 // ============================================================================
 
-export * from './api'
-export * from './domain'
-export * from './index'
-export * from './multisig'
-export * from './social'
-export * from './treasury'
-export * from './wallet' 
+// All enhanced types are defined above and ready for use 

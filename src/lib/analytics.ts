@@ -245,7 +245,7 @@ class AnalyticsClient {
           pageLoadTime: navigation.loadEventEnd - navigation.fetchStart,
           domContentLoaded: navigation.domContentLoadedEventEnd - navigation.fetchStart,
           timeToFirstByte: navigation.responseStart - navigation.requestStart,
-          domProcessing: navigation.domComplete - navigation.domLoading,
+          domProcessing: navigation.domComplete - (navigation as any).domLoading,
           resourceLoadTime: navigation.loadEventEnd - navigation.domContentLoadedEventEnd
         }
 
@@ -426,7 +426,7 @@ export const analytics = new AnalyticsClient()
 // REACT HOOKS FOR ANALYTICS
 // ============================================================================
 
-import { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 /**
@@ -538,7 +538,7 @@ export function measureComponentRender<T extends Record<string, any>>(
 // BUSINESS INTELLIGENCE HELPERS
 // ============================================================================
 
-export const BusinessMetrics = {
+export const BusinessMetricsTracker = {
   trackRevenue(amount: number, currency: string = 'USD'): void {
     analytics.track('revenue', {
       amount,
@@ -611,6 +611,5 @@ export {
   type AnalyticsEvent,
   type UserProperties,
   type PerformanceMetrics,
-  type BusinessMetrics,
-  type AnalyticsConfig
+  type BusinessMetrics
 } 
