@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -124,6 +126,7 @@ export default function UserDashboard() {
   if (!connection?.isConnected) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <Header />
         <WalletConnectModal
           isOpen={showConnectModal}
           onClose={() => setShowConnectModal(false)}
@@ -132,7 +135,7 @@ export default function UserDashboard() {
         />
         
         {/* Landing prompt for non-connected users */}
-        <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="flex items-center justify-center min-h-screen p-6 pt-28">
           <Card className="w-full max-w-md">
             <CardHeader className="text-center">
               <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -154,6 +157,7 @@ export default function UserDashboard() {
             </CardContent>
           </Card>
         </div>
+        <Footer />
       </div>
     )
   }
@@ -161,8 +165,10 @@ export default function UserDashboard() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <Header />
+        
+        {/* User Dashboard Header */}
+        <div className="bg-white border-b border-gray-200 sticky top-16 z-30 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
@@ -613,6 +619,8 @@ export default function UserDashboard() {
             </TabsContent>
           </Tabs>
         </div>
+        
+        <Footer />
       </div>
     </ErrorBoundary>
   )
