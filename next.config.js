@@ -481,8 +481,8 @@ const nextConfig = {
   // Compression and Caching
   poweredByHeader: false,
   
-  // Asset Optimization
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/assets' : '',
+  // Asset Optimization - Removed assetPrefix as it causes MIME type issues on Vercel
+  // assetPrefix: process.env.NODE_ENV === 'production' ? '/assets' : '',
   
   // Redirect and Rewrites
   async rewrites() {
