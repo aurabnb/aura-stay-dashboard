@@ -1,3 +1,8 @@
+// Global polyfill for self to prevent SSR issues
+if (typeof global !== 'undefined' && typeof self === 'undefined') {
+  global.self = global;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -100,14 +105,6 @@ const nextConfig = {
   
   // Optimized Webpack configuration for Solana and Node.js 24.1.0
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Load browser polyfills for SSR
-    if (isServer) {
-      try {
-        require('./src/lib/browser-polyfills');
-      } catch (e) {
-        // Polyfills file might not exist yet, ignore error
-      }
-    }
     
     // Development optimizations
     if (dev) {
@@ -143,6 +140,7 @@ const nextConfig = {
         path: false,
         buffer: require.resolve('buffer'),
         process: require.resolve('process/browser'),
+        global: require.resolve('global'),
       };
       
       config.plugins.push(
@@ -166,31 +164,50 @@ const nextConfig = {
       // Add ProvidePlugin for browser globals
       config.plugins.push(
         new webpack.ProvidePlugin({
-          global: 'global',
           Buffer: ['buffer', 'Buffer'],
           process: 'process/browser',
         })
       );
     }
+    
+    // Provide global for all environments (client and server)
+    config.plugins.push(
+      new webpack.ProvidePlugin({
+        global: require.resolve('global'),
+      })
+    );
 
     // Server-side configuration to handle wallet adapters and browser-specific modules
-    config.externals = config.externals || [];
     if (isServer) {
-      config.externals.push({
-        '@solana/wallet-adapter-phantom': 'commonjs @solana/wallet-adapter-phantom',
-        '@solana/wallet-adapter-solflare': 'commonjs @solana/wallet-adapter-solflare',
-        '@solana/wallet-adapter-backpack': 'commonjs @solana/wallet-adapter-backpack',
-        '@solana/wallet-adapter-coin98': 'commonjs @solana/wallet-adapter-coin98',
-        'canvas': 'canvas',
-        'jsdom': 'jsdom',
-      });
+      // Make sure externals array exists
+      config.externals = config.externals || [];
+      
+      // Add problematic browser-only packages as externals for server builds
+      config.externals.push(
+        // Function-based external to catch more patterns
+        function ({ context, request }, callback) {
+          // Externalize all wallet adapter packages
+          if (request && (
+            request.includes('@solana/wallet-adapter') ||
+            request.includes('@walletconnect') ||
+            request.includes('@reown/appkit') ||
+            request.includes('@trezor/connect') ||
+            request.includes('canvas') ||
+            request.includes('jsdom')
+          )) {
+            return callback(null, `commonjs ${request}`);
+          }
+          callback();
+        }
+      );
     }
     
-    // Additional polyfills for server-side compilation
+    // Handle server-side self reference issues
     if (isServer) {
       config.plugins.push(
-        new webpack.ProvidePlugin({
-          'self': 'global',
+        new webpack.DefinePlugin({
+          'self': '(typeof globalThis !== "undefined" ? globalThis : global)',
+          'window': '(typeof globalThis !== "undefined" ? globalThis : global)',
         })
       );
     }
@@ -291,6 +308,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  
+  // Additional experimental features
+  // (typedRoutes disabled to prevent SSR issues)
   
   // ESLint configuration
   eslint: {

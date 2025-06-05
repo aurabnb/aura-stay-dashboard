@@ -101,6 +101,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
+        {/* Browser polyfills for SSR compatibility */}
+        <script src="/polyfills.js" />
+        
         {/* Performance optimizations */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://api.coingecko.com" />
