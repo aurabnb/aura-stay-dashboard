@@ -19,17 +19,25 @@ export function useNotificationsWithWallet() {
   // Track wallet disconnection events
   useEffect(() => {
     if (!connected && !connecting && !disconnecting && preferences.showOnWalletEvents) {
-      // Only show disconnection if we were previously connected
-      const wasConnected = localStorage.getItem('aura_wallet_was_connected')
-      if (wasConnected === 'true') {
-        addNotification(notificationPresets.walletDisconnected())
-        localStorage.removeItem('aura_wallet_was_connected')
+      try {
+        // Only show disconnection if we were previously connected
+        const wasConnected = localStorage.getItem('aura_wallet_was_connected')
+        if (wasConnected === 'true') {
+          addNotification(notificationPresets.walletDisconnected())
+          localStorage.removeItem('aura_wallet_was_connected')
+        }
+      } catch (error) {
+        console.warn('Failed to handle wallet disconnection:', error)
       }
     }
     
     // Track connection state
     if (connected) {
-      localStorage.setItem('aura_wallet_was_connected', 'true')
+      try {
+        localStorage.setItem('aura_wallet_was_connected', 'true')
+      } catch (error) {
+        console.warn('Failed to save wallet connection state:', error)
+      }
     }
   }, [connected, connecting, disconnecting, addNotification, preferences.showOnWalletEvents])
 

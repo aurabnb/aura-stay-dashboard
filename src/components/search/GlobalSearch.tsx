@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Search, 
@@ -308,7 +308,7 @@ export function GlobalSearch({ isOpen, onClose, placeholder = "Search everything
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, searchResults, selectedIndex, onClose])
 
-  const handleResultClick = (result: SearchResult) => {
+  const handleResultClick = useCallback((result: SearchResult) => {
     // Save to recent searches
     const newRecentSearches = [
       query,
@@ -321,7 +321,7 @@ export function GlobalSearch({ isOpen, onClose, placeholder = "Search everything
     // Navigate to result
     router.push(result.url)
     onClose()
-  }
+  }, [query, recentSearches, router, onClose])
 
   const handleRecentSearchClick = (searchTerm: string) => {
     setQuery(searchTerm)

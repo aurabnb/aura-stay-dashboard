@@ -168,10 +168,15 @@ function NotificationContainer() {
   }
 
   return (
-    <div className={cn(
-      'fixed z-50 flex flex-col space-y-2 w-full max-w-sm',
-      positionClasses[preferences.position]
-    )}>
+    <div 
+      className={cn(
+        'fixed z-50 flex flex-col space-y-2 w-full max-w-sm',
+        positionClasses[preferences.position]
+      )}
+      role="region"
+      aria-label="Notifications"
+      aria-live="polite"
+    >
       <AnimatePresence mode="popLayout">
         {notifications.map((notification) => (
           <NotificationToast
@@ -256,6 +261,8 @@ function NotificationToast({ notification }: { notification: Notification }) {
           size="sm"
           onClick={() => removeNotification(notification.id)}
           className="flex-shrink-0 h-6 w-6 p-0 opacity-70 hover:opacity-100"
+          aria-label="Close notification"
+          title="Close notification"
         >
           <X className="w-4 h-4" />
         </Button>

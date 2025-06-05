@@ -68,6 +68,7 @@ const navigationItems = [
 const dashboardMenuItems = [
   { name: 'Main Dashboard', href: '/dashboard', description: 'Central control panel', icon: LayoutDashboard },
   { name: 'User Dashboard', href: '/user-dashboard', description: 'Personal portfolio & activity', icon: Wallet },
+  { name: 'User Profile', href: '/user-profile', description: 'Manage profile & settings', icon: Users },
   { name: 'Analytics', href: '/analytics', description: 'Advanced metrics & insights', icon: BarChart3 },
   { name: 'Dashboard Analytics', href: '/dashboard/analytics', description: 'Detailed dashboard analytics', icon: BarChart3 },
   { name: 'Trading', href: '/dashboard/trading', description: 'DEX & market data', icon: TrendingUp },
