@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Required for static export compatibility
+// export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     // For now, skip database check to avoid build issues

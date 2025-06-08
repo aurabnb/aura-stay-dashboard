@@ -2,10 +2,18 @@ import { AnchorProvider, Program, setProvider } from '@project-serum/anchor';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
-// Program IDs from Anchor.toml
+// Program IDs
 export const PROGRAM_IDS = {
-  AURA_BURN_REDISTRIBUTION: new PublicKey('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe'),
+  TIME_WEIGHTED_STAKING: new PublicKey('3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6'),
+} as const;
+
+// Connection configuration
+export const getConnection = () => {
+  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+  return new Connection(endpoint, 'confirmed');
 };
+
+export const connection = getConnection();
 
 export class AnchorService {
   private connection: Connection;
@@ -52,7 +60,7 @@ export class AnchorService {
   }
 
   // Add methods to interact with your specific programs
-  async getBurnRedistributionProgram() {
+  async getTimeWeightedStakingProgram() {
     // This would return the initialized program instance
     // You'll need to add the IDL file for this program
     throw new Error('Program IDL not yet imported. Add your program IDL files.');

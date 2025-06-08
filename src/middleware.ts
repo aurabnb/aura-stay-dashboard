@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Check if we're building for static export
+const isStaticExport = process.env.STATIC_EXPORT === 'true' || process.env.STATIC_EXPORT === '1'
+
 // Rate limiting store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
@@ -71,6 +74,11 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 export function middleware(request: NextRequest) {
+  // If static export, disable middleware functionality
+  if (isStaticExport) {
+    return NextResponse.next()
+  }
+
   const { pathname } = request.nextUrl
 
   // Skip middleware for static files and API health checks
@@ -120,7 +128,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
+  matcher: isStaticExport ? [] : [
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)

@@ -9,22 +9,37 @@ import {
   X,
   Copy,
   ExternalLink,
+  LogOut,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { CustomWalletButton } from '@/components/wallet/CustomWalletButton';
+import { Button } from '@/components/ui/button';
 
 /* -------------------------------------------------------------------------- */
 /*                                   Header                                   */
 /* -------------------------------------------------------------------------- */
 export function Header() {
+  try {
+    const { connected, publicKey, disconnect } = useWallet();
+    return <HeaderContent connected={connected} publicKey={publicKey} disconnect={disconnect} />
+  } catch (error) {
+    // Fallback when wallet context is not available
+    return <HeaderContent connected={false} publicKey={null} disconnect={() => {}} />
+  }
+}
+
+interface HeaderContentProps {
+  connected: boolean;
+  publicKey: any;
+  disconnect: () => void;
+}
+
+function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps) {
   /* ----------------------------- dropdown state ---------------------------- */
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
-
-  /* ----------------------------- wallet state ------------------------------ */
-  const { connected, publicKey, disconnect } = useWallet();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -132,10 +147,16 @@ export function Header() {
                     Treasury Dashboard
                   </Link>
                   <Link
+                    href="/staking"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Staking
+                  </Link>
+                  <Link
                     href="/user-dashboard"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    📊 User Dashboard
+                    User Dashboard
                   </Link>
                   <Link
                     href="/analytics"
@@ -280,11 +301,18 @@ export function Header() {
                 Treasury Dashboard
               </Link>
               <Link
+                href="/staking"
+                className="block text-sm font-medium text-gray-900"
+                onClick={() => setMobileOpen(false)}
+              >
+                Staking
+              </Link>
+              <Link
                 href="/user-dashboard"
                 className="block text-sm font-medium text-gray-900"
                 onClick={() => setMobileOpen(false)}
               >
-                📊 User Dashboard
+                User Dashboard
               </Link>
               <Link
                 href="/analytics"

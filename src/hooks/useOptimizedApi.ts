@@ -51,6 +51,17 @@ export function useOptimizedApi<T>(
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const onSuccessRef = useRef(onSuccess)
+  const onErrorRef = useRef(onError)
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onSuccessRef.current = onSuccess
+  }, [onSuccess])
+  
+  useEffect(() => {
+    onErrorRef.current = onError
+  }, [onError])
 
   // Select appropriate optimizer
   const getOptimizer = useCallback(() => {
@@ -105,7 +116,7 @@ export function useOptimizedApi<T>(
         setData(result)
         setLastFetch(new Date())
         setIsStale(false)
-        onSuccess?.(result)
+        onSuccessRef.current?.(result)
       }
     } catch (err: any) {
       // Handle ALL abort-related scenarios silently
@@ -120,13 +131,13 @@ export function useOptimizedApi<T>(
       // Only handle actual errors, not cancellations
       const error = err instanceof Error ? err : new Error('Fetch failed')
       setError(error)
-      onError?.(error)
+      onErrorRef.current?.(error)
     } finally {
       if (!abortController.signal.aborted && !isBackground) {
         setLoading(false)
       }
     }
-  }, [url, enabled, staleTime, getOptimizer, onSuccess, onError])
+  }, [url, enabled, staleTime, getOptimizer])
 
   // Background fetch for keeping data fresh
   const backgroundFetch = useCallback(async () => {
@@ -179,7 +190,7 @@ export function useOptimizedApi<T>(
       preloadData()
     }
     fetchData()
-  }, [fetchData, preloadData, preload])
+  }, [url, enabled]) // Only depend on essential values, not functions
 
   // Set up refetch interval
   useEffect(() => {
@@ -198,7 +209,7 @@ export function useOptimizedApi<T>(
         }
       }
     }
-  }, [refetchInterval, enabled, background, fetchData, backgroundFetch])
+  }, [refetchInterval, enabled, background]) // Remove function dependencies
 
   // Check stale status periodically
   useEffect(() => {

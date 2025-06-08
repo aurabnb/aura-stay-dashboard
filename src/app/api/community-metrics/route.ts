@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+// Required for static export compatibility
+export const dynamic = 'force-dynamic'
+export const revalidate = 60 // Revalidate every 60 seconds
+
 interface CommunityMetrics {
   twitter: {
     followers: number

@@ -8,19 +8,19 @@ skip-lint = false
 resolution = true
 
 [programs.localnet]
-aura_burn_redistribution = "3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe"
+time_weighted_staking = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
 
 [programs.devnet]
-aura_burn_redistribution = "3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe"
+time_weighted_staking = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
 
 [programs.mainnet]
-aura_burn_redistribution = "3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe"
+time_weighted_staking = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
@@ -32,14 +32,13 @@ shutdown_wait = 2000
 upgradeable = false
 
 [[test.genesis]]
-address = "3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe"
-program = "target/deploy/aura_burn_redistribution.so"
+address = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
+program = "target/deploy/time_weighted_staking.so"
 
 [test.validator]
 bind_address = "0.0.0.0"
 url = "http://127.0.0.1:8899"
 ledger = ".anchor/test-ledger"
-limit_ledger_size = 10000
 rpc_port = 8899
 gossip_port = 8001
 dynamic_port_range = "8002-8020"

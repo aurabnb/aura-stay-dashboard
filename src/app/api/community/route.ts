@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Required for static export compatibility
+export const dynamic = 'force-dynamic'
+export const revalidate = 60 // Revalidate every minute
+
 interface CommunityMessage {
   id: string
   content: string
