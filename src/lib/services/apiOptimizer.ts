@@ -158,12 +158,26 @@ class ApiOptimizer {
         }
         
         if (!response.ok) {
-          const error = new Error(`HTTP ${response.status}: ${response.statusText}`)
+          const errorMessage = `HTTP ${response.status}: ${response.statusText}`
+          const error = new Error(errorMessage)
+          
+          // Add additional error context
+          ;(error as any).status = response.status
+          ;(error as any).statusText = response.statusText
+          ;(error as any).url = url
+          
+          // Log the error with more context
+          console.warn(`API Request failed: ${errorMessage} for ${url}`)
           
           // Track API error
           if (this.config.enablePerformanceTracking) {
             trackError(error, url)
             trackApiCall(url, startTime, false, cacheHit)
+          }
+          
+          // For 4xx errors, don't retry and throw immediately
+          if (response.status >= 400 && response.status < 500) {
+            throw error
           }
           
           throw error

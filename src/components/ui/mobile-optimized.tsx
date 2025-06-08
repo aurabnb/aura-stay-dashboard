@@ -104,13 +104,19 @@ interface MobileDrawerProps {
 export function MobileDrawer({ isOpen, onClose, children, title }: MobileDrawerProps) {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      // Only manipulate document on client side
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'hidden'
+      }
     } else {
-      document.body.style.overflow = 'unset'
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'unset'
+      }
     }
-
     return () => {
-      document.body.style.overflow = 'unset'
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'unset'
+      }
     }
   }, [isOpen])
 
@@ -377,13 +383,19 @@ export function MobileBottomSheet({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      // Only manipulate document on client side
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'hidden'
+      }
     } else {
-      document.body.style.overflow = 'unset'
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'unset'
+      }
     }
-
     return () => {
-      document.body.style.overflow = 'unset'
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'unset'
+      }
     }
   }, [isOpen])
 

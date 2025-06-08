@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { walletService } from '@/lib/services/walletService'
 
+// Required for static export compatibility - only in non-static mode
+// export const dynamic = 'force-dynamic'
+export const revalidate = 300 // Revalidate every 5 minutes
+
 interface TreasuryData {
   treasury: {
     totalMarketCap: number

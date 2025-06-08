@@ -29,7 +29,11 @@ const SolanaWalletProvider = dynamic(
   () => import('./SolanaWalletProvider').then(mod => mod.SolanaWalletProvider),
   { 
     ssr: false,
-    loading: () => <div>Loading wallet provider...</div>
+    loading: () => (
+      <div className="flex items-center justify-center p-4">
+        <div className="animate-pulse text-sm text-gray-500">Loading wallet provider...</div>
+      </div>
+    )
   }
 )
 
@@ -50,7 +54,9 @@ export function AppProviders({ children }: AppProvidersProps) {
     return (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          {children}
+          <div suppressHydrationWarning>
+            {children}
+          </div>
         </TooltipProvider>
       </QueryClientProvider>
     )

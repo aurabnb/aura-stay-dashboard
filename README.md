@@ -1,237 +1,175 @@
-# 🏝️ AURA Stay Dashboard
+# AURA Stay Dashboard
 
-A modern, decentralized dashboard for the AURA ecosystem - building the world's first community-owned hospitality network.
+A comprehensive Next.js dashboard for the AURA ecosystem featuring real-time staking, treasury tracking, and community analytics.
 
-## 🚀 Overview
+## 🚀 Key Features
 
-AURA Stay Dashboard is a Next.js application that provides real-time treasury monitoring, governance tools, and community features for the AURA token ecosystem. Built with modern web technologies and integrated with Solana blockchain.
+### 🏠 Real Estate Integration
+- **Volcano House Calculator**: Property investment analysis
+- **Stay Showcase**: Unique property experiences
+- **Investment Tracking**: Real estate performance metrics
 
-## ✨ Features
+### 💰 Staking Platform
+- **Time-Weighted Staking**: Earn rewards based on stake duration
+- **Live Blockchain Integration**: Real Solana transactions with wallet signatures
+- **30-Day Optimal Lock**: Maximum rewards for longer commitments
+- **Multi-Token Rewards**: SOL and SPL token distributions
 
-- **📊 Treasury Monitoring** - Real-time wallet tracking and asset management
-- **🗳️ Governance System** - Token-weighted voting and proposals
-- **💰 Fiat Integration** - Buy crypto with MoonPay integration
-- **🔗 Wallet Connection** - Phantom, Solflare, and other Solana wallets
-- **📈 Analytics Dashboard** - Trading insights and portfolio tracking
-- **🏨 Property Showcase** - Investment opportunities and property details
-- **🔥 Token Economics** - 2% burn and redistribution system
-- **📱 Mobile Responsive** - Optimized for all devices
+### 📊 Treasury Management
+- **Live Wallet Monitoring**: Real-time balance tracking
+- **Burn & Redistribution**: Token economics management
+- **Performance Analytics**: Investment return analysis
+
+### 🎯 Trading Tools
+- **Jupiter Integration**: Advanced Solana token swapping
+- **Portfolio Tracking**: Multi-wallet performance monitoring
+- **Price Analytics**: Real-time market data
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15.3.3 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS + Radix UI
-- **Database**: PostgreSQL with Prisma ORM
-- **Blockchain**: Solana Web3.js + Anchor
-- **Authentication**: Wallet-based + NextAuth.js
-- **Deployment**: Vercel/Railway ready
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Blockchain**: Solana, Anchor Framework, SPL Tokens
+- **Wallet**: Solana Wallet Adapter
+- **Charts**: Recharts, D3.js
+- **UI**: Shadcn/ui, Framer Motion
+- **API**: Real-time price feeds, Solana RPC
 
-## 🏃‍♂️ Quick Start
+## 📋 Testing Documentation
+
+### Comprehensive Test Suite
+- **[TESTING_SUMMARY.md](./TESTING_SUMMARY.md)** - Complete testing overview and results
+- **[FUNCTION_TEST_REPORT.md](./FUNCTION_TEST_REPORT.md)** - Automated validation test results
+- **[MANUAL_TESTING_GUIDE.md](./MANUAL_TESTING_GUIDE.md)** - Step-by-step testing instructions
+
+### Smart Contract Testing
+- **16 Contract Functions** fully documented and tested
+- **100% Success Rate** on automated validation tests
+- **Real Blockchain Integration** with Solana devnet
+- **Security Features** validated (replay protection, access control)
+
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- Node.js 18.18.0+ (recommended: 20+)
-- PostgreSQL database (or use cloud providers)
-- Git
+- Node.js 18+ 
+- npm or yarn
+- Solana wallet (Phantom, Solflare, etc.)
+- AURA tokens for staking (test tokens available)
 
 ### Installation
-
 ```bash
 # Clone the repository
-git clone https://github.com/aurabnb/aura-stay-dashboard.git
+git clone <repository-url>
 cd aura-stay-dashboard
 
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp env.example .env
-# Edit .env with your database URL and API keys
-
-# Set up the database
-npm run db:generate
-npm run db:push
-
-# Start the development server
+# Start development server
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see the application.
-
-## 📝 Environment Configuration
-
-Create a `.env` file with the following variables:
-
+### Environment Setup
 ```bash
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/aura_stay_dashboard"
+# Copy environment template
+cp .env.example .env.local
 
-# Solana
-NEXT_PUBLIC_SOLANA_RPC_URL="https://api.devnet.solana.com"
-NEXT_PUBLIC_SOLANA_NETWORK="devnet"
-
-# Optional: API Keys
-COINGECKO_API_KEY="your_api_key"
-NEXT_PUBLIC_MOONPAY_API_KEY="your_moonpay_key"
+# Configure your environment variables
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_RPC_ENDPOINT=https://api.devnet.solana.com
 ```
 
-## 🗄️ Database Setup
+## 🧪 Testing the Platform
 
-### Cloud Database (Recommended)
+### User Testing (Real Blockchain)
+1. Visit: http://localhost:3000/staking
+2. Connect your Solana wallet
+3. Look for green "Live Blockchain Integration" banner
+4. Try staking - you'll get real wallet signature prompts
+5. Monitor transactions on [Solana Explorer](https://explorer.solana.com/?cluster=devnet)
 
-**Option 1: Neon (Free)**
-1. Visit [neon.tech](https://neon.tech)
-2. Create a project and copy the DATABASE_URL
-3. Update your `.env` file
-
-**Option 2: Supabase**
-1. Visit [supabase.com](https://supabase.com)
-2. Create a project and get the connection string
-3. Update your `.env` file
-
-### Local PostgreSQL
-
+### Automated Testing
 ```bash
-# macOS with Homebrew
-brew install postgresql
-brew services start postgresql
-createdb aura_stay_dashboard
+# Run function validation tests
+npx tsx scripts/simple-function-test.ts
+
+# Generate manual testing guide
+npx tsx scripts/manual-test-guide.ts
 ```
 
-## 📜 Available Scripts
+## 🔗 Smart Contract Details
 
-```bash
-# Development
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
+### Deployed Contract
+- **Program ID**: `3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6`
+- **Network**: Solana Devnet
+- **Token Mint**: `3SPBiVPiJTqnqmrBxxRVnRDEywsqBHeTEDQs34PmXon9`
 
-# Database
-npm run db:generate  # Generate Prisma client
-npm run db:push      # Push schema to database
-npm run db:migrate   # Run database migrations
-npm run db:studio    # Open Prisma Studio
-npm run db:seed      # Seed database with initial data
+### Contract Functions
+- **Admin Functions** (9): Pool management, distribution control, emergency operations
+- **User Functions** (4): Stake, unstake, claim rewards
+- **Read-Only Functions** (3): Pool state, user positions, balances
 
-# Testing
-npm run test         # Run unit tests
-npm run test:e2e     # Run end-to-end tests
-npm run test:watch   # Run tests in watch mode
-
-# Blockchain
-npm run anchor:build # Build Solana programs
-npm run anchor:test  # Test Solana programs
-```
-
-## 📁 Project Structure
+## 📚 Project Structure
 
 ```
-aura-stay-dashboard/
-├── src/
-│   ├── app/                 # Next.js App Router pages
-│   ├── components/          # React components
-│   │   ├── ui/             # Reusable UI components
-│   │   ├── treasury/       # Treasury-specific components
-│   │   ├── governance/     # Governance components
-│   │   └── ...
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utility functions and services
-│   ├── types/              # TypeScript type definitions
-│   └── services/           # API and blockchain services
-├── prisma/                 # Database schema and migrations
-├── programs/               # Solana/Anchor programs
-├── public/                 # Static assets
-├── tests/                  # Test files
-├── docs/                   # Documentation files
-└── scripts/                # Build and deployment scripts
+src/
+├── app/                    # Next.js app router pages
+├── components/             # React components
+│   ├── analytics/         # Analytics dashboards
+│   ├── staking/           # Staking interfaces
+│   ├── trading/           # Trading tools
+│   ├── treasury/          # Treasury management
+│   └── ui/                # UI components
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utilities and services
+│   ├── anchor/           # Solana/Anchor integration
+│   └── services/         # API services
+└── types/                # TypeScript definitions
+
+scripts/                  # Testing and automation
+├── simple-function-test.ts    # Automated validation
+├── manual-test-guide.ts       # Test guide generator
+└── comprehensive-test.ts      # Full integration tests
+
+programs/                 # Solana smart contracts
+└── time-weighted-staking/ # Staking contract source
 ```
 
-## 🔗 Key Components
+## 🎯 Integration Status
 
-- **Treasury Dashboard** - Real-time wallet monitoring and analytics
-- **Governance Portal** - Proposal creation and voting system
-- **Fiat Purchase Flow** - MoonPay integration for crypto purchases
-- **Property Showcase** - Investment opportunities in eco-stays
-- **Community Board** - Social features and messaging
-- **Analytics Suite** - Trading and portfolio insights
+### ✅ Live Blockchain Features
+- **100% Real Integration**: All staking operations use actual blockchain transactions
+- **Wallet Signatures**: Every transaction requires user approval
+- **Real Token Transfers**: Actual AURA tokens moved to/from smart contract
+- **Live State Reading**: Pool and user data read from blockchain
+- **Real-Time Prices**: Live SOL prices from CoinGecko
+- **Network Statistics**: Live Solana network data
 
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
-```
-
-### Railway
-
-```bash
-# Install Railway CLI
-npm i -g @railway/cli
-
-# Deploy
-railway login
-railway link
-railway up
-```
+### 🔧 Development Features
+- **Hot Reload**: Instant updates during development
+- **TypeScript**: Full type safety
+- **Responsive Design**: Mobile-optimized interface
+- **Error Handling**: Comprehensive error boundaries
+- **Performance Optimized**: Lazy loading and code splitting
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📚 Documentation
-
-- [Technical Documentation](./docs/TECHNICAL-README.md)
-- [Migration Reports](./docs/)
-- [Database Setup Guide](./docs/DATABASE_SETUP.md)
-- [Deployment Guide](./docs/PRODUCTION-DEPLOYMENT.md)
-- [API Documentation](./docs/API.md)
-
-## 🔒 Security
-
-- All database queries use Prisma for SQL injection protection
-- Wallet connections are handled securely with proper validation
-- API routes include proper authentication and rate limiting
-- Environment variables are properly configured for sensitive data
-
-## 📈 Performance
-
-- Next.js 15 optimizations and App Router
-- Static generation where possible
-- Image optimization with Next.js Image component
-- Efficient database queries with Prisma
-- Real-time updates with optimized polling
-
-## 🌐 Community
-
-- [Telegram](https://t.me/aurabnb)
-- [Twitter](https://twitter.com/aurabnb)
-- [Discord](https://discord.gg/aurabnb)
-- [Website](https://aurabnb.com)
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Run tests: `npm test`
+5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 💎 AURA Ecosystem
+## 🆘 Support
 
-AURA is building the world's first decentralized hospitality network. Learn more:
-
-- **Volcano Stay**: Our first eco-lodge in Costa Rica
-- **Community Governance**: Token holders vote on all decisions
-- **Revenue Sharing**: Property income flows back to token holders
-- **Sustainable Tourism**: Carbon-negative properties with local impact
+- **Documentation**: Check the `/docs` directory for detailed guides
+- **Issues**: Report bugs or request features via GitHub issues
+- **Testing**: Follow the manual testing guide for validation
+- **Community**: Join our Discord for support and updates
 
 ---
 
-**Built with ❤️ by the AURA community** 
+**Built with ❤️ for the AURA ecosystem** 

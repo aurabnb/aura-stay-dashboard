@@ -11,11 +11,32 @@ interface CustomWalletButtonProps {
   mobile?: boolean;
 }
 
-export const CustomWalletButton: React.FC<CustomWalletButtonProps> = ({ 
+// Safe wrapper component that handles wallet context errors gracefully
+export const CustomWalletButton: React.FC<CustomWalletButtonProps> = (props) => {
+  try {
+    const { wallets, select, connecting, connected } = useWallet();
+    return <CustomWalletButtonContent {...props} wallets={wallets} select={select} connecting={connecting} connected={connected} />
+  } catch (error) {
+    // Fallback when wallet context is not available
+    return <CustomWalletButtonContent {...props} wallets={[]} select={() => {}} connecting={false} connected={false} />
+  }
+};
+
+interface CustomWalletButtonContentProps extends CustomWalletButtonProps {
+  wallets: any[];
+  select: (walletName: any) => void;
+  connecting: boolean;
+  connected: boolean;
+}
+
+const CustomWalletButtonContent: React.FC<CustomWalletButtonContentProps> = ({ 
   className, 
-  mobile = false 
+  mobile = false,
+  wallets,
+  select,
+  connecting,
+  connected
 }) => {
-  const { wallets, select, connecting, connected } = useWallet();
   const [walletOptionsOpen, setWalletOptionsOpen] = useState(false);
   const { toast } = useToast();
 
