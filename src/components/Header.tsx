@@ -150,6 +150,12 @@ export function Header() {
                     Treasury Dashboard
                   </Link>
                   <Link
+                    href="/staking"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Staking
+                  </Link>
+                  <Link
                     href="/user-dashboard"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
@@ -300,6 +306,13 @@ export function Header() {
                 onClick={() => setMobileOpen(false)}
               >
                 Treasury Dashboard
+              </Link>
+              <Link
+                href="/staking"
+                className="block text-sm font-medium text-gray-900"
+                onClick={() => setMobileOpen(false)}
+              >
+                Staking
               </Link>
               <Link
                 href="/user-dashboard"
