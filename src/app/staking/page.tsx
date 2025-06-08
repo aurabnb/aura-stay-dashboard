@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useStaking } from '@/hooks/useStaking'
@@ -54,6 +54,14 @@ export default function StakingPage() {
   const [stakeAmount, setStakeAmount] = useState('')
   const [unstakeAmount, setUnstakeAmount] = useState('')
   const [selectedAction, setSelectedAction] = useState<'stake' | 'unstake'>('stake')
+  
+  // Add mounted state to prevent hydration mismatches
+  const [mounted, setMounted] = useState(false)
+  
+  // Ensure client-side rendering to prevent hydration issues
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Handle staking
   const handleStake = async () => {
@@ -329,7 +337,7 @@ export default function StakingPage() {
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
                               })} $AURA
-                              {connected && stakingStats.userStaked > 0 && (
+                              {mounted && connected && stakingStats.userStaked > 0 && (
                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                               )}
                             </div>
@@ -349,7 +357,7 @@ export default function StakingPage() {
               </Card>
 
               {/* Staking Actions */}
-              {connected && (
+              {mounted && connected && (
                 <Card className="mb-8">
                   <CardHeader>
                     <CardTitle>Manage Your Stake</CardTitle>
@@ -534,10 +542,19 @@ export default function StakingPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Connection</span>
                       <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-                        <span className={`text-xs ${connected ? 'text-green-600' : 'text-gray-500'}`}>
-                          {connected ? 'Connected' : 'Not Connected'}
-                        </span>
+                        {mounted ? (
+                          <>
+                            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
+                            <span className={`text-xs ${connected ? 'text-green-600' : 'text-gray-500'}`}>
+                              {connected ? 'Connected' : 'Not Connected'}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-2 h-2 rounded-full bg-gray-300" />
+                            <span className="text-xs text-gray-500">Loading...</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -570,7 +587,7 @@ export default function StakingPage() {
               </Card>
 
               {/* Your Position */}
-              {connected && userStake && (
+              {mounted && connected && userStake && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

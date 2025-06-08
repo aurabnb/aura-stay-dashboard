@@ -507,7 +507,7 @@ export function useStaking() {
     userStake,
     loading,
     error,
-    connected: !!publicKey,
+    connected: mounted && !!publicKey,
 
     // Real data
     solPrice,
