@@ -19,13 +19,28 @@ import { CustomWalletButton } from '@/components/wallet/CustomWalletButton';
 /*                                   Header                                   */
 /* -------------------------------------------------------------------------- */
 export function Header() {
+  try {
+    const { connected, publicKey, disconnect } = useWallet();
+    return <HeaderContent connected={connected} publicKey={publicKey} disconnect={disconnect} />
+  } catch (error) {
+    // Fallback when wallet context is not available
+    return <HeaderContent connected={false} publicKey={null} disconnect={() => {}} />
+  }
+}
+
+interface HeaderContentProps {
+  connected: boolean;
+  publicKey: any;
+  disconnect: () => void;
+}
+
+function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps) {
   /* ----------------------------- dropdown state ---------------------------- */
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
 
-  /* ----------------------------- wallet state ------------------------------ */
-  const { connected, publicKey, disconnect } = useWallet();
+  /* ----------------------------- other state ------------------------------ */
   const [mounted, setMounted] = useState(false);
 
   const pathname = usePathname();
