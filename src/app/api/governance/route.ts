@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// Required for static export compatibility
-export const dynamic = 'force-dynamic'
+// Required for static export compatibility - only in non-static mode
+// export const dynamic = 'force-dynamic'
 export const revalidate = 180 // Revalidate every 3 minutes
 
 interface ProposalData {
