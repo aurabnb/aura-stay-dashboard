@@ -1,6 +1,6 @@
 [toolchain]
-anchor_version = "0.30.1"
-solana_version = "1.18.0"
+anchor_version = "0.28.0"
+solana_version = "1.17.0"
 
 [features]
 seeds = false
@@ -8,20 +8,20 @@ skip-lint = false
 resolution = true
 
 [programs.localnet]
-time_weighted_staking = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
+aura_staking = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
 
 [programs.devnet]
-time_weighted_staking = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
+aura_staking = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
 
 [programs.mainnet]
-time_weighted_staking = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
+aura_staking = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "devnet"
-wallet = "~/.config/solana/id.json"
+wallet = "dev-authority.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
@@ -32,8 +32,8 @@ shutdown_wait = 2000
 upgradeable = false
 
 [[test.genesis]]
-address = "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6"
-program = "target/deploy/time_weighted_staking.so"
+address = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
+program = "target/deploy/aura_staking.so"
 
 [test.validator]
 bind_address = "0.0.0.0"
