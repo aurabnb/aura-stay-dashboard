@@ -22,7 +22,6 @@ const nextConfig = {
   // Standard configuration for development/server mode
   ...(!isStaticExport && {
     experimental: {
-      optimizeCss: true,
       webpackBuildWorker: true,
     }
   }),
