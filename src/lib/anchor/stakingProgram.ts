@@ -6,7 +6,6 @@ import {
   Transaction
 } from '@solana/web3.js'
 import { AnchorProvider, BN } from '@coral-xyz/anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 
 // Use the deployed program ID
 export const TIME_WEIGHTED_STAKING_PROGRAM_ID = new PublicKey('3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6')
