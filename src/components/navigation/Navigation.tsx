@@ -73,7 +73,7 @@ const dashboardMenuItems = [
   { name: 'Dashboard Analytics', href: '/dashboard/analytics', description: 'Detailed dashboard analytics', icon: BarChart3 },
   { name: 'Trading', href: '/dashboard/trading', description: 'DEX & market data', icon: TrendingUp },
   { name: 'Treasury', href: '/dashboard/treasury', description: 'Treasury monitoring', icon: PieChart },
-  { name: 'Staking', href: '/dashboard/staking', description: 'Stake & earn rewards', icon: Coins },
+      { name: 'Staking', href: '/user-dashboard#staking', description: 'Stake & earn rewards', icon: Coins },
   { name: 'Governance', href: '/dashboard/governance', description: 'DAO proposals & voting', icon: Users },
   { name: 'Community', href: '/dashboard/community', description: 'Community engagement', icon: MessageSquare },
   { name: 'Investment Hub', href: '/dashboard/investment', description: 'Investment opportunities', icon: TrendingUp },

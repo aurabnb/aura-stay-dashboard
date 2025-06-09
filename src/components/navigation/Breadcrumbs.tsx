@@ -158,7 +158,7 @@ export const breadcrumbConfigs = {
   ],
   dashboardStaking: [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Staking', href: '/dashboard/staking' }
+          { label: 'Staking', href: '/user-dashboard#staking' }
   ],
   dashboardGovernance: [
     { label: 'Dashboard', href: '/dashboard' },

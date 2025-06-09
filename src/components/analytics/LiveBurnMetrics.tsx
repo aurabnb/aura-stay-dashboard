@@ -164,7 +164,7 @@ const LiveBurnMetrics: React.FC = () => {
         {/* CTA Buttons */}
         <div className="flex gap-3">
           <Button asChild className="flex-1 bg-red-600 hover:bg-red-700">
-            <Link href="/dashboard/staking">
+                          <Link href="/user-dashboard#staking">
               Start Staking
             </Link>
           </Button>

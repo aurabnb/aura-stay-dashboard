@@ -305,7 +305,7 @@ export function TreasuryOverview() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Button className="w-full" asChild>
-                    <Link href="/staking">Start Staking</Link>
+                    <Link href="/user-dashboard#staking">Start Staking</Link>
                   </Button>
                   <Button variant="outline" className="w-full" asChild>
                     <Link href="/governance">Vote on Proposals</Link>

@@ -211,7 +211,7 @@ export function OnboardingFlow({ onComplete, onClose }: OnboardingFlowProps) {
       ),
       action: {
         label: 'Start Staking',
-        href: '/dashboard/staking'
+        href: '/user-dashboard#staking'
       },
       completable: false
     },

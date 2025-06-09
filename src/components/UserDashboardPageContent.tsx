@@ -2,105 +2,52 @@
 
 import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
+import Link from 'next/link'
 import { 
-  Wallet, 
-  TrendingUp, 
-  Coins, 
-  Users, 
   BarChart3, 
-  ArrowUpDown, 
-  Gift, 
-  Vote, 
+  TrendingUp, 
+  Wallet, 
+  Home, 
+  Users, 
   Settings,
-  Eye,
-  EyeOff,
+  PieChart,
+  Activity,
+  Coins,
+  Shield,
+  Zap,
+  Percent,
+  Calculator,
+  RefreshCw,
+  Award,
+  Target,
+  ArrowRight,
+  Clock,
+  Info,
+  DollarSign,
+  TrendingDown,
   Copy,
   ExternalLink,
-  Zap,
-  Shield,
-  Trophy,
-  Calendar,
-  DollarSign,
-  Activity,
-  PieChart,
-  Target,
-  Flame,
-  Layers
+  Eye,
+  EyeOff
 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { toast } from '@/components/ui/use-toast'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useClipboard } from '@/hooks/enhanced-hooks'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { LoadingOverlay, SkeletonStats } from '@/components/ui/loading'
-import { useRouter } from 'next/navigation'
-
-// Dynamic imports for components that may cause SSR issues
-const WalletConnectModal = dynamic(
-  () => import('@/components/wallet/WalletConnectModal').then(mod => ({ default: mod.WalletConnectModal })),
-  { 
-    ssr: false,
-    loading: () => <div className="animate-pulse">Loading wallet modal...</div>
-  }
-)
-
-// Alternative: Use standard Solana wallet button  
-const WalletMultiButton = dynamic(
-  () => import('@solana/wallet-adapter-react-ui').then(mod => ({ default: mod.WalletMultiButton })),
-  { ssr: false }
-)
-
-const PortfolioOverview = dynamic(
-  () => import('@/components/wallet/PortfolioOverview').then(mod => ({ default: mod.PortfolioOverview })),
-  { 
-    ssr: false,
-    loading: () => <div className="animate-pulse h-64 bg-gray-100 rounded-lg"></div>
-  }
-)
-
-// Create a safe analytics object for SSR
-let analytics: any
-if (typeof window !== 'undefined') {
-  import('@/lib/analytics').then((mod) => {
-    analytics = mod.analytics
-  })
-} else {
-  analytics = { 
-    page: () => {}, 
-    trackFeatureUsage: () => {}, 
-    trackWalletConnection: () => {}, 
-    trackError: () => {}, 
-    track: () => {} 
-  }
-}
+import { useStaking } from '@/hooks/useStaking'
 
 // Dynamically import wallet components to prevent SSR issues
-const WalletDashboard = dynamic(
-  () => import('@/components/wallet/WalletDashboard').then(mod => ({ default: mod.WalletDashboard })),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border rounded-lg p-6">
-                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
-                <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((mod) => ({ default: mod.WalletMultiButton })),
+  { ssr: false }
 )
 
 // Add hook for fetching live AURA data from DexScreener
@@ -120,32 +67,27 @@ function useAuraMarketData() {
 
     const fetchMarketData = async () => {
       try {
-        // Use the correct AURA token contract address
         const AURA_TOKEN_ADDRESS = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe'
         const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_ADDRESS}`)
         
         if (response.ok && isMounted) {
           const data = await response.json()
-          console.log('DexScreener AURA data:', data) // Debug log
           
           if (data.pairs && data.pairs.length > 0) {
             const pair = data.pairs[0]
             const price = parseFloat(pair.priceUsd) || 0.0002700
             const change24h = parseFloat(pair.priceChange?.h24) || 0
-            const volume24h = parseFloat(pair.volume?.h24) || 0
-            const marketCap = parseFloat(pair.marketCap) || price * 1000000000 // Fallback calculation
+            const marketCap = parseFloat(pair.marketCap) || price * 1000000000
             
-            // Extract AURA logo from DexScreener
-            let logoUrl = '/aura-logo.png' // Fallback
+            let logoUrl = '/aura-logo.png'
             if (pair.baseToken && pair.baseToken.address === AURA_TOKEN_ADDRESS) {
               logoUrl = pair.baseToken.logoURI || logoUrl
             } else if (pair.quoteToken && pair.quoteToken.address === AURA_TOKEN_ADDRESS) {
               logoUrl = pair.quoteToken.logoURI || logoUrl
             }
             
-            // Calculate estimated staking data based on market cap
-            const estimatedSupply = 1000000000 // 1B tokens estimated
-            const totalStaked = estimatedSupply * 0.52 // Assume 52% staked
+            const estimatedSupply = 1000000000
+            const totalStaked = estimatedSupply * 0.52
             
             setMarketData({
               price,
@@ -157,32 +99,25 @@ function useAuraMarketData() {
               loading: false
             })
           } else {
-            console.warn('No trading pairs found for AURA token')
-            // Use fallback data if no pairs found
             setMarketData(prev => ({ 
               ...prev, 
-              marketCap: prev.price * 1000000000, // Calculate from price
+              marketCap: prev.price * 1000000000,
               loading: false 
             }))
           }
         } else {
-          console.error('DexScreener API request failed:', response.status)
           setMarketData(prev => ({ ...prev, loading: false }))
         }
       } catch (error) {
-        console.error('Failed to fetch AURA market data from DexScreener:', error)
-        // Use fallback data on error
         setMarketData(prev => ({ 
           ...prev, 
-          marketCap: prev.price * 1000000000, // Calculate from price
+          marketCap: prev.price * 1000000000,
           loading: false 
         }))
       }
     }
 
     fetchMarketData()
-    
-    // Refresh data every 30 seconds
     const interval = setInterval(fetchMarketData, 30000)
     
     return () => {
@@ -195,251 +130,244 @@ function useAuraMarketData() {
 }
 
 export default function UserDashboardPageContent() {
-  const { connected, publicKey, disconnect } = useWallet()
+  const { publicKey, connected } = useWallet()
+  const { copyToClipboard, copied } = useClipboard()
+  const marketData = useAuraMarketData()
+  
+  const {
+    stakingStats,
+    userStake,
+    loading,
+    error,
+    stake,
+    unstake,
+    claimRewards,
+    calculateEstimatedRewards,
+    refreshData,
+    formatAmount,
+    auraPrice,
+    networkStats,
+    isContractIntegrated
+  } = useStaking()
+
+  const [stakeAmount, setStakeAmount] = useState('')
+  const [unstakeAmount, setUnstakeAmount] = useState('')
   const [mounted, setMounted] = useState(false)
-  const router = useRouter()
+  const [activeTab, setActiveTab] = useState('overview')
+  const [balanceVisible, setBalanceVisible] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+    
+    // Handle URL hash for tab navigation
+    const hash = window.location.hash.replace('#', '')
+    if (hash && ['overview', 'staking', 'wallet', 'treasury', 'portfolio'].includes(hash)) {
+      setActiveTab(hash)
+    }
   }, [])
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border rounded-lg p-6">
-                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
-                <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
+  // Update URL hash when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    window.location.hash = value
   }
 
-  if (!connected || !publicKey) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Wallet className="w-8 h-8 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Welcome to AURA Dashboard</CardTitle>
-            <CardDescription className="text-lg">
-              Connect your wallet to access your portfolio, staking, trading, and governance features.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WalletMultiButton className="w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    )
+  // Handle staking
+  const handleStake = async () => {
+    if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid stake amount",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      const signature = await stake(stakeAmount)
+      toast({
+        title: "Stake Successful!",
+        description: `Transaction: ${signature}`,
+      })
+      setStakeAmount('')
+    } catch (err: any) {
+      toast({
+        title: "Staking Failed",
+        description: err.message,
+        variant: "destructive"
+      })
+    }
   }
 
-  return (
-    <WalletDashboard 
-      walletAddress={publicKey.toString()} 
-      onDisconnect={disconnect}
-    />
-  )
-}
+  // Handle unstaking
+  const handleUnstake = async () => {
+    if (!unstakeAmount || parseFloat(unstakeAmount) <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid unstake amount",
+        variant: "destructive"
+      })
+      return
+    }
 
-// Helper Components
-function StatCard({ 
-  title, 
-  value, 
-  change, 
-  icon: Icon, 
-  trend 
-}: { 
-  title: string
-  value: string
-  change: string
-  icon: any
-  trend: 'up' | 'down' | 'stable'
-}) {
-  const trendColor = trend === 'up' ? 'text-green-600' : trend === 'down' ? 'text-red-600' : 'text-gray-600'
-  
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            <p className={`text-sm ${trendColor}`}>{change}</p>
-          </div>
-          <div className="p-3 bg-blue-100 rounded-full">
-            <Icon className="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+    try {
+      const signature = await unstake(unstakeAmount)
+      toast({
+        title: "Unstake Successful!",
+        description: `Transaction: ${signature}`,
+      })
+      setUnstakeAmount('')
+    } catch (err: any) {
+      toast({
+        title: "Unstaking Failed",
+        description: err.message,
+        variant: "destructive"
+      })
+    }
+  }
 
-function QuickActions() {
-  const router = useRouter()
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Button 
-          className="w-full justify-start" 
-          variant="outline"
-          onClick={() => router.push('/staking')}
-        >
-          <Coins className="w-4 h-4 mr-2" />
-          Stake AURA
-        </Button>
-        <Button 
-          className="w-full justify-start" 
-          variant="outline"
-          onClick={() => router.push('/trading')}
-        >
-          <ArrowUpDown className="w-4 h-4 mr-2" />
-          Swap Tokens
-        </Button>
-        <Button 
-          className="w-full justify-start" 
-          variant="outline"
-          onClick={() => router.push('/staking')}
-        >
-          <Gift className="w-4 h-4 mr-2" />
-          Claim Rewards
-        </Button>
-        <Button 
-          className="w-full justify-start" 
-          variant="outline"
-          onClick={() => router.push('/dashboard/community')}
-        >
-          <Vote className="w-4 h-4 mr-2" />
-          View Proposals
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
+  // Handle claim rewards
+  const handleClaimRewards = async () => {
+    try {
+      const signature = await claimRewards()
+      toast({
+        title: "Rewards Claimed!",
+        description: `Transaction: ${signature}`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Claim Failed",
+        description: err.message,
+        variant: "destructive"
+      })
+    }
+  }
 
-function RecentActivity() {
-  const activities = [
-    { type: 'stake', amount: '500 AURA', time: '2 hours ago', status: 'confirmed' },
-    { type: 'reward', amount: '+12.34 AURA', time: '1 day ago', status: 'confirmed' },
-    { type: 'swap', amount: '100 SOL → AURA', time: '3 days ago', status: 'confirmed' },
+  const quickAccessItems = [
+    {
+      title: 'Analytics',
+      description: 'Comprehensive analytics and insights',
+      icon: BarChart3,
+      href: '/dashboard/analytics',
+      color: 'bg-blue-500',
+      stats: '47 metrics tracked'
+    },
+    {
+      title: 'Trading',
+      description: 'Advanced trading interface',
+      icon: TrendingUp,
+      href: '/dashboard/trading',
+      color: 'bg-green-500',
+      stats: '23 active trades'
+    },
+    {
+      title: 'Properties',
+      description: 'Browse and manage property listings',
+      icon: Home,
+      href: '/dashboard/properties',
+      color: 'bg-cyan-500',
+      stats: '12 properties'
+    },
+    {
+      title: 'Governance',
+      description: 'Participate in DAO governance',
+      icon: Users,
+      href: '/dashboard/governance',
+      color: 'bg-indigo-500',
+      stats: '5 active proposals'
+    }
   ]
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Recent Activity</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {activities.map((activity, index) => (
-          <div key={index} className="flex items-center justify-between text-sm">
-            <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${
-                activity.type === 'stake' ? 'bg-blue-500' :
-                activity.type === 'reward' ? 'bg-green-500' : 'bg-purple-500'
-              }`} />
-              <span className="font-medium">{activity.amount}</span>
-            </div>
-            <span className="text-gray-500">{activity.time}</span>
-          </div>
-        ))}
-        <Button variant="ghost" size="sm" className="w-full">
-          View All History
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
-function MarketOverview() {
-  const marketData = useAuraMarketData()
+  const treasuryFeatures = [
+    {
+      icon: Shield,
+      title: 'Secure Protocol',
+      description: 'Audited smart contracts with multi-signature security'
+    },
+    {
+      icon: Zap,
+      title: 'Time-Weighted Rewards',
+      description: 'Earn more for longer stakes with our innovative algorithm'
+    },
+    {
+      icon: Percent,
+      title: 'Competitive APY',
+      description: 'Industry-leading yields up to 18.2% annually'
+    },
+    {
+      icon: Users,
+      title: 'Community Driven',
+      description: 'Governance participation and community benefits'
+    }
+  ]
 
   const formatPrice = (price: number) => {
-    return price < 0.01 ? `$${price.toFixed(8)}` : `$${price.toFixed(4)}`
+    return price >= 0.01 ? price.toFixed(4) : price.toExponential(2)
   }
 
   const formatMarketCap = (marketCap: number) => {
-    if (marketCap >= 1000000) {
-      return `$${(marketCap / 1000000).toFixed(1)}M`
-    } else if (marketCap >= 1000) {
-      return `$${(marketCap / 1000).toFixed(1)}K`
-    }
-    return `$${marketCap.toFixed(0)}`
+    if (marketCap >= 1e9) return `$${(marketCap / 1e9).toFixed(2)}B`
+    if (marketCap >= 1e6) return `$${(marketCap / 1e6).toFixed(2)}M`
+    if (marketCap >= 1e3) return `$${(marketCap / 1e3).toFixed(2)}K`
+    return `$${marketCap.toFixed(2)}`
   }
 
   const formatStaked = (staked: number) => {
-    if (staked >= 1000000) {
-      return `${(staked / 1000000).toFixed(1)}M AURA`
-    } else if (staked >= 1000) {
-      return `${(staked / 1000).toFixed(1)}K AURA`
-    }
-    return `${staked.toFixed(0)} AURA`
+    if (staked >= 1e9) return `${(staked / 1e9).toFixed(2)}B`
+    if (staked >= 1e6) return `${(staked / 1e6).toFixed(2)}M`
+    if (staked >= 1e3) return `${(staked / 1e3).toFixed(2)}K`
+    return staked.toFixed(0)
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          {marketData.logoUrl && (
-            <img 
-              src={marketData.logoUrl} 
-              alt="AURA"
-              className="w-6 h-6 rounded-full"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          )}
-          <TrendingUp className="w-5 h-5" />
-          <span>AURA Market Overview</span>
-          {marketData.loading && (
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse ml-2" />
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">AURA Price</p>
-            <p className="text-xl font-bold">{formatPrice(marketData.price)}</p>
-            <p className={`text-sm ${marketData.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {marketData.change24h >= 0 ? '+' : ''}{marketData.change24h.toFixed(2)}% (24h)
-            </p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">Market Cap</p>
-            <p className="text-xl font-bold">{formatMarketCap(marketData.marketCap)}</p>
-            <p className="text-sm text-blue-600">Real-time data</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">Total Staked</p>
-            <p className="text-xl font-bold">{formatStaked(marketData.totalStaked)}</p>
-            <p className="text-sm text-blue-600">{marketData.stakingParticipation}% of supply</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      {/* DevNet Warning Banner */}
+      {mounted && !isContractIntegrated && (
+        <div className="bg-orange-600 text-white text-center py-3 px-4 relative z-50">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-2 h-2 bg-orange-300 rounded-full animate-pulse"></div>
+            <span className="font-semibold">🚧 DEVNET VERSION - Using test tokens 🚧</span>
+            <div className="w-2 h-2 bg-orange-300 rounded-full animate-pulse"></div>
           </div>
         </div>
-        
-        <Separator className="my-4" />
-        
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span>Staking Participation</span>
-            <span>{marketData.stakingParticipation}%</span>
-          </div>
-          <Progress value={marketData.stakingParticipation} className="h-2" />
+      )}
+
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8 pt-28 space-y-6">
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            User Dashboard
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Your comprehensive AuraBNB control center. Manage your portfolio, stake tokens, and access all platform features.
+          </p>
         </div>
-      </CardContent>
-    </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>User Dashboard</CardTitle>
+            <CardDescription>Complete user dashboard functionality is being integrated. Please visit the new location soon.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">All user features including staking, portfolio management, and treasury overview are being consolidated here.</p>
+                             <Link href="/user-dashboard#staking">
+                <Button className="mr-4">
+                  Access Staking Features
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button variant="outline">
+                  View Main Dashboard
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Footer />
+    </div>
   )
 } 
