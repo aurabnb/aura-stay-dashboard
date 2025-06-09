@@ -38,44 +38,15 @@ const TOKEN_METADATA = {
 // Fetch current token prices from DexScreener and CoinGecko
 async function fetchTokenPrices(): Promise<{ sol: number; aura: number; usdc: number; auraLogo?: string }> {
   try {
-    // Fetch SOL price from CoinGecko
-    const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-    const solData = await solResponse.json();
-    const solPrice = solData.solana?.usd || 180;
-
-    // Fetch AURA price and logo from DexScreener
-    const auraResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_MINT}`);
-    const auraData = await auraResponse.json();
-    let auraPrice = 0.0002700; // Fallback price
-    let auraLogo = '/aura-logo.png'; // Fallback logo
+    // Use our server-side API route instead of direct external calls
+    const response = await fetch('/api/token-prices?tokens=sol,aura');
+    const data = await response.json();
     
-    if (auraData.pairs && auraData.pairs.length > 0) {
-      const pair = auraData.pairs[0];
-      const price = parseFloat(pair.priceUsd);
-      if (price && price > 0) {
-        auraPrice = price;
-      }
-      
-      // Extract AURA logo from DexScreener
-      if (pair.baseToken && pair.baseToken.address === AURA_TOKEN_MINT) {
-        auraLogo = pair.baseToken.logoURI || auraLogo;
-        console.log('AURA logo found in baseToken:', auraLogo);
-      } else if (pair.quoteToken && pair.quoteToken.address === AURA_TOKEN_MINT) {
-        auraLogo = pair.quoteToken.logoURI || auraLogo;
-        console.log('AURA logo found in quoteToken:', auraLogo);
-      }
-      
-      console.log('DexScreener AURA data:', { price: auraPrice, logo: auraLogo });
-    }
-
-    // Update TOKEN_METADATA with fetched logo
-    TOKEN_METADATA[AURA_TOKEN_MINT].logo = auraLogo;
-
     return {
-      sol: solPrice,
-      aura: auraPrice,
+      sol: data.sol || 180,
+      aura: data.aura || 0.0002700,
       usdc: 1.0, // USDC is stable
-      auraLogo
+      auraLogo: data.auraLogo || '/aura-logo.png'
     };
   } catch (error) {
     console.error('Error fetching token prices:', error);
@@ -453,22 +424,16 @@ export async function getWalletTransactions(
 
 export async function getTokenMetrics(): Promise<TokenMetrics> {
   try {
-    // Fetch AURA token metrics from DexScreener
-    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_MINT}`);
+    // Use our server-side API route instead of direct external calls
+    const response = await fetch('/api/token-prices?tokens=aura');
     const data = await response.json();
     
-    if (data.pairs && data.pairs.length > 0) {
-      const pair = data.pairs[0];
-      const price = parseFloat(pair.priceUsd) || 0.0002700;
-      const priceChange24h = parseFloat(pair.priceChange?.h24) || 0;
-      const volume24h = parseFloat(pair.volume?.h24) || 0;
-      const marketCap = parseFloat(pair.marketCap) || 0;
-      
+    if (data.auraMetrics) {
       return {
-        price,
-        priceChange24h,
-        marketCap,
-        volume24h,
+        price: data.auraMetrics.price,
+        priceChange24h: data.auraMetrics.priceChange24h,
+        marketCap: data.auraMetrics.marketCap,
+        volume24h: data.auraMetrics.volume24h,
         holders: 5000, // Estimate - would need additional API
         symbol: 'AURA',
         name: 'AURA Token'

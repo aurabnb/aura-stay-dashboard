@@ -107,37 +107,29 @@ export function useStaking() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
       
-      // Fetch SOL price from CoinGecko
-      const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', {
+      // Use our server-side API route instead of direct external calls
+      const response = await fetch('/api/token-prices?tokens=sol,aura', {
         signal: controller.signal
       })
       
-      if (solResponse.ok) {
-        const solData: TokenPrice = await solResponse.json()
-        if (solData?.solana?.usd) {
-          setSolPrice(solData.solana.usd)
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Update SOL price
+        if (data.sol) {
+          setSolPrice(data.sol)
         }
-      }
-      
-      // Fetch AURA price from DexScreener
-      const auraResponse = await fetch('https://api.dexscreener.com/latest/dex/tokens/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', {
-        signal: controller.signal
-      })
-      
-      if (auraResponse.ok) {
-        const auraData: DexScreenerResponse = await auraResponse.json()
-        if (auraData.pairs && auraData.pairs.length > 0) {
-          const auraPrice = parseFloat(auraData.pairs[0].priceUsd)
-          if (auraPrice && auraPrice > 0) {
-            setAuraPrice(auraPrice)
-          } else {
-            setAuraPrice(0.0002700) // Fallback to the correct AURA price
-          }
+        
+        // Update AURA price
+        if (data.aura) {
+          setAuraPrice(data.aura)
         } else {
           setAuraPrice(0.0002700) // Fallback to the correct AURA price
         }
       } else {
-        setAuraPrice(0.0002700) // Fallback to the correct AURA price
+        // Fallback prices
+        setSolPrice(180)
+        setAuraPrice(0.0002700)
       }
       
       clearTimeout(timeoutId)

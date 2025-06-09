@@ -265,4 +265,16 @@ enum StakingStatus {
   ACTIVE
   UNSTAKED
   PENDING_UNSTAKE
+}
+
+// Cache model for API responses to reduce external calls and improve performance
+model ApiCache {
+  id          String   @id @default(cuid())
+  key         String   @unique // Cache key (e.g., "token_prices", "aura_metrics")
+  data        Json     // Cached response data
+  expiresAt   DateTime // When the cache expires
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("api_cache")
 } 

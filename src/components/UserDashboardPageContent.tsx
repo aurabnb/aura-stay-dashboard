@@ -60,7 +60,7 @@ const WalletMultiButton = dynamic(
   { ssr: false }
 )
 
-// Add hook for fetching live AURA data from DexScreener
+// Hook for AURA market data
 function useAuraMarketData() {
   const [marketData, setMarketData] = useState({
     price: 0.00025070,
@@ -77,26 +77,21 @@ function useAuraMarketData() {
 
     const fetchMarketData = async () => {
       try {
-        const AURA_TOKEN_ADDRESS = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe'
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_ADDRESS}`)
+        // Use our server-side API route instead of direct external calls
+        const response = await fetch('/api/token-prices?tokens=aura')
         
         if (response.ok && isMounted) {
           const data = await response.json()
           
-          if (data.pairs && data.pairs.length > 0) {
-            const pair = data.pairs[0]
-            const price = parseFloat(pair.priceUsd) || 0.00025070
-            const change24h = parseFloat(pair.priceChange?.h24) || -21.66
-            const marketCap = parseFloat(pair.fdv) || parseFloat(pair.marketCap) || 197408
-            const volume24h = parseFloat(pair.volume?.h24) || 19193
-            
+          if (data.auraMetrics) {
+            const metrics = data.auraMetrics
             setMarketData({
-              price,
-              change24h,
-              marketCap,
-              volume24h,
+              price: metrics.price,
+              change24h: metrics.priceChange24h,
+              marketCap: metrics.marketCap,
+              volume24h: metrics.volume24h,
               holders: 5000, // This would need to come from another API
-              logoUrl: pair.baseToken?.logoURI || '/aura-logo.png',
+              logoUrl: data.auraLogo || '/aura-logo.png',
               loading: false
             })
           } else {
@@ -106,6 +101,7 @@ function useAuraMarketData() {
           setMarketData(prev => ({ ...prev, loading: false }))
         }
       } catch (error) {
+        console.error('Error fetching AURA market data:', error)
         setMarketData(prev => ({ ...prev, loading: false }))
       }
     }
@@ -122,12 +118,12 @@ function useAuraMarketData() {
   return marketData
 }
 
-// Helper function to fetch SOL price
+// Helper function to fetch SOL price from our API
 async function fetchSolPrice(): Promise<number> {
   try {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd')
+    const response = await fetch('/api/token-prices?tokens=sol')
     const data = await response.json()
-    return data.solana?.usd || 150 // Fallback to 150 if API fails
+    return data.sol || 150 // Fallback to 150 if API fails
   } catch (error) {
     console.error('Error fetching SOL price:', error)
     return 150 // Fallback price
