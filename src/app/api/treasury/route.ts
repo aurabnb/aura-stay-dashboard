@@ -61,6 +61,24 @@ async function fetchCoinGeckoPrice(): Promise<number> {
   }
 }
 
+// Fetch AURA price from DexScreener
+async function fetchAuraPrice(): Promise<number> {
+  try {
+    const response = await fetch(
+      'https://api.dexscreener.com/latest/dex/tokens/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe'
+    )
+    const data = await response.json()
+    if (data.pairs && data.pairs.length > 0) {
+      const price = parseFloat(data.pairs[0].priceUsd)
+      return price > 0 ? price : 0.0002700 // Fallback price
+    }
+    return 0.0002700 // Fallback price
+  } catch (error) {
+    console.error('Error fetching AURA price:', error)
+    return 0.0002700 // Fallback price
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -87,6 +105,9 @@ export async function GET(request: NextRequest) {
 
 async function getTreasuryBalances() {
   try {
+    // Fetch real AURA price
+    const auraPrice = await fetchAuraPrice()
+    
     // In a real implementation, this would fetch from blockchain APIs
     // For now, returning mock data
     const balances = [
@@ -108,8 +129,8 @@ async function getTreasuryBalances() {
       },
       {
         token: 'AURA',
-        amount: 2500000,
-        usdValue: 2500000 * 2.1, // AURA price
+        amount: 500000000, // 500M AURA tokens - realistic amount for low price
+        usdValue: 500000000 * auraPrice, // Use real AURA price
         change24h: 12.8,
         walletAddress: 'fa1ra81T7g5DzSn7XT6z36zNqupHpG1Eh7omB2F6GTh',
         logo: '/logos/aura.png'

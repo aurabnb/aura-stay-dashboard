@@ -22,9 +22,19 @@ interface TokenPrice {
   solana: {
     usd: number
   }
-  'aura-network': {
-    usd: number
-  }
+}
+
+interface DexScreenerResponse {
+  pairs: Array<{
+    baseToken: {
+      address: string
+      symbol: string
+    }
+    priceUsd: string
+    volume: {
+      h24: number
+    }
+  }>
 }
 
 interface DeFiData {
@@ -89,7 +99,7 @@ export function useStaking() {
     }
   }, [mounted, connection, wallet])
 
-  // Fetch real SOL and AURA prices from CoinGecko (client-side only)
+  // Fetch real SOL and AURA prices (client-side only)
   const fetchTokenPrices = useCallback(async () => {
     if (!mounted || typeof window === 'undefined') return
     
@@ -97,24 +107,46 @@ export function useStaking() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
       
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,aura-network&vs_currencies=usd', {
+      // Fetch SOL price from CoinGecko
+      const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', {
         signal: controller.signal
       })
       
+      if (solResponse.ok) {
+        const solData: TokenPrice = await solResponse.json()
+        if (solData?.solana?.usd) {
+          setSolPrice(solData.solana.usd)
+        }
+      }
+      
+      // Fetch AURA price from DexScreener
+      const auraResponse = await fetch('https://api.dexscreener.com/latest/dex/tokens/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe', {
+        signal: controller.signal
+      })
+      
+      if (auraResponse.ok) {
+        const auraData: DexScreenerResponse = await auraResponse.json()
+        if (auraData.pairs && auraData.pairs.length > 0) {
+          const auraPrice = parseFloat(auraData.pairs[0].priceUsd)
+          if (auraPrice && auraPrice > 0) {
+            setAuraPrice(auraPrice)
+          } else {
+            setAuraPrice(0.0002700) // Fallback to the correct AURA price
+          }
+        } else {
+          setAuraPrice(0.0002700) // Fallback to the correct AURA price
+        }
+      } else {
+        setAuraPrice(0.0002700) // Fallback to the correct AURA price
+      }
+      
       clearTimeout(timeoutId)
       
-      if (!response.ok) throw new Error('API response not ok')
-      
-      const data: TokenPrice = await response.json()
-      if (data?.solana?.usd) {
-        setSolPrice(data.solana.usd)
-      }
-      if (data?.['aura-network']?.usd) {
-        setAuraPrice(data['aura-network'].usd)
-      }
     } catch (err) {
       console.warn('Using fallback token prices:', err)
-      // Keep fallback prices, don't set error for price fetching
+      // Use fallback prices
+      setSolPrice(180)
+      setAuraPrice(0.0002700) // Correct AURA fallback price
     }
   }, [mounted])
 

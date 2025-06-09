@@ -59,7 +59,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.coingecko.com https://api.mainnet-beta.solana.com https://api.devnet.solana.com wss:",
+    "connect-src 'self' https://api.coingecko.com https://api.dexscreener.com https://api.mainnet-beta.solana.com https://api.devnet.solana.com wss:",
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -128,7 +128,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: isStaticExport ? [] : [
+  matcher: [
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)

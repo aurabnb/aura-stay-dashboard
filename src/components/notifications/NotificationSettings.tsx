@@ -20,14 +20,14 @@ import {
   TestTube
 } from 'lucide-react'
 import { useNotifications, type NotificationPreferences } from '@/components/notifications/NotificationSystem'
-import { showNotificationDemo } from '@/hooks/useNotifications'
+import { createNotificationDemo } from '@/hooks/useNotifications'
 
 interface NotificationSettingsProps {
   onClose?: () => void
 }
 
 export function NotificationSettings({ onClose }: NotificationSettingsProps) {
-  const { preferences, updatePreferences, clearAll } = useNotifications()
+  const { preferences, updatePreferences, clearAll, addNotification } = useNotifications()
 
   const handlePreferenceChange = (key: keyof NotificationPreferences, value: any) => {
     updatePreferences({
@@ -36,8 +36,8 @@ export function NotificationSettings({ onClose }: NotificationSettingsProps) {
     })
   }
 
-  const testNotifications = () => {
-    showNotificationDemo()
+  const handleDemoNotifications = () => {
+    createNotificationDemo(addNotification)
   }
 
   return (
@@ -253,7 +253,7 @@ export function NotificationSettings({ onClose }: NotificationSettingsProps) {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
           <Button
-            onClick={testNotifications}
+            onClick={handleDemoNotifications}
             variant="outline"
             className="flex items-center space-x-2"
             disabled={!preferences.enabled}

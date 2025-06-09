@@ -1,6 +1,16 @@
+'use client'
+
 import { Suspense } from 'react'
-import { InvestmentHubDashboard } from '@/components/dashboards/InvestmentHubDashboard'
-import { Loader2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Dynamic import with SSR disabled to prevent wallet context issues
+const InvestmentHubDashboard = dynamic(
+  () => import('@/components/dashboards/InvestmentHubDashboard').then(mod => ({ default: mod.InvestmentHubDashboard })),
+  { 
+    ssr: false,
+    loading: () => <InvestmentLoadingSkeleton />
+  }
+)
 
 function InvestmentLoadingSkeleton() {
   return (
@@ -27,9 +37,4 @@ export default function InvestmentPage() {
       </Suspense>
     </div>
   )
-}
-
-export const metadata = {
-  title: 'Investment Hub | Aura Stay Dashboard',
-  description: 'Invest in unique properties and earn returns through community ownership.',
 } 

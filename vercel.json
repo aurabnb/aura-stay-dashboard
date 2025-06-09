@@ -1,8 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:static",
-  "outputDirectory": "out",
-  "installCommand": "npm install",
+  "buildCommand": "npm run build:vercel",
   "framework": "nextjs",
   "regions": ["iad1", "sfo1"],
   "env": {
@@ -13,16 +11,12 @@
     "env": {
       "NEXT_TELEMETRY_DISABLED": "1",
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_GLOBAL_POLYFILLS": "true",
       "SKIP_ENV_VALIDATION": "true",
-      "STATIC_EXPORT": "1"
+      "VERCEL": "1"
     }
   },
   "functions": {
     "app/api/**/*.ts": {
-      "maxDuration": 30
-    },
-    "app/**/*.tsx": {
       "maxDuration": 30
     }
   },
@@ -48,13 +42,5 @@
         }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/"
-    }
-  ],
-  "trailingSlash": false,
-  "cleanUrls": true
+  ]
 } 

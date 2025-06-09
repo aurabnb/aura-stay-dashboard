@@ -27,8 +27,32 @@ const nextConfig = {
     }
   }),
 
+  // Transpile Solana packages for proper bundling
+  transpilePackages: [
+    '@solana/web3.js',
+    '@solana/wallet-adapter-base',
+    '@solana/wallet-adapter-react',
+    '@solana/wallet-adapter-react-ui',
+    '@solana/wallet-adapter-wallets',
+    '@coral-xyz/anchor',
+    '@project-serum/anchor',
+    '@solana/spl-token',
+  ],
+
   webpack: (config, { isServer, dev }) => {
-    // Solana wallet adapter and web3.js configuration
+    // Configure externals for server-side rendering
+    if (isServer) {
+      config.externals = config.externals || []
+      config.externals.push({
+        '@solana/web3.js': 'commonjs @solana/web3.js',
+        '@coral-xyz/anchor': 'commonjs @coral-xyz/anchor',
+        '@solana/wallet-adapter-react': 'commonjs @solana/wallet-adapter-react',
+        '@solana/wallet-adapter-react-ui': 'commonjs @solana/wallet-adapter-react-ui',
+        '@solana/spl-token': 'commonjs @solana/spl-token',
+      })
+    }
+
+    // Solana wallet adapter and web3.js configuration for client-side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -42,6 +66,11 @@ const nextConfig = {
         zlib: require.resolve("browserify-zlib"),
         assert: require.resolve("assert"),
         util: require.resolve("util"),
+        path: false,
+        os: false,
+        http: false,
+        https: false,
+        url: false,
       };
       
       // Safer environment variable handling
@@ -61,7 +90,24 @@ const nextConfig = {
       );
     }
     
-    // Disable source maps in development to improve performance (as suggested by warning)
+    // Optimize chunks to prevent vendor chunk issues
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks?.cacheGroups,
+          solana: {
+            test: /[\\/]node_modules[\\/](@solana|@coral-xyz)[\\/]/,
+            name: 'solana',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      },
+    }
+    
+    // Disable source maps in development to improve performance
     if (dev) {
       config.devtool = false;
     }

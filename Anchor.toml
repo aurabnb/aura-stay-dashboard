@@ -1,6 +1,6 @@
 [toolchain]
 anchor_version = "0.28.0"
-solana_version = "1.17.0"
+solana_version = "1.16.25"
 
 [features]
 seeds = false
@@ -8,13 +8,13 @@ skip-lint = false
 resolution = true
 
 [programs.localnet]
-aura_staking = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
+time_weighted_staking = "35C2x1zY4b1z5Gv2RhTf1rG3jc7UKzbjgSgv6Ww8ixeJ"
 
 [programs.devnet]
-aura_staking = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
+time_weighted_staking = "35C2x1zY4b1z5Gv2RhTf1rG3jc7UKzbjgSgv6Ww8ixeJ"
 
 [programs.mainnet]
-aura_staking = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
+time_weighted_staking = "35C2x1zY4b1z5Gv2RhTf1rG3jc7UKzbjgSgv6Ww8ixeJ"
 
 [registry]
 url = "https://api.apr.dev"
@@ -32,8 +32,8 @@ shutdown_wait = 2000
 upgradeable = false
 
 [[test.genesis]]
-address = "9SNiVmYxKDG6Y1uRs2e6ivmjsG49KPygvwqmNCooiw4m"
-program = "target/deploy/aura_staking.so"
+address = "35C2x1zY4b1z5Gv2RhTf1rG3jc7UKzbjgSgv6Ww8ixeJ"
+program = "target/deploy/time_weighted_staking.so"
 
 [test.validator]
 bind_address = "0.0.0.0"
@@ -45,7 +45,7 @@ dynamic_port_range = "8002-8020"
 
 [workspace]
 members = [
-    "programs/*"
+    "programs/time-weighted-staking"
 ]
 
 [build]

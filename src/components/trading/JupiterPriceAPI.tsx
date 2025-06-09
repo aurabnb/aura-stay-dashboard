@@ -7,7 +7,7 @@ import { TrendingUp, Zap } from 'lucide-react'
 
 const JupiterPriceAPI: React.FC = () => {
   const [priceData, setPriceData] = useState({
-    aura: 0.00011566,
+    aura: 0.0002700,
     sol: 178.15,
     change24h: 12.5
   })

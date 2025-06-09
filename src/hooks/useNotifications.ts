@@ -291,10 +291,9 @@ export const notificationManager = NotificationManager.getInstance()
 
 /**
  * Demo function to test all notification types
+ * This function should be called from within a React component
  */
-export function showNotificationDemo() {
-  const { addNotification } = useNotifications()
-
+export function createNotificationDemo(addNotification: (notification: any) => void) {
   const demos = [
     notificationPresets.walletConnected('Phantom'),
     notificationPresets.transactionSuccess('abc123...'),

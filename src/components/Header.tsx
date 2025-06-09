@@ -9,32 +9,21 @@ import {
   X,
   Copy,
   ExternalLink,
+  Search,
+  Bell,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useWallet } from '@solana/wallet-adapter-react';
 import { CustomWalletButton } from '@/components/wallet/CustomWalletButton';
-// import { SearchButton } from '@/components/search/SearchButton'; // Temporarily disabled for SSG
 
 /* -------------------------------------------------------------------------- */
 /*                                   Header                                   */
 /* -------------------------------------------------------------------------- */
+
 export function Header() {
-  try {
-    const { connected, publicKey, disconnect } = useWallet();
-    return <HeaderContent connected={connected} publicKey={publicKey} disconnect={disconnect} />
-  } catch (error) {
-    // Fallback when wallet context is not available
-    return <HeaderContent connected={false} publicKey={null} disconnect={() => {}} />
-  }
+  return <HeaderContent />
 }
 
-interface HeaderContentProps {
-  connected: boolean;
-  publicKey: any;
-  disconnect: () => void;
-}
-
-function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps) {
+function HeaderContent() {
   /* ----------------------------- dropdown state ---------------------------- */
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(false);
@@ -52,53 +41,7 @@ function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps)
     setMounted(true);
   }, []);
 
-  // Mock notifications for SSR
-  const mockNotifications = {
-    notifySuccess: () => {},
-    notifyError: () => {},
-    notifyInfo: () => {},
-    notifyWarning: () => {},
-  };
-
-  // Use mock during SSR, real notifications after mount
-  const notifications = mockNotifications;
-
-  /* ----------------------- wallet connect helpers ------------------------- */
-  const disconnectWallet = async () => {
-    try {
-      await disconnect();
-      toast({ title: "Wallet Disconnected" });
-    } catch (error) {
-      console.error('Disconnect error:', error);
-    }
-  };
-
-  /* --------------------------- quick actions ---------------------------- */
-  const copyAddress = () => {
-    if (publicKey) {
-      navigator.clipboard.writeText(publicKey.toString());
-      toast({ title: "Address Copied! 📋" });
-    }
-  };
-  
-  const openInExplorer = () => {
-    if (publicKey) {
-      window.open(
-        `https://explorer.solana.com/address/${publicKey.toString()}`,
-        "_blank"
-      );
-    }
-  };
-
   const handleBuyWithFiat = () => {
-    if (!connected) {
-      toast({
-        title: "Wallet Required",
-        description: "Connect a wallet first",
-        variant: "destructive",
-      });
-      return;
-    }
     router.push("/buy-fiat");
     setMobileOpen(false);
   };
@@ -269,13 +212,7 @@ function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps)
           <div className="hidden lg:flex items-center gap-4">
             {/* Global Search - temporarily disabled for SSG build */}
 
-            <WalletSection
-              connected={connected}
-              publicKey={publicKey}
-              copyAddress={copyAddress}
-              openInExplorer={openInExplorer}
-              disconnectWallet={disconnectWallet}
-            />
+            <WalletSection />
 
             {/* Notification Test Button temporarily disabled for SSG */}
 
@@ -381,14 +318,7 @@ function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps)
               </Link>
 
               <div className="pt-4 border-t border-gray-200 space-y-3">
-                <WalletSection
-                  mobile
-                  connected={connected}
-                  publicKey={publicKey}
-                  copyAddress={copyAddress}
-                  openInExplorer={openInExplorer}
-                  disconnectWallet={disconnectWallet}
-                />
+                <WalletSection />
 
                 <button
                   onClick={handleBuyWithFiat}
@@ -414,62 +344,25 @@ function HeaderContent({ connected, publicKey, disconnect }: HeaderContentProps)
 /*                              wallet section                                */
 /* -------------------------------------------------------------------------- */
 
-interface WalletSectionProps {
-  mobile?: boolean;
-  connected: boolean;
-  publicKey: any;
-  copyAddress: () => void;
-  openInExplorer: () => void;
-  disconnectWallet: () => void;
-}
+// Simple client-only wallet component
+function WalletSection({ mobile = false }: { mobile?: boolean }) {
+  const [mounted, setMounted] = useState(false);
 
-const WalletSection: React.FC<WalletSectionProps> = ({
-  mobile,
-  connected,
-  publicKey,
-  copyAddress,
-  openInExplorer,
-  disconnectWallet,
-}) => {
-  if (!connected) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Return placeholder during SSR
     return (
-      <CustomWalletButton mobile={mobile} />
+      <button 
+        className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium"
+        disabled
+      >
+        Connect Wallet
+      </button>
     );
   }
 
-  const walletAddress = publicKey?.toString() || '';
-
-  /* --- connected state --- */
-  return (
-    <div className={mobile ? "space-y-3" : "flex items-center space-x-2"}>
-      <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2">
-        <div className="w-3 h-3 rounded-full bg-green-500" />
-        <span className="text-sm font-medium">
-          {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
-        </span>
-        <button
-          onClick={copyAddress}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
-          title="Copy address"
-        >
-          <Copy className="h-3 w-3" />
-        </button>
-        <button
-          onClick={openInExplorer}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
-          title="View in explorer"
-        >
-          <ExternalLink className="h-3 w-3" />
-        </button>
-      </div>
-      <button
-        onClick={disconnectWallet}
-        className={`bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-          mobile ? "w-full" : ""
-        }`}
-      >
-        Disconnect
-      </button>
-    </div>
-  );
-};
+  return <CustomWalletButton mobile={mobile} />;
+}

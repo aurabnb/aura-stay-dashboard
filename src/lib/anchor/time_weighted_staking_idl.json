@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "name": "time_weighted_staking",
-  "address": "3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6",
+  "address": "BN2DqSycxKERFRxt5Z4E9KEexBZQvxyR3bX7qNKVYj2F",
   "instructions": [
     {
       "name": "initializePool",

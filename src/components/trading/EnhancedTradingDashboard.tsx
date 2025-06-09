@@ -30,10 +30,10 @@ const EnhancedTradingDashboard = () => {
     {
       symbol: 'AURA',
       name: 'Aura Token',
-      price: 0.00011566,
+      price: 0.0002700,
       change24h: 12.5,
       volume24h: 45000,
-      marketCap: 115655,
+      marketCap: 270000,
       icon: '/aura-icon.png',
       jupiterUrl: 'https://jup.ag/swap/SOL-3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
       priceChange7d: 25.8,

@@ -1,5 +1,16 @@
+'use client'
+
 import { Suspense } from 'react'
-import { InvestmentHubDashboard } from '@/components/dashboards/InvestmentHubDashboard'
+import dynamic from 'next/dynamic'
+
+// Dynamically import the dashboard component to prevent SSR issues
+const InvestmentHubDashboard = dynamic(
+  () => import('@/components/dashboards/InvestmentHubDashboard').then(mod => ({ default: mod.InvestmentHubDashboard })),
+  { 
+    ssr: false,
+    loading: () => <InvestmentHubLoading />
+  }
+)
 
 function InvestmentHubLoading() {
   return (

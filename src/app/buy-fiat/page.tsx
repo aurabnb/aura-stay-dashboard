@@ -1,9 +1,37 @@
 'use client'
 
 import React from 'react'
+import dynamic from 'next/dynamic'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { FiatPurchase } from '@/components/financial/FiatPurchase'
+
+// Dynamic import with SSR disabled to prevent wallet context issues
+const FiatPurchase = dynamic(
+  () => import('@/components/financial/FiatPurchase').then(mod => ({ default: mod.FiatPurchase })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 w-48 bg-gray-200 rounded"></div>
+            <div className="h-4 w-64 bg-gray-200 rounded"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="h-32 bg-gray-200 rounded"></div>
+                <div className="h-10 bg-gray-200 rounded"></div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-32 bg-gray-200 rounded"></div>
+                <div className="h-10 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+)
 
 export default function BuyFiatPage() {
   return (

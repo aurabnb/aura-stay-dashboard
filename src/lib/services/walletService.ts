@@ -56,7 +56,7 @@ export const KNOWN_TOKENS: Record<string, { symbol: string; name: string; decima
 }
 
 export const FIXED_PRICES: Record<string, number> = {
-  '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': 0.00011566, // AURA
+  '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': 0.0002700, // AURA - updated to correct price
   '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh': 105000, // WBTC
   '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': 3500, // ETH
   'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 1, // USDC
