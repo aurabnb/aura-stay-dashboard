@@ -275,7 +275,7 @@ export function StakingSection() {
                 AURA Staking
               </CardTitle>
               <CardDescription className="text-purple-700 font-urbanist mt-2">
-                Stake AURA tokens to earn proportional payouts from the 2% burn redistribution
+                Stake AURA tokens to earn proportional payouts from the 0.8% burn redistribution
               </CardDescription>
             </div>
             <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">
@@ -491,7 +491,7 @@ export function StakingSection() {
             <div className="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-xl border border-red-200">
               <h4 className="font-semibold text-red-900 mb-3 font-urbanist flex items-center gap-2">
                 <Flame className="h-5 w-5" />
-                Live 2% Burn System
+                Live 0.8% Burn System
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>

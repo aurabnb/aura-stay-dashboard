@@ -151,7 +151,7 @@ const BurnRedistributionDashboard: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Burn & Redistribution</h1>
+        <h1 className="text-3xl font-bold tracking-tight">0.8% Burn & Redistribution (through internal app)</h1>
         <p className="text-muted-foreground">
           Track token burns and automatic reward distribution to stakers
         </p>

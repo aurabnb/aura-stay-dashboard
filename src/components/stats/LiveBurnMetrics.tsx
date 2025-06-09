@@ -62,7 +62,7 @@ export function LiveBurnMetrics() {
       color: 'text-orange-600'
     },
     {
-      label: '2% Burn & Redistribution',
+      label: '0.8% Burn & Redistribution',
       value: '(through internal app)',
       change: 0,
       icon: <Percent className="h-5 w-5" />,
@@ -104,7 +104,7 @@ export function LiveBurnMetrics() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold mb-2">2% Burn & Redistribution</h2>
+          <h2 className="text-3xl font-bold mb-2">0.8% Burn & Redistribution (through internal app)</h2>
           <p className="text-gray-600">
             Automated burn and redistribution system powering sustainable growth
           </p>
@@ -238,7 +238,7 @@ export function LiveBurnMetrics() {
               <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">•</span>
               </div>
-              <h4 className="font-semibold mb-2">2% of every transaction is automatically burned</h4>
+              <h4 className="font-semibold mb-2">0.8% of every transaction is automatically burned</h4>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -247,7 +247,7 @@ export function LiveBurnMetrics() {
               <h4 className="font-semibold mb-2">Burned tokens are redistributed to stakers</h4>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">•</span>
               </div>
               <h4 className="font-semibold mb-2">Rewards distributed when claimed</h4>

@@ -79,7 +79,7 @@ const dashboardMenuItems = [
   { name: 'Investment Hub', href: '/dashboard/investment', description: 'Investment opportunities', icon: TrendingUp },
   { name: 'Wallet Management', href: '/dashboard/wallet', description: 'Portfolio management', icon: Wallet },
   { name: 'Properties', href: '/dashboard/properties', description: 'Property management', icon: Building2 },
-  { name: 'Burn Tracking', href: '/burn-tracking', description: 'Token burn & redistribution', icon: Flame },
+  { name: 'Burn Tracking', href: '/burn-tracking', description: '0.8% token burn & redistribution (through internal app)', icon: Flame },
         { name: 'Expense Tracker', href: '/user-dashboard#expenses', description: 'Project expense tracking', icon: Receipt },
 ]
 

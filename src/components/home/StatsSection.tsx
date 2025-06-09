@@ -248,8 +248,8 @@ export function StatsSection() {
                   {/* Live indicator for key metrics */}
                   {['totalValue', 'stakedTokens'].includes(stat.key) && (
                     <div className="flex items-center space-x-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-600 font-medium">LIVE</span>
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-yellow-600 font-medium">SOON</span>
                     </div>
                   )}
                 </div>

@@ -34,7 +34,7 @@ export default function StakingPage() {
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">AURA Staking</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Stake AURA tokens to earn rewards from the 2% burn redistribution mechanism
+              Stake AURA tokens to earn rewards from the 0.8% burn redistribution mechanism
             </p>
           </div>
           

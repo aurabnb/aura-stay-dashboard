@@ -111,14 +111,14 @@ export default function Home() {
             <CommunityGrowthMetrics />
           </section>
 
-          {/* 2% Burn System */}
+          {/* 0.8% Burn System */}
           <section>
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Token Economics
               </h2>
               <p className="text-lg text-gray-600">
-                Automated burn and redistribution system powering sustainable growth
+                Automated 0.8% burn and redistribution system powering sustainable growth (through internal app)
               </p>
             </div>
             <LiveBurnMetrics />

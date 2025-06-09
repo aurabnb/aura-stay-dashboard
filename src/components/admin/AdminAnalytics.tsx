@@ -133,9 +133,9 @@ export function AdminAnalytics() {
           <p className="text-gray-600">Real-time insights into platform performance</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Live Data
+            Soon
           </Badge>
           <Button
             variant="outline"

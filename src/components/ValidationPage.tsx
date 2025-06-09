@@ -42,7 +42,7 @@ export default function ValidationPage() {
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
               <h3 className="text-lg font-semibold text-purple-800 mb-2">Treasury Data</h3>
               <div className="text-2xl font-bold text-purple-600">
-                {loading ? "⏳ LOADING" : error ? "❌ ERROR" : "✅ LIVE"}
+                {loading ? "⏳ LOADING" : error ? "❌ ERROR" : "🔜 SOON"}
               </div>
               <p className="text-sm text-purple-600 mt-1">Real-time Updates</p>
             </div>
