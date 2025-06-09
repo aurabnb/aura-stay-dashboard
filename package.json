@@ -129,6 +129,7 @@
     "eslint-config-next": "14.2.15",
     "framer-motion": "^12.15.0",
     "global": "^4.4.0",
+    "googleapis": "^150.0.1",
     "input-otp": "^1.4.2",
     "isomorphic-dompurify": "^2.25.0",
     "lucide-react": "^0.462.0",
