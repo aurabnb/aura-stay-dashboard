@@ -131,7 +131,7 @@ function useAuraMarketData() {
 
 export default function UserDashboardPageContent() {
   const { publicKey, connected } = useWallet()
-  const { copyToClipboard, copied } = useClipboard()
+  const { copy, isCopied } = useClipboard()
   const marketData = useAuraMarketData()
   
   const {
