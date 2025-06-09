@@ -5,7 +5,7 @@ import {
   WalletOverview, 
   TokenMetrics 
 } from '@/types/wallet';
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, LAMPORTS_PER_SOL, ParsedTransactionWithMeta } from '@solana/web3.js';
 
 // AURA token contract address
 const AURA_TOKEN_MINT = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe';
@@ -36,36 +36,54 @@ const TOKEN_METADATA = {
 };
 
 // Fetch current token prices from DexScreener and CoinGecko
-async function fetchTokenPrices(): Promise<{ sol: number; aura: number; usdc: number }> {
+async function fetchTokenPrices(): Promise<{ sol: number; aura: number; usdc: number; auraLogo?: string }> {
   try {
     // Fetch SOL price from CoinGecko
     const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
     const solData = await solResponse.json();
     const solPrice = solData.solana?.usd || 180;
 
-    // Fetch AURA price from DexScreener
+    // Fetch AURA price and logo from DexScreener
     const auraResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_MINT}`);
     const auraData = await auraResponse.json();
     let auraPrice = 0.0002700; // Fallback price
+    let auraLogo = '/aura-logo.png'; // Fallback logo
     
     if (auraData.pairs && auraData.pairs.length > 0) {
-      const price = parseFloat(auraData.pairs[0].priceUsd);
+      const pair = auraData.pairs[0];
+      const price = parseFloat(pair.priceUsd);
       if (price && price > 0) {
         auraPrice = price;
       }
+      
+      // Extract AURA logo from DexScreener
+      if (pair.baseToken && pair.baseToken.address === AURA_TOKEN_MINT) {
+        auraLogo = pair.baseToken.logoURI || auraLogo;
+        console.log('AURA logo found in baseToken:', auraLogo);
+      } else if (pair.quoteToken && pair.quoteToken.address === AURA_TOKEN_MINT) {
+        auraLogo = pair.quoteToken.logoURI || auraLogo;
+        console.log('AURA logo found in quoteToken:', auraLogo);
+      }
+      
+      console.log('DexScreener AURA data:', { price: auraPrice, logo: auraLogo });
     }
+
+    // Update TOKEN_METADATA with fetched logo
+    TOKEN_METADATA[AURA_TOKEN_MINT].logo = auraLogo;
 
     return {
       sol: solPrice,
       aura: auraPrice,
-      usdc: 1.0 // USDC is stable
+      usdc: 1.0, // USDC is stable
+      auraLogo
     };
   } catch (error) {
     console.error('Error fetching token prices:', error);
     return {
       sol: 180,
       aura: 0.0002700,
-      usdc: 1.0
+      usdc: 1.0,
+      auraLogo: '/aura-logo.png'
     };
   }
 }
@@ -263,6 +281,118 @@ export async function getWalletBalances(walletAddress: string): Promise<WalletBa
   }
 }
 
+// Helper function to parse transaction data and determine type and amount
+function parseTransaction(
+  transaction: ParsedTransactionWithMeta, 
+  walletAddress: string
+): { type: string; amount: number; token: string; fee: number } {
+  const walletPubkey = walletAddress;
+  let type = 'unknown';
+  let amount = 0;
+  let token = 'SOL';
+  const fee = (transaction.meta?.fee || 0) / LAMPORTS_PER_SOL;
+
+  try {
+    // Check for SOL transfers
+    if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
+      // Find the account index for our wallet
+      let accountIndex = -1;
+      
+      // Handle both parsed and regular account keys
+      if (transaction.transaction.message.accountKeys) {
+        accountIndex = transaction.transaction.message.accountKeys.findIndex(
+          (key) => {
+            // Handle both string and PublicKey object formats
+            const keyString = typeof key === 'string' ? key : 
+                             key.pubkey ? key.pubkey.toString() : 
+                             key.toString();
+            return keyString === walletPubkey;
+          }
+        );
+      }
+      
+      if (accountIndex !== -1) {
+        const preBalance = transaction.meta.preBalances[accountIndex] || 0;
+        const postBalance = transaction.meta.postBalances[accountIndex] || 0;
+        const balanceChange = (postBalance - preBalance) / LAMPORTS_PER_SOL;
+        
+        // Only consider significant balance changes (excluding fees)
+        if (Math.abs(balanceChange) > 0.001) {
+          amount = Math.abs(balanceChange);
+          type = balanceChange > 0 ? 'receive' : 'send';
+          token = 'SOL';
+          return { type, amount, token, fee };
+        }
+      }
+    }
+
+    // Check for SPL token transfers
+    if (transaction.meta?.preTokenBalances && transaction.meta?.postTokenBalances) {
+      for (let i = 0; i < transaction.meta.preTokenBalances.length; i++) {
+        const preTokenBalance = transaction.meta.preTokenBalances[i];
+        const postTokenBalance = transaction.meta.postTokenBalances.find(
+          (post) => post.accountIndex === preTokenBalance.accountIndex
+        );
+        
+        if (preTokenBalance && postTokenBalance) {
+          const preAmount = parseFloat(preTokenBalance.uiTokenAmount.uiAmountString || '0');
+          const postAmount = parseFloat(postTokenBalance.uiTokenAmount.uiAmountString || '0');
+          const tokenChange = postAmount - preAmount;
+          
+          if (Math.abs(tokenChange) > 0) {
+            amount = Math.abs(tokenChange);
+            type = tokenChange > 0 ? 'receive' : 'send';
+            
+            // Determine token symbol
+            if (preTokenBalance.mint === AURA_TOKEN_MINT) {
+              token = 'AURA';
+            } else if (preTokenBalance.mint === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v') {
+              token = 'USDC';
+            } else {
+              token = 'TOKEN';
+            }
+            return { type, amount, token, fee };
+          }
+        }
+      }
+    }
+
+    // Check for common program interactions
+    if (transaction.transaction.message.instructions) {
+      for (const instruction of transaction.transaction.message.instructions) {
+        if ('programId' in instruction) {
+          const programId = instruction.programId.toString();
+          
+          // Check for staking programs
+          if (programId === 'Stake11111111111111111111111111111111111111' || 
+              programId.includes('Stake')) {
+            type = 'stake';
+            amount = 1; // Placeholder amount for staking operations
+            token = 'SOL';
+            return { type, amount, token, fee };
+          }
+          
+          // Check for DEX/swap programs
+          if (programId.includes('Swap') || 
+              programId === 'SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8' ||
+              programId === '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM') {
+            type = 'swap';
+            amount = 0; // Would need more complex parsing for swap amounts
+            token = 'TOKEN';
+            return { type, amount, token, fee };
+          }
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('Error parsing transaction:', error);
+  }
+
+  // Default for unparseable transactions
+  return { type, amount, token, fee };
+}
+
 export async function getWalletTransactions(
   walletAddress: string, 
   limit: number = 20
@@ -274,18 +404,53 @@ export async function getWalletTransactions(
     const signatures = await connection.getSignaturesForAddress(publicKey, { limit });
     const transactions: WalletTransaction[] = [];
     
-    for (const sigInfo of signatures) {
-      // For now, create mock transaction data based on signatures
-      // In a full implementation, you'd parse each transaction
-      transactions.push({
-        signature: sigInfo.signature,
-        type: Math.random() > 0.5 ? 'send' : 'receive',
-        amount: Math.random() * 100 + 1,
-        token: Math.random() > 0.5 ? 'SOL' : 'AURA',
-        fee: (sigInfo.fee || 5000) / LAMPORTS_PER_SOL,
-        blockTime: sigInfo.blockTime || Math.floor(Date.now() / 1000),
-        status: sigInfo.err ? 'failed' : 'success'
-      });
+    // Process signatures in batches to avoid overwhelming the RPC
+    const batchSize = 5;
+    for (let i = 0; i < Math.min(signatures.length, 10); i += batchSize) {
+      const batch = signatures.slice(i, i + batchSize);
+      
+      // Fetch parsed transaction details for each signature
+      const txPromises = batch.map(sigInfo => 
+        connection.getParsedTransaction(sigInfo.signature, {
+          maxSupportedTransactionVersion: 0
+        }).catch(error => {
+          console.error(`Error fetching transaction ${sigInfo.signature}:`, error);
+          return null;
+        })
+      );
+      
+      const txResults = await Promise.all(txPromises);
+      
+      for (let j = 0; j < batch.length; j++) {
+        const sigInfo = batch[j];
+        const transaction = txResults[j];
+        
+        if (transaction) {
+          // Parse the transaction to extract meaningful data
+          const { type, amount, token, fee } = parseTransaction(transaction, walletAddress);
+          
+          transactions.push({
+            signature: sigInfo.signature,
+            type,
+            amount,
+            token,
+            fee,
+            blockTime: sigInfo.blockTime || Math.floor(Date.now() / 1000),
+            status: sigInfo.err ? 'failed' : 'success'
+          });
+        } else {
+          // Fallback for transactions that couldn't be parsed
+          transactions.push({
+            signature: sigInfo.signature,
+            type: 'unknown',
+            amount: 0,
+            token: 'SOL',
+            fee: (sigInfo.fee || 5000) / LAMPORTS_PER_SOL,
+            blockTime: sigInfo.blockTime || Math.floor(Date.now() / 1000),
+            status: sigInfo.err ? 'failed' : 'success'
+          });
+        }
+      }
     }
     
     return transactions;

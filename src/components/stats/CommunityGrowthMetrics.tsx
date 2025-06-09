@@ -36,27 +36,30 @@ interface ApiResponse {
 const fallbackMetrics: CommunityMetric[] = [
   {
     platform: 'X (Twitter)',
-    current: 15420,
-    growth: 12.3,
+    current: 286,
+    growth: 15.2,
     icon: Twitter,
     color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
+    bgColor: 'bg-blue-50',
+    url: 'https://x.com/Aura_bnb'
   },
   {
     platform: 'Telegram',
-    current: 8745,
-    growth: 18.7,
+    current: 442,
+    growth: 22.1,
     icon: MessageCircle,
     color: 'text-cyan-600',
-    bgColor: 'bg-cyan-50'
+    bgColor: 'bg-cyan-50',
+    url: 'https://t.me/+_3_OC0_hoY5mYWE5'
   },
   {
     platform: 'LinkedIn',
-    current: 3250,
-    growth: 9.4,
+    current: 15,
+    growth: 8.7,
     icon: Linkedin,
     color: 'text-blue-700',
-    bgColor: 'bg-blue-50'
+    bgColor: 'bg-blue-50',
+    url: 'https://www.linkedin.com/company/aura-bnb/'
   }
 ];
 
@@ -86,13 +89,25 @@ function MetricCard({ metric, isLoading }: { metric: CommunityMetric; isLoading:
           <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${metric.color}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-            {metric.platform}
-          </p>
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">
-            {metric.current.toLocaleString()}
-          </p>
-          <div className="flex items-center mt-1">
+          {metric.url ? (
+            <a 
+              href={metric.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs sm:text-sm font-medium text-gray-600 hover:text-black transition-colors inline-flex items-center gap-1 truncate"
+            >
+              {metric.platform}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          ) : (
+            <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+              {metric.platform}
+            </p>
+          )}
+          <div className="flex items-center gap-2">
+            <p className="text-lg sm:text-2xl font-bold text-gray-900">
+              {metric.current.toLocaleString()}
+            </p>
             <Badge 
               variant={metric.growth >= 0 ? 'default' : 'destructive'}
               className="text-xs px-2 py-0.5"
@@ -100,6 +115,11 @@ function MetricCard({ metric, isLoading }: { metric: CommunityMetric; isLoading:
               {metric.growth >= 0 ? '+' : ''}{metric.growth.toFixed(1)}%
             </Badge>
           </div>
+          <p className="text-xs text-gray-500">
+            {metric.platform === 'X (Twitter)' ? '@Aura_bnb' : 
+             metric.platform === 'Telegram' ? 'Community group' : 
+             'Company page'}
+          </p>
         </div>
       </div>
     </MobileCard>
@@ -315,7 +335,7 @@ export function CommunityGrowthMetrics() {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500'}`} />
-            <span>{error ? 'Offline Mode' : 'Live Data'}</span>
+            <span>{error ? 'Online Mode' : 'Live Data'}</span>
           </div>
           {error && (
             <span className="text-orange-600">Using cached data</span>

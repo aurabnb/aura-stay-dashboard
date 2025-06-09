@@ -111,6 +111,7 @@ function useAuraMarketData() {
     marketCap: 0,
     totalStaked: 0,
     stakingParticipation: 0,
+    logoUrl: '/aura-logo.png', // Fallback logo
     loading: true
   })
 
@@ -134,6 +135,14 @@ function useAuraMarketData() {
             const volume24h = parseFloat(pair.volume?.h24) || 0
             const marketCap = parseFloat(pair.marketCap) || price * 1000000000 // Fallback calculation
             
+            // Extract AURA logo from DexScreener
+            let logoUrl = '/aura-logo.png' // Fallback
+            if (pair.baseToken && pair.baseToken.address === AURA_TOKEN_ADDRESS) {
+              logoUrl = pair.baseToken.logoURI || logoUrl
+            } else if (pair.quoteToken && pair.quoteToken.address === AURA_TOKEN_ADDRESS) {
+              logoUrl = pair.quoteToken.logoURI || logoUrl
+            }
+            
             // Calculate estimated staking data based on market cap
             const estimatedSupply = 1000000000 // 1B tokens estimated
             const totalStaked = estimatedSupply * 0.52 // Assume 52% staked
@@ -144,6 +153,7 @@ function useAuraMarketData() {
               marketCap,
               totalStaked,
               stakingParticipation: 52,
+              logoUrl,
               loading: false
             })
           } else {
@@ -382,6 +392,16 @@ function MarketOverview() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
+          {marketData.logoUrl && (
+            <img 
+              src={marketData.logoUrl} 
+              alt="AURA"
+              className="w-6 h-6 rounded-full"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
           <TrendingUp className="w-5 h-5" />
           <span>AURA Market Overview</span>
           {marketData.loading && (

@@ -23,16 +23,16 @@ interface CommunityMetrics {
 // Development fallback data (realistic community metrics)
 const DEV_FALLBACK_METRICS: CommunityMetrics = {
   twitter: {
-    followers: 2847,
-    growth: 12.3
+    followers: 286,
+    growth: 15.2
   },
   telegram: {
-    members: 1654,
-    growth: 8.7
+    members: 442,
+    growth: 22.1
   },
   linkedin: {
-    followers: 892,
-    growth: 15.2
+    followers: 15,
+    growth: 8.7
   },
   lastUpdated: new Date().toISOString()
 }
@@ -40,7 +40,7 @@ const DEV_FALLBACK_METRICS: CommunityMetrics = {
 // Real social media account handles/IDs
 const SOCIAL_ACCOUNTS = {
   twitter: {
-    username: 'aura_bnb',
+    username: 'Aura_bnb',
     apiUrl: 'https://api.twitter.com/2/users/by/username/'
   },
   telegram: {
