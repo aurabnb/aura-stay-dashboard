@@ -385,18 +385,39 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ walletAddress, onDisc
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Send className="h-3 w-3 mr-1" />
-                              Send
-                            </Button>
+                            {balance.symbol !== 'AURA' && (
+                              <Button variant="outline" size="sm">
+                                <Send className="h-3 w-3 mr-1" />
+                                Send
+                              </Button>
+                            )}
                             {balance.symbol === 'AURA' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => router.push('/staking')}
-                              >
-                                <Coins className="h-3 w-3 mr-1" />
-                                Stake
+                              <>
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => router.push('/staking')}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                                >
+                                  <Coins className="h-3 w-3 mr-1" />
+                                  Stake AURA
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Send
+                                </Button>
+                              </>
+                            )}
+                            {balance.symbol === 'SOL' && (
+                              <Button variant="outline" size="sm">
+                                <Send className="h-3 w-3 mr-1" />
+                                Send
+                              </Button>
+                            )}
+                            {balance.symbol === 'USDC' && (
+                              <Button variant="outline" size="sm">
+                                <Send className="h-3 w-3 mr-1" />
+                                Send
                               </Button>
                             )}
                           </div>

@@ -119,18 +119,23 @@ function useAuraMarketData() {
 
     const fetchMarketData = async () => {
       try {
-        const response = await fetch('https://api.dexscreener.com/latest/dex/tokens/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe')
+        // Use the correct AURA token contract address
+        const AURA_TOKEN_ADDRESS = '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe'
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_ADDRESS}`)
+        
         if (response.ok && isMounted) {
           const data = await response.json()
+          console.log('DexScreener AURA data:', data) // Debug log
+          
           if (data.pairs && data.pairs.length > 0) {
             const pair = data.pairs[0]
             const price = parseFloat(pair.priceUsd) || 0.0002700
             const change24h = parseFloat(pair.priceChange?.h24) || 0
             const volume24h = parseFloat(pair.volume?.h24) || 0
+            const marketCap = parseFloat(pair.marketCap) || price * 1000000000 // Fallback calculation
             
-            // Calculate estimated market cap and staking data
+            // Calculate estimated staking data based on market cap
             const estimatedSupply = 1000000000 // 1B tokens estimated
-            const marketCap = price * estimatedSupply
             const totalStaked = estimatedSupply * 0.52 // Assume 52% staked
             
             setMarketData({
@@ -142,14 +147,26 @@ function useAuraMarketData() {
               loading: false
             })
           } else {
+            console.warn('No trading pairs found for AURA token')
             // Use fallback data if no pairs found
-            setMarketData(prev => ({ ...prev, loading: false }))
+            setMarketData(prev => ({ 
+              ...prev, 
+              marketCap: prev.price * 1000000000, // Calculate from price
+              loading: false 
+            }))
           }
+        } else {
+          console.error('DexScreener API request failed:', response.status)
+          setMarketData(prev => ({ ...prev, loading: false }))
         }
       } catch (error) {
-        console.warn('Failed to fetch AURA market data from DexScreener:', error)
+        console.error('Failed to fetch AURA market data from DexScreener:', error)
         // Use fallback data on error
-        setMarketData(prev => ({ ...prev, loading: false }))
+        setMarketData(prev => ({ 
+          ...prev, 
+          marketCap: prev.price * 1000000000, // Calculate from price
+          loading: false 
+        }))
       }
     }
 
