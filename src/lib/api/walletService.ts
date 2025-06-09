@@ -285,58 +285,49 @@ export async function getWalletBalances(walletAddress: string): Promise<WalletBa
 function parseTransaction(
   transaction: ParsedTransactionWithMeta, 
   walletAddress: string
-): { type: string; amount: number; token: string; fee: number } {
-  const walletPubkey = walletAddress;
-  let type = 'unknown';
+): { type: 'send' | 'receive' | 'stake' | 'unstake' | 'swap' | 'other'; amount: number; token: string; fee: number } {
+  let type: 'send' | 'receive' | 'stake' | 'unstake' | 'swap' | 'other' = 'other';
   let amount = 0;
   let token = 'SOL';
-  const fee = (transaction.meta?.fee || 0) / LAMPORTS_PER_SOL;
+  let fee = (transaction.meta?.fee || 5000) / LAMPORTS_PER_SOL;
 
   try {
-    // Check for SOL transfers
-    if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
-      // Find the account index for our wallet
-      let accountIndex = -1;
-      
-      // Handle both parsed and regular account keys
-      if (transaction.transaction.message.accountKeys) {
-        accountIndex = transaction.transaction.message.accountKeys.findIndex(
-          (key) => {
-            // Handle both string and PublicKey object formats
-            const keyString = typeof key === 'string' ? key : 
-                             key.pubkey ? key.pubkey.toString() : 
-                             key.toString();
-            return keyString === walletPubkey;
-          }
-        );
-      }
-      
-      if (accountIndex !== -1) {
-        const preBalance = transaction.meta.preBalances[accountIndex] || 0;
-        const postBalance = transaction.meta.postBalances[accountIndex] || 0;
-        const balanceChange = (postBalance - preBalance) / LAMPORTS_PER_SOL;
-        
-        // Only consider significant balance changes (excluding fees)
-        if (Math.abs(balanceChange) > 0.001) {
-          amount = Math.abs(balanceChange);
-          type = balanceChange > 0 ? 'receive' : 'send';
-          token = 'SOL';
-          return { type, amount, token, fee };
-        }
+    // Check SOL balance changes first
+    const preBalances = transaction.meta?.preBalances || [];
+    const postBalances = transaction.meta?.postBalances || [];
+    const accountKeys = transaction.transaction.message.accountKeys || [];
+    
+    // Find the user's account index
+    let userAccountIndex = -1;
+    for (let i = 0; i < accountKeys.length; i++) {
+      if (accountKeys[i].pubkey.toString() === walletAddress) {
+        userAccountIndex = i;
+        break;
       }
     }
-
-    // Check for SPL token transfers
+    
+    if (userAccountIndex !== -1 && userAccountIndex < preBalances.length && userAccountIndex < postBalances.length) {
+      const solChange = (postBalances[userAccountIndex] - preBalances[userAccountIndex]) / LAMPORTS_PER_SOL;
+      
+      if (Math.abs(solChange) > fee * 2) { // Ignore small changes that might just be fees
+        amount = Math.abs(solChange);
+        type = solChange > 0 ? 'receive' : 'send';
+        token = 'SOL';
+        return { type, amount, token, fee };
+      }
+    }
+    
+    // Check for token balance changes
     if (transaction.meta?.preTokenBalances && transaction.meta?.postTokenBalances) {
       for (let i = 0; i < transaction.meta.preTokenBalances.length; i++) {
         const preTokenBalance = transaction.meta.preTokenBalances[i];
         const postTokenBalance = transaction.meta.postTokenBalances.find(
-          (post) => post.accountIndex === preTokenBalance.accountIndex
+          post => post.accountIndex === preTokenBalance.accountIndex
         );
         
-        if (preTokenBalance && postTokenBalance) {
-          const preAmount = parseFloat(preTokenBalance.uiTokenAmount.uiAmountString || '0');
-          const postAmount = parseFloat(postTokenBalance.uiTokenAmount.uiAmountString || '0');
+        if (postTokenBalance && preTokenBalance.uiTokenAmount && postTokenBalance.uiTokenAmount) {
+          const preAmount = preTokenBalance.uiTokenAmount.uiAmount || 0;
+          const postAmount = postTokenBalance.uiTokenAmount.uiAmount || 0;
           const tokenChange = postAmount - preAmount;
           
           if (Math.abs(tokenChange) > 0) {
@@ -442,10 +433,10 @@ export async function getWalletTransactions(
           // Fallback for transactions that couldn't be parsed
           transactions.push({
             signature: sigInfo.signature,
-            type: 'unknown',
+            type: 'other',
             amount: 0,
             token: 'SOL',
-            fee: (sigInfo.fee || 5000) / LAMPORTS_PER_SOL,
+            fee: 0.000005, // Default SOL transaction fee
             blockTime: sigInfo.blockTime || Math.floor(Date.now() / 1000),
             status: sigInfo.err ? 'failed' : 'success'
           });
