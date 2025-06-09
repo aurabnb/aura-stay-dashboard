@@ -1,0 +1,23 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-img-element": "warn",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "dist/",
+    "backup/",
+    "docs/backup/",
+    "scripts/",
+    "programs/",
+    "target/",
+    "tests/",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ]
+} 

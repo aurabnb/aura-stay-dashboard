@@ -1,25 +1,49 @@
-/* ------------------------------------------------------------------
-   Types that describe raw payloads coming *from external services*
-   (Solscan, Jupiter, Meteora …)
--------------------------------------------------------------------*/
-
-/** Native SOL account response */
-export interface SolAccountResp {
-  lamports: number;
+// API Response Types
+export interface ApiResponse<T = any> {
+  data: T;
+  success: boolean;
+  message?: string;
+  error?: string;
 }
 
-export interface TokenAmount {
-  uiAmount: number;
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
-export interface TokenAccountResp {
-  tokenAddress: string;
-  tokenSymbol?: string;
-  tokenName?: string;
-  tokenAmount: TokenAmount;
-  /** USD value we enrich locally */
-  usd?: number;
+// Treasury API Types
+export interface TreasuryStats {
+  totalValue: number;
+  totalStaked: number;
+  totalBurned: number;
+  totalRedistributed: number;
+  apr: number;
+  participants: number;
 }
 
-/** { mint: { price } } map returned by Jupiter price API */
-export type JupiterPriceResp = Record<string, { price: number }>;
+// Wallet API Types
+export interface WalletConnectRequest {
+  publicKey: string;
+  signature: string;
+}
+
+export interface WalletConnectResponse {
+  token: string;
+  user: {
+    id: string;
+    publicKey: string;
+    role: string;
+  };
+}
+
+// Error Types
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: any;
+} 

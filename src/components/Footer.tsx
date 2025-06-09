@@ -1,8 +1,9 @@
+'use client'
 
-import React from 'react';
-import { ExternalLink, FileText, Twitter, MessageCircle, BarChart, Search, Coins } from 'lucide-react';
+import React from 'react'
+import { ExternalLink, FileText, Twitter, MessageCircle, BarChart, Search, Coins } from 'lucide-react'
 
-const Footer = () => {
+export function Footer() {
   const footerLinks = [
     {
       url: 'https://www.coingecko.com/en/coins/aurora-ventures',
@@ -35,11 +36,11 @@ const Footer = () => {
       icon: BarChart
     },
     {
-      url: 'https://t.me/Auratoken88',
+      url: 'https://t.me/aurabnb',
       label: 'Telegram',
       icon: MessageCircle
     }
-  ];
+  ]
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-20">
@@ -55,32 +56,30 @@ const Footer = () => {
           
           <div className="flex flex-wrap justify-center gap-8 mb-8">
             {footerLinks.map((link, index) => {
-              const Icon = link.icon;
+              const Icon = link.icon
               return (
                 <a
                   key={index}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors font-urbanist"
+                  className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
                 >
                   <Icon className="h-4 w-4" />
                   <span>{link.label}</span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
-              );
+              )
             })}
           </div>
           
           <div className="border-t border-gray-200 pt-8">
-            <p className="text-gray-600 text-sm font-urbanist">
+            <p className="text-gray-600 text-sm">
               © 2025 AURA. Building the world's first decentralized unique stay network.
             </p>
           </div>
         </div>
       </div>
     </footer>
-  );
-};
-
-export default Footer;
+  )
+} 

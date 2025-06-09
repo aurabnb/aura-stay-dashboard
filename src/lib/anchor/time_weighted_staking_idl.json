@@ -1,0 +1,636 @@
+{
+  "version": "0.1.0",
+  "name": "time_weighted_staking",
+  "address": "BN2DqSycxKERFRxt5Z4E9KEexBZQvxyR3bX7qNKVYj2F",
+  "instructions": [
+    {
+      "name": "initializePool",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "authority",
+          "type": "publicKey"
+        },
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "vaultBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "startDistribution",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "stopDistribution",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "endDistributionPermanently",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "stake",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "unstake",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claimSolRewards",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimSplRewards",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userRewardAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "depositSolRewards",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "depositSplRewards",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authorityTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "createRewardVault",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "rewardTokenMint",
+          "type": "publicKey"
+        },
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "adminWithdrawSol",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "adminWithdrawSpl",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "adminWithdrawStakeTokens",
+      "accounts": [
+        {
+          "name": "stakingPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "StakingPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakeTokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalStaked",
+            "type": "u64"
+          },
+          {
+            "name": "totalWeightedStake",
+            "type": "u64"
+          },
+          {
+            "name": "lastRewardDistribution",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vaultBump",
+            "type": "u8"
+          },
+          {
+            "name": "solRewardsAvailable",
+            "type": "u64"
+          },
+          {
+            "name": "distributionActive",
+            "type": "bool"
+          },
+          {
+            "name": "distributionEnded",
+            "type": "bool"
+          },
+          {
+            "name": "currentDistributionEpoch",
+            "type": "u64"
+          },
+          {
+            "name": "globalSequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserStake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "weightedStake",
+            "type": "u64"
+          },
+          {
+            "name": "lastStakeTime",
+            "type": "i64"
+          },
+          {
+            "name": "lockStartTime",
+            "type": "i64"
+          },
+          {
+            "name": "penaltyAmount",
+            "type": "u64"
+          },
+          {
+            "name": "distributionEpoch",
+            "type": "u64"
+          },
+          {
+            "name": "hasClaimedEpoch",
+            "type": "u64"
+          },
+          {
+            "name": "lastActionSequence",
+            "type": "u64"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount provided"
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientStake",
+      "msg": "Insufficient stake balance"
+    },
+    {
+      "code": 6002,
+      "name": "InsufficientBalance",
+      "msg": "Insufficient balance for withdrawal"
+    },
+    {
+      "code": 6003,
+      "name": "NoStake",
+      "msg": "No stake found"
+    },
+    {
+      "code": 6004,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidTokenMint",
+      "msg": "Invalid token mint"
+    },
+    {
+      "code": 6006,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6007,
+      "name": "DistributionAlreadyActive",
+      "msg": "Distribution already active"
+    },
+    {
+      "code": 6008,
+      "name": "DistributionNotActive",
+      "msg": "Distribution not active"
+    },
+    {
+      "code": 6009,
+      "name": "DistributionStillActive",
+      "msg": "Distribution still active, cannot claim yet"
+    },
+    {
+      "code": 6010,
+      "name": "WrongDistributionEpoch",
+      "msg": "User not in current distribution epoch"
+    },
+    {
+      "code": 6011,
+      "name": "DistributionPermanentlyEnded",
+      "msg": "Distribution permanently ended, cannot start new distribution"
+    },
+    {
+      "code": 6012,
+      "name": "ReplayAttack",
+      "msg": "Replay attack detected"
+    },
+    {
+      "code": 6013,
+      "name": "AlreadyClaimed",
+      "msg": "Already claimed rewards for this epoch"
+    },
+    {
+      "code": 6014,
+      "name": "StakeNotActive",
+      "msg": "Stake not active"
+    }
+  ]
+} 

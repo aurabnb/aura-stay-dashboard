@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build:vercel",
+  "framework": "nextjs",
+  "regions": ["iad1", "sfo1"],
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "build": {
+    "env": {
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "SKIP_ENV_VALIDATION": "true",
+      "VERCEL": "1"
+    }
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+} 

@@ -1,0 +1,268 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core treasury management tables (from Supabase)
+model Wallet {
+  id          String   @id @default(cuid())
+  address     String   @unique
+  name        String
+  description String?
+  blockchain  String
+  walletType  String   @map("wallet_type")
+  explorerUrl String   @map("explorer_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  balances    WalletBalance[]
+  transactions TransactionRecord[]
+  
+  @@map("wallets")
+}
+
+model WalletBalance {
+  id           String    @id @default(cuid())
+  walletId     String    @map("wallet_id")
+  tokenSymbol  String    @map("token_symbol")
+  tokenName    String?   @map("token_name")
+  tokenAddress String?   @map("token_address")
+  balance      Float     @default(0)
+  usdValue     Float?    @map("usd_value")
+  isLpToken    Boolean?  @map("is_lp_token")
+  platform     String?
+  lpDetails    Json?     @map("lp_details") // Store LP details as JSON
+  lastUpdated  DateTime  @default(now()) @map("last_updated")
+  
+  wallet       Wallet    @relation(fields: [walletId], references: [id])
+  
+  @@index([walletId])
+  @@index([tokenSymbol])
+  @@map("wallet_balances")
+}
+
+// Enhanced features for Next.js application
+
+// User management (optional email auth + wallet-based)
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  walletAddress String? @unique @map("wallet_address")
+  username  String?  @unique
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  messages  CommunityMessage[]
+  proposals Proposal[]
+  votes     Vote[]
+  transactions TransactionRecord[]
+  stakingRecords StakingRecord[]
+  
+  @@map("users")
+}
+
+// Community features
+model CommunityMessage {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String   @map("author_id")
+  category  String
+  upvotes   Int      @default(0)
+  downvotes Int      @default(0)
+  timestamp DateTime @default(now())
+  
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  @@index([category])
+  @@index([timestamp])
+  @@map("community_messages")
+}
+
+// Governance system
+model Proposal {
+  id          String          @id @default(cuid())
+  title       String
+  description String
+  category    ProposalCategory
+  status      ProposalStatus   @default(ACTIVE)
+  proposerId  String          @map("proposer_id")
+  votesFor    Int             @default(0) @map("votes_for")
+  votesAgainst Int            @default(0) @map("votes_against")
+  totalVotes  Int             @default(0) @map("total_votes")
+  startDate   DateTime        @default(now()) @map("start_date")
+  endDate     DateTime        @map("end_date")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  
+  proposer    User            @relation(fields: [proposerId], references: [id])
+  votes       Vote[]
+  
+  @@index([status])
+  @@index([category])
+  @@index([endDate])
+  @@map("proposals")
+}
+
+model Vote {
+  id         String    @id @default(cuid())
+  proposalId String    @map("proposal_id")
+  userId     String    @map("user_id")
+  voteType   VoteType  @map("vote_type")
+  weight     Int       // Voting power based on staked tokens
+  timestamp  DateTime  @default(now())
+  
+  proposal   Proposal  @relation(fields: [proposalId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+  
+  @@unique([proposalId, userId])
+  @@index([proposalId])
+  @@map("votes")
+}
+
+// Transaction tracking and analytics
+model TransactionRecord {
+  id          String            @id @default(cuid())
+  hash        String            @unique
+  amount      Float
+  tokenSymbol String            @map("token_symbol")
+  fromWallet  String            @map("from_wallet")
+  toWallet    String            @map("to_wallet")
+  category    TransactionCategory
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  timestamp   DateTime
+  blockchain  String
+  userId      String?           @map("user_id")
+  walletId    String?           @map("wallet_id")
+  metadata    Json?             // Additional transaction data
+  
+  user        User?             @relation(fields: [userId], references: [id])
+  wallet      Wallet?           @relation(fields: [walletId], references: [id])
+  
+  @@index([hash])
+  @@index([category])
+  @@index([timestamp])
+  @@index([fromWallet])
+  @@index([toWallet])
+  @@map("transactions")
+}
+
+// Staking and reward tracking
+model StakingRecord {
+  id          String           @id @default(cuid())
+  userId      String           @map("user_id")
+  walletAddress String        @map("wallet_address")
+  stakedAmount Float          @map("staked_amount")
+  rewardAmount Float          @default(0) @map("reward_amount")
+  status      StakingStatus    @default(ACTIVE)
+  startDate   DateTime         @default(now()) @map("start_date")
+  endDate     DateTime?        @map("end_date")
+  lastReward  DateTime?        @map("last_reward")
+  
+  user        User             @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([status])
+  @@map("staking_records")
+}
+
+// Price history for analytics
+model PriceHistory {
+  id        String   @id @default(cuid())
+  tokenSymbol String @map("token_symbol")
+  price     Float
+  volume    Float?
+  marketCap Float?   @map("market_cap")
+  timestamp DateTime @default(now())
+  source    String   // "coingecko", "dexscreener", etc.
+  
+  @@index([tokenSymbol, timestamp])
+  @@map("price_history")
+}
+
+// Analytics and metrics
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventType String   @map("event_type")
+  userId    String?  @map("user_id")
+  sessionId String?  @map("session_id")
+  data      Json
+  timestamp DateTime @default(now())
+  
+  @@index([eventType])
+  @@index([timestamp])
+  @@map("analytics_events")
+}
+
+model CommunityMetrics {
+  id        String   @id @default(cuid())
+  platform  String   // 'twitter', 'telegram', 'linkedin'
+  followers Int
+  growth    Float
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([platform, createdAt])
+  @@map("community_metrics")
+}
+
+// Enums
+enum ProposalCategory {
+  TREASURY
+  CHARITABLE
+  PARTNERSHIP
+  GOVERNANCE
+  TECHNICAL
+}
+
+enum ProposalStatus {
+  ACTIVE
+  PASSED
+  REJECTED
+  EXPIRED
+}
+
+enum VoteType {
+  FOR
+  AGAINST
+  ABSTAIN
+}
+
+enum TransactionCategory {
+  TREASURY_OPERATION
+  COMMUNITY_FUNDING
+  STAKING_REWARD
+  BURN_REDISTRIBUTION
+  LP_OPERATION
+  GOVERNANCE
+}
+
+enum TransactionType {
+  BUY
+  SELL
+  TRANSFER
+  STAKE
+  UNSTAKE
+  BURN
+  REWARD
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+enum StakingStatus {
+  ACTIVE
+  UNSTAKED
+  PENDING_UNSTAKE
+} 

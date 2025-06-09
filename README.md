@@ -1,148 +1,65 @@
+# AURA Stay Dashboard 5
 
-# Airscape: Decentralized Boutique Unique Stays
+A comprehensive Next.js dashboard for the AURA ecosystem featuring real-time staking, treasury tracking, and community analytics.
 
-Welcome to Airscape - reimagining short-term stays by creating a user-owned, decentralized ecosystem for boutique unique stays. We're building the future of hospitality for crypto natives, bohemians, and dreamers who seek curated, experiential destinations.
+## 🚀 Key Features
 
-## 🌟 Vision & Goals
+### 🏠 Real Estate Integration
+- **Volcano House Calculator**: Property investment analysis
+- **Stay Showcase**: Unique property experiences
+- **Investment Tracking**: Real estate performance metrics
 
-Airscape is creating a revolutionary platform that enables:
+### 💰 Staking Platform
+- **Time-Weighted Staking**: Earn rewards based on stake duration
+- **Live Blockchain Integration**: Real Solana transactions with wallet signatures
+- **30-Day Optimal Lock**: Maximum rewards for longer commitments
+- **Multi-Token Rewards**: SOL and SPL token distributions
 
-- **Cross-Border Investments**: Seamless investment in unique stay properties through tokenized assets
-- **Hyper-Liquid Real Estate**: Minute-by-minute trading markets for real estate investments
-- **Complete Transparency**: On-chain financials using Prasaga's supply chain tracking
-- **Direct Payouts**: Instant bookings and payouts from a decentralized trust
-- **No Blockchain Knowledge Required**: Fiat payments and simplified wallet management
-- **Community Benefits**: Airdrops to AURA holders and community-driven governance
-- **Sustainability Focus**: Environmental preservation and local economic support
-- **Symbiotic Integration**: Book directly through Airscape or external platforms (Airbnb, Booking.com, etc.)
+### 📊 Treasury Management
+- **Live Wallet Monitoring**: Real-time balance tracking
+- **Burn & Redistribution**: Token economics management
+- **Performance Analytics**: Investment return analysis
 
-## 📋 Project Requirements Document (PRD)
+### 🎯 Trading Tools
+- **Jupiter Integration**: Advanced Solana token swapping
+- **Portfolio Tracking**: Multi-wallet performance monitoring
+- **Price Analytics**: Real-time market data
 
-For detailed technical specifications and complete project roadmap, see our comprehensive PRD:
-**[Airscape Technical Requirements Document](https://docs.google.com/document/d/1NV4ryYsIgFbis3cqP0XB2plp_mRegYr0eHGl3kUIBXM/edit?tab=t.0)**
+## 🛠️ Tech Stack
 
-## 🚀 Current Build (Phase 1: Aura Foundation - Live)
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Blockchain**: Solana, Anchor Framework, SPL Tokens
+- **Wallet**: Solana Wallet Adapter
+- **Charts**: Recharts, D3.js
+- **UI**: Shadcn/ui, Framer Motion
+- **API**: Real-time price feeds, Solana RPC
 
-### ✅ Already Implemented Features
+## 📋 Testing Documentation
 
-**Core Infrastructure:**
-- **Live Domain**: [aurabnb.io](https://aurabnb.io) with vision statement and email sign-up
-- **Blog System**: Static blog posts with navigation
-- **Token Launch**: AURA token launched on Solana via Believe.app, graduated to Meteora
-- **Value Indicator Dashboard**: Real-time treasury tracking with market value metrics
-- **Treasury Monitoring**: Live wallet balance tracking and expense monitoring
-- **Community Board**: Messaging system for community suggestions and discussions
+### Comprehensive Test Suite
+- **[TESTING_SUMMARY.md](./TESTING_SUMMARY.md)** - Complete testing overview and results
+- **[FUNCTION_TEST_REPORT.md](./FUNCTION_TEST_REPORT.md)** - Automated validation test results
+- **[MANUAL_TESTING_GUIDE.md](./MANUAL_TESTING_GUIDE.md)** - Step-by-step testing instructions
 
-**Financial Transparency:**
-- **Multi-wallet Monitoring**: Real-time tracking of foundation wallets across Solana
-- **Market Cap Integration**: Live AURA market cap from CoinGecko API
-- **LP Token Tracking**: Meteora liquidity pool position monitoring
-- **Expense Categories**: Automated categorization of treasury movements
+### Smart Contract Testing
+- **16 Contract Functions** fully documented and tested
+- **100% Success Rate** on automated validation tests
+- **Real Blockchain Integration** with Solana devnet
+- **Security Features** validated (replay protection, access control)
 
-**Technical Stack:**
-- **Frontend**: React + TypeScript with Tailwind CSS
-- **Backend**: Supabase with Edge Functions
-- **Blockchain**: Solana integration with wallet balance APIs
-- **Data Sources**: CoinGecko, Meteora, and custom blockchain data aggregation
+## 🚀 Quick Start
 
-### 🛠 Latest Features
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Solana wallet (Phantom, Solflare, etc.)
+- AURA tokens for staking (test tokens available)
 
-**Real-Time Data Dashboard:**
-- Live SOL price feeds with API status indicators
-- Treasury value calculation (volatile assets + hard assets + market cap)
-- Wallet balance aggregation across multiple addresses
-- LP token value calculation and display
-- API health monitoring with visual status indicators
-
-**Enhanced User Experience:**
-- Tabbed interface for Treasury Overview, Monitored Wallets, and Expense Tracker
-- Real-time refresh functionality with toast notifications
-- Error handling and retry mechanisms
-- Mobile-responsive design
-
-## 🗺 Development Roadmap
-
-### Phase 2: Aura Expansion & DEX (Coming Soon)
-- Property showcase for Aura stays
-- Airbnb integration for bookings
-- Internal DEX with AURA/USDC trading
-- Samsara seed token launch ($1.2M raise)
-
-### Phase 3: Samsara Pilot Launch
-- 45 eco-conscious units in Dominical, Costa Rica
-- Prasaga transparency integration
-- Local sourcing enforcement for all consumables
-- POS system with real-time inventory tracking
-
-### Phase 4: Airscape MVP
-- Custom booking engine with Airbnb calendar sync
-- Wallet integration with simplified fiat payments
-- Referral rewards system for token holders
-- Local vendor ecosystem with rating system
-
-### Phase 5: Full Launch & Partnerships
-- Investment hub for property purchases (50% user funding)
-- Event booking for larger resorts
-- Enhanced DEX features and derivatives
-- Staking rewards transferable to property investments
-
-### Phase 6: Global Expansion
-- 40+ boutique properties worldwide
-- Global Property DAO system
-- AIRSCAPE index token with revenue redistribution
-- Charitable voting and transport booking integration
-
-## 🏗 Technical Architecture
-
-### Current Tech Stack
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS + shadcn/ui components
-- **State Management**: TanStack Query for data fetching
-- **Backend**: Supabase with PostgreSQL database
-- **Edge Functions**: Supabase Edge Functions for API aggregation
-- **Blockchain**: Solana Web3.js integration
-
-### Data Sources & APIs
-- **CoinGecko API**: Token prices and market cap data
-- **Meteora API**: LP token balances and pool information
-- **Solana RPC**: Direct blockchain data for wallet balances
-- **Custom Aggregation**: Real-time treasury value calculation
-
-## 🎯 Key Innovations
-
-### Symbiotic Platform Integration
-Unlike traditional booking platforms, Airscape works *with* existing platforms:
-- Users can book through Airscape for exclusive perks
-- Alternative booking through Airbnb, Booking.com, Tablet Hotels
-- Revenue tracking across all booking channels
-
-### Local Economy Focus
-- Mandatory local sourcing for all consumables
-- Vendor application and rating system
-- Economic impact tracking and transparency
-- Community-driven vendor selection
-
-### Token-Powered Governance
-- Charter-guided governance to prevent attacks
-- Token holders vote on specific categories
-- Foundation retains control over critical decisions
-- Time-weighted staking for governance participation
-
-## 🌱 Sustainability & Impact
-
-- **Environmental Preservation**: Green energy and sustainable building practices
-- **Local Economic Support**: Mandatory local vendor usage
-- **Transparent Operations**: All transactions tracked on-chain
-- **Community Ownership**: User-owned ecosystem with shared benefits
-
-## 🚦 Getting Started
-
-### Development Setup
-
+### Installation
 ```bash
 # Clone the repository
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+git clone <repository-url>
+cd aura-stay-dashboard
 
 # Install dependencies
 npm install
@@ -152,29 +69,107 @@ npm run dev
 ```
 
 ### Environment Setup
-The project uses Supabase for backend services. Ensure you have the following environment variables configured:
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `INFURA_API_KEY`
+```bash
+# Copy environment template
+cp .env.example .env.local
 
-## 📊 Live Demo
+# Configure your environment variables
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_RPC_ENDPOINT=https://api.devnet.solana.com
+```
 
-Visit [aurabnb.io](https://aurabnb.io) to see the current live implementation with:
-- Real-time treasury dashboard
-- Live market data integration
-- Community messaging board
-- Multi-wallet monitoring system
+## 🧪 Testing the Platform
+
+### User Testing (Real Blockchain)
+1. Visit: http://localhost:3000/staking
+2. Connect your Solana wallet
+3. Look for green "Live Blockchain Integration" banner
+4. Try staking - you'll get real wallet signature prompts
+5. Monitor transactions on [Solana Explorer](https://explorer.solana.com/?cluster=devnet)
+
+### Automated Testing
+```bash
+# Run function validation tests
+npx tsx scripts/simple-function-test.ts
+
+# Generate manual testing guide
+npx tsx scripts/manual-test-guide.ts
+```
+
+## 🔗 Smart Contract Details
+
+### Deployed Contract
+- **Program ID**: `3qbuonQKjYW5XhYWohpHu1trKazvr7UwBYP5xk9hKMF6`
+- **Network**: Solana Devnet
+- **Token Mint**: `3SPBiVPiJTqnqmrBxxRVnRDEywsqBHeTEDQs34PmXon9`
+
+### Contract Functions
+- **Admin Functions** (9): Pool management, distribution control, emergency operations
+- **User Functions** (4): Stake, unstake, claim rewards
+- **Read-Only Functions** (3): Pool state, user positions, balances
+
+## 📚 Project Structure
+
+```
+src/
+├── app/                    # Next.js app router pages
+├── components/             # React components
+│   ├── analytics/         # Analytics dashboards
+│   ├── staking/           # Staking interfaces
+│   ├── trading/           # Trading tools
+│   ├── treasury/          # Treasury management
+│   └── ui/                # UI components
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utilities and services
+│   ├── anchor/           # Solana/Anchor integration
+│   └── services/         # API services
+└── types/                # TypeScript definitions
+
+scripts/                  # Testing and automation
+├── simple-function-test.ts    # Automated validation
+├── manual-test-guide.ts       # Test guide generator
+└── comprehensive-test.ts      # Full integration tests
+
+programs/                 # Solana smart contracts
+└── time-weighted-staking/ # Staking contract source
+```
+
+## 🎯 Integration Status
+
+### ✅ Live Blockchain Features
+- **100% Real Integration**: All staking operations use actual blockchain transactions
+- **Wallet Signatures**: Every transaction requires user approval
+- **Real Token Transfers**: Actual AURA tokens moved to/from smart contract
+- **Live State Reading**: Pool and user data read from blockchain
+- **Real-Time Prices**: Live SOL prices from CoinGecko
+- **Network Statistics**: Live Solana network data
+
+### 🔧 Development Features
+- **Hot Reload**: Instant updates during development
+- **TypeScript**: Full type safety
+- **Responsive Design**: Mobile-optimized interface
+- **Error Handling**: Comprehensive error boundaries
+- **Performance Optimized**: Lazy loading and code splitting
 
 ## 🤝 Contributing
 
-We're building the future of decentralized hospitality! The codebase follows React best practices with TypeScript for type safety and Tailwind for responsive design.
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Run tests: `npm test`
+5. Submit a pull request
 
-## 📞 Community
+## 📄 License
 
-- **Website**: [aurabnb.io](https://aurabnb.io)
-- **Documentation**: [Project PRD](https://docs.google.com/document/d/1NV4ryYsIgFbis3cqP0XB2plp_mRegYr0eHGl3kUIBXM/edit?tab=t.0)
-- **Community Board**: Available on the live site
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+- **Documentation**: Check the `/docs` directory for detailed guides
+- **Issues**: Report bugs or request features via GitHub issues
+- **Testing**: Follow the manual testing guide for validation
+- **Community**: Join our Discord for support and updates
 
 ---
 
-*Airscape: Redefining the Art of Unique Short Term Stays*
+**Built with ❤️ for the AURA ecosystem** 
