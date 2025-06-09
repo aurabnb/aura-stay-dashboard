@@ -39,6 +39,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { useClipboard } from '@/hooks/enhanced-hooks'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingOverlay, SkeletonStats } from '@/components/ui/loading'
+import { useRouter } from 'next/navigation'
 
 // Dynamic imports for components that may cause SSR issues
 const WalletConnectModal = dynamic(
@@ -102,9 +103,74 @@ const WalletDashboard = dynamic(
   }
 )
 
+// Add hook for fetching live AURA data from DexScreener
+function useAuraMarketData() {
+  const [marketData, setMarketData] = useState({
+    price: 0.0002700, // Fallback price
+    change24h: 0,
+    marketCap: 0,
+    totalStaked: 0,
+    stakingParticipation: 0,
+    loading: true
+  })
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchMarketData = async () => {
+      try {
+        const response = await fetch('https://api.dexscreener.com/latest/dex/tokens/3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe')
+        if (response.ok && isMounted) {
+          const data = await response.json()
+          if (data.pairs && data.pairs.length > 0) {
+            const pair = data.pairs[0]
+            const price = parseFloat(pair.priceUsd) || 0.0002700
+            const change24h = parseFloat(pair.priceChange?.h24) || 0
+            const volume24h = parseFloat(pair.volume?.h24) || 0
+            
+            // Calculate estimated market cap and staking data
+            const estimatedSupply = 1000000000 // 1B tokens estimated
+            const marketCap = price * estimatedSupply
+            const totalStaked = estimatedSupply * 0.52 // Assume 52% staked
+            
+            setMarketData({
+              price,
+              change24h,
+              marketCap,
+              totalStaked,
+              stakingParticipation: 52,
+              loading: false
+            })
+          } else {
+            // Use fallback data if no pairs found
+            setMarketData(prev => ({ ...prev, loading: false }))
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch AURA market data from DexScreener:', error)
+        // Use fallback data on error
+        setMarketData(prev => ({ ...prev, loading: false }))
+      }
+    }
+
+    fetchMarketData()
+    
+    // Refresh data every 30 seconds
+    const interval = setInterval(fetchMarketData, 30000)
+    
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [])
+
+  return marketData
+}
+
 export default function UserDashboardPageContent() {
   const { connected, publicKey, disconnect } = useWallet()
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
@@ -192,25 +258,43 @@ function StatCard({
 }
 
 function QuickActions() {
+  const router = useRouter()
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Button className="w-full justify-start" variant="outline">
+        <Button 
+          className="w-full justify-start" 
+          variant="outline"
+          onClick={() => router.push('/staking')}
+        >
           <Coins className="w-4 h-4 mr-2" />
           Stake AURA
         </Button>
-        <Button className="w-full justify-start" variant="outline">
+        <Button 
+          className="w-full justify-start" 
+          variant="outline"
+          onClick={() => router.push('/trading')}
+        >
           <ArrowUpDown className="w-4 h-4 mr-2" />
           Swap Tokens
         </Button>
-        <Button className="w-full justify-start" variant="outline">
+        <Button 
+          className="w-full justify-start" 
+          variant="outline"
+          onClick={() => router.push('/staking')}
+        >
           <Gift className="w-4 h-4 mr-2" />
           Claim Rewards
         </Button>
-        <Button className="w-full justify-start" variant="outline">
+        <Button 
+          className="w-full justify-start" 
+          variant="outline"
+          onClick={() => router.push('/dashboard/community')}
+        >
           <Vote className="w-4 h-4 mr-2" />
           View Proposals
         </Button>
@@ -253,30 +337,59 @@ function RecentActivity() {
 }
 
 function MarketOverview() {
+  const marketData = useAuraMarketData()
+
+  const formatPrice = (price: number) => {
+    return price < 0.01 ? `$${price.toFixed(8)}` : `$${price.toFixed(4)}`
+  }
+
+  const formatMarketCap = (marketCap: number) => {
+    if (marketCap >= 1000000) {
+      return `$${(marketCap / 1000000).toFixed(1)}M`
+    } else if (marketCap >= 1000) {
+      return `$${(marketCap / 1000).toFixed(1)}K`
+    }
+    return `$${marketCap.toFixed(0)}`
+  }
+
+  const formatStaked = (staked: number) => {
+    if (staked >= 1000000) {
+      return `${(staked / 1000000).toFixed(1)}M AURA`
+    } else if (staked >= 1000) {
+      return `${(staked / 1000).toFixed(1)}K AURA`
+    }
+    return `${staked.toFixed(0)} AURA`
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <TrendingUp className="w-5 h-5" />
-          <span>Market Overview</span>
+          <span>AURA Market Overview</span>
+          {marketData.loading && (
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse ml-2" />
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <p className="text-sm text-gray-600">AURA Price</p>
-            <p className="text-xl font-bold">$1.42</p>
-            <p className="text-sm text-green-600">+8.34% (24h)</p>
+            <p className="text-xl font-bold">{formatPrice(marketData.price)}</p>
+            <p className={`text-sm ${marketData.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {marketData.change24h >= 0 ? '+' : ''}{marketData.change24h.toFixed(2)}% (24h)
+            </p>
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Market Cap</p>
-            <p className="text-xl font-bold">$14.2M</p>
-            <p className="text-sm text-green-600">+12.1% (24h)</p>
+            <p className="text-xl font-bold">{formatMarketCap(marketData.marketCap)}</p>
+            <p className="text-sm text-blue-600">Real-time data</p>
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Total Staked</p>
-            <p className="text-xl font-bold">5.2M AURA</p>
-            <p className="text-sm text-blue-600">52% of supply</p>
+            <p className="text-xl font-bold">{formatStaked(marketData.totalStaked)}</p>
+            <p className="text-sm text-blue-600">{marketData.stakingParticipation}% of supply</p>
           </div>
         </div>
         
@@ -285,9 +398,9 @@ function MarketOverview() {
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span>Staking Participation</span>
-            <span>52%</span>
+            <span>{marketData.stakingParticipation}%</span>
           </div>
-          <Progress value={52} className="h-2" />
+          <Progress value={marketData.stakingParticipation} className="h-2" />
         </div>
       </CardContent>
     </Card>

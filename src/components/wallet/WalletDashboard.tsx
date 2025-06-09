@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +49,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ walletAddress, onDisc
   const [balancesVisible, setBalancesVisible] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
+  const router = useRouter()
 
   // Fetch all wallet data
   const fetchWalletData = async () => {
@@ -388,12 +390,16 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ walletAddress, onDisc
                               Send
                             </Button>
                             {balance.symbol === 'AURA' && (
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => router.push('/staking')}
+                              >
                                 <Coins className="h-3 w-3 mr-1" />
                                 Stake
-                          </Button>
-                        )}
-                      </div>
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                 ))}
