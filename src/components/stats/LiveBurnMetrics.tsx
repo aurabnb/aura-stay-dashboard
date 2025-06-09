@@ -48,29 +48,29 @@ export function LiveBurnMetrics() {
 
   const burnMetrics: BurnMetric[] = [
     {
-      label: 'Total Burned',
-      value: '2.4M',
+      label: 'Total Rewards',
+      value: '12533.36',
       change: 5.2,
       icon: <Flame className="h-5 w-5" />,
       color: 'text-red-600'
     },
     {
-      label: 'Daily Burn Rate',
-      value: '12.5K',
+      label: 'Active Stakers',
+      value: '2,857',
       change: 8.1,
       icon: <TrendingUp className="h-5 w-5" />,
       color: 'text-orange-600'
     },
     {
-      label: 'Burn Percentage',
-      value: '2.0%',
+      label: '2% Burn & Redistribution',
+      value: '(through internal app)',
       change: 0,
       icon: <Percent className="h-5 w-5" />,
       color: 'text-blue-600'
     },
     {
-      label: 'Redistributed',
-      value: '847K',
+      label: 'Next Distribution',
+      value: '5h 59m',
       change: 12.3,
       icon: <Coins className="h-5 w-5" />,
       color: 'text-green-600'
@@ -104,25 +104,19 @@ export function LiveBurnMetrics() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Live Burn Metrics</h2>
+          <h2 className="text-3xl font-bold mb-2">2% Burn & Redistribution</h2>
           <p className="text-gray-600">
-            Real-time tracking of AURA's 2% burn and redistribution system
+            Automated burn and redistribution system powering sustainable growth
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
             <Flame className="h-3 w-3 mr-1" />
-            Active
+            SOON
           </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            Coming in V1.2
+          </Badge>
         </div>
       </div>
 
@@ -232,40 +226,37 @@ export function LiveBurnMetrics() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-red-600" />
-            How the 2% Burn System Works
+            How It Works
           </CardTitle>
           <CardDescription>
-            Understanding AURA's deflationary tokenomics
+            Understanding AURA's automated burn and redistribution system
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">1</span>
+                <span className="text-white font-bold text-xl">•</span>
               </div>
-              <h4 className="font-semibold mb-2">Transaction Occurs</h4>
-              <p className="text-sm text-gray-700">
-                Every AURA transaction automatically triggers the 2% burn mechanism
-              </p>
+              <h4 className="font-semibold mb-2">2% of every transaction is automatically burned</h4>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">2</span>
+                <span className="text-white font-bold text-xl">•</span>
               </div>
-              <h4 className="font-semibold mb-2">Tokens Burned</h4>
-              <p className="text-sm text-gray-700">
-                2% of transaction value is permanently removed from circulation
-              </p>
+              <h4 className="font-semibold mb-2">Burned tokens are redistributed to stakers</h4>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">3</span>
+                <span className="text-white font-bold text-xl">•</span>
               </div>
-              <h4 className="font-semibold mb-2">Value Redistributed</h4>
-              <p className="text-sm text-gray-700">
-                Burn contributes to treasury funding and staking rewards
-              </p>
+              <h4 className="font-semibold mb-2">Rewards distributed when claimed</h4>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-bold text-xl">•</span>
+              </div>
+              <h4 className="font-semibold mb-2">Proportional to your staking amount</h4>
             </div>
           </div>
         </CardContent>
