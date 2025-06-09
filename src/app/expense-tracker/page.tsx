@@ -1,44 +1,49 @@
-import { Suspense } from 'react'
-import ExpenseTracker from '@/components/financial/ExpenseTracker'
-import { Card, CardContent } from '@/components/ui/card'
+'use client'
 
-function ExpenseTrackerLoadingSkeleton() {
-  return (
-    <Card className="w-full animate-pulse">
-      <CardContent className="p-6">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="p-4 bg-gray-200 rounded-lg h-20"></div>
-          ))}
-        </div>
-        <div className="space-y-3">
-          {[...Array(10)].map((_, i) => (
-            <div key={i} className="h-12 bg-gray-200 rounded"></div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent } from '@/components/ui/card'
+import { Receipt, ArrowRight } from 'lucide-react'
 
 export default function ExpenseTrackerPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to user dashboard expenses tab after a brief delay
+    const timer = setTimeout(() => {
+      router.push('/user-dashboard#expenses')
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [router])
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Expense Tracker</h1>
-            <p className="text-muted-foreground">
-              Track and analyze treasury expenses with historical SOL price calculations
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-8 text-center space-y-6">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+            <Receipt className="h-8 w-8 text-blue-600" />
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold">Expense Tracker Moved</h2>
+            <p className="text-gray-600">
+              The expense tracker has been moved to the User Dashboard for better integration
             </p>
           </div>
           
-          <Suspense fallback={<ExpenseTrackerLoadingSkeleton />}>
-            <ExpenseTracker />
-          </Suspense>
-        </div>
-      </div>
+          <div className="flex items-center justify-center space-x-2 text-blue-600">
+            <span className="text-sm">Redirecting to User Dashboard</span>
+            <ArrowRight className="h-4 w-4" />
+          </div>
+          
+          <div className="flex space-x-1 justify-center">
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 } 

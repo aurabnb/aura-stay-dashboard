@@ -80,7 +80,7 @@ const dashboardMenuItems = [
   { name: 'Wallet Management', href: '/dashboard/wallet', description: 'Portfolio management', icon: Wallet },
   { name: 'Properties', href: '/dashboard/properties', description: 'Property management', icon: Building2 },
   { name: 'Burn Tracking', href: '/burn-tracking', description: 'Token burn & redistribution', icon: Flame },
-  { name: 'Expense Tracker', href: '/expense-tracker', description: 'Treasury expense tracking', icon: Receipt },
+        { name: 'Expense Tracker', href: '/user-dashboard#expenses', description: 'Project expense tracking', icon: Receipt },
 ]
 
 const propertyMenuItems = [

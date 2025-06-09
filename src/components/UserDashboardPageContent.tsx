@@ -38,7 +38,8 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  CheckCircle
+  CheckCircle,
+  Receipt
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from '@/components/ui/use-toast'
@@ -46,6 +47,12 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { useClipboard } from '@/hooks/enhanced-hooks'
 import { useStaking } from '@/hooks/useStaking'
 import { Connection, PublicKey } from '@solana/web3.js'
+
+// Import ExpenseTracker component
+const ExpenseTracker = dynamic(
+  () => import('@/components/financial/ExpenseTracker'),
+  { ssr: false }
+)
 
 // Dynamically import wallet components to prevent SSR issues
 const WalletMultiButton = dynamic(
@@ -600,12 +607,13 @@ export default function UserDashboardPageContent() {
 
         {/* Main Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="staking">Staking</TabsTrigger>
             <TabsTrigger value="wallet">Wallet</TabsTrigger>
             <TabsTrigger value="treasury">Treasury</TabsTrigger>
+            <TabsTrigger value="expenses">Project Expenses</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -948,6 +956,23 @@ export default function UserDashboardPageContent() {
                     Treasury Settings (Admin Only)
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="expenses" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Receipt className="h-5 w-5" />
+                  <span>Project Expenses</span>
+                </CardTitle>
+                <CardDescription>
+                  Track and analyze project expenses with real-time data from Google Sheets
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ExpenseTracker />
               </CardContent>
             </Card>
           </TabsContent>
