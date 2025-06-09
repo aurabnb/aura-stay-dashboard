@@ -47,14 +47,12 @@ async function fetchAuraMarketCap(): Promise<number> {
   }
 }
 
-// Fetch current SOL price
+// Fetch current SOL price from our API route
 async function fetchCoinGeckoPrice(): Promise<number> {
   try {
-    const response = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
-    )
+    const response = await fetch(`${process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000'}/api/sol-price`)
     const data = await response.json()
-    return data.solana?.usd || 245.67
+    return data.price || 245.67
   } catch (error) {
     console.error('Error fetching SOL price:', error)
     return 245.67 // Fallback SOL price
