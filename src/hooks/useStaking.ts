@@ -107,15 +107,15 @@ export function useStaking() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
       
-      // Fetch SOL price from CoinGecko
-      const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', {
+      // Fetch SOL price from our API route
+      const solResponse = await fetch('/api/sol-price', {
         signal: controller.signal
       })
       
       if (solResponse.ok) {
-        const solData: TokenPrice = await solResponse.json()
-        if (solData?.solana?.usd) {
-          setSolPrice(solData.solana.usd)
+        const solData = await solResponse.json()
+        if (solData?.price) {
+          setSolPrice(solData.price)
         }
       }
       

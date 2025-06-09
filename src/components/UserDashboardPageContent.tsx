@@ -122,12 +122,12 @@ function useAuraMarketData() {
   return marketData
 }
 
-// Helper function to fetch SOL price
+// Helper function to fetch SOL price via our API route
 async function fetchSolPrice(): Promise<number> {
   try {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd')
+    const response = await fetch('/api/sol-price')
     const data = await response.json()
-    return data.solana?.usd || 150 // Fallback to 150 if API fails
+    return data.price || 150 // Fallback to 150 if API fails
   } catch (error) {
     console.error('Error fetching SOL price:', error)
     return 150 // Fallback price

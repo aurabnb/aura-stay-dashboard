@@ -38,10 +38,10 @@ const TOKEN_METADATA = {
 // Fetch current token prices from DexScreener and CoinGecko
 async function fetchTokenPrices(): Promise<{ sol: number; aura: number; usdc: number; auraLogo?: string }> {
   try {
-    // Fetch SOL price from CoinGecko
-    const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+    // Fetch SOL price from our API route
+    const solResponse = await fetch('/api/sol-price');
     const solData = await solResponse.json();
-    const solPrice = solData.solana?.usd || 180;
+    const solPrice = solData.price || 180;
 
     // Fetch AURA price and logo from DexScreener
     const auraResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_MINT}`);

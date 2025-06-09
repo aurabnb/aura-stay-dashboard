@@ -234,14 +234,12 @@ class WalletService {
     }
   }
 
-  // Get SOL price from CoinGecko
+  // Get SOL price from our API route
   private async getSolPrice(): Promise<number> {
     try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
-      )
+      const response = await fetch('/api/sol-price')
       const data = await response.json()
-      return data.solana?.usd || 0
+      return data.price || 0
     } catch (error) {
       console.error('Error fetching SOL price:', error)
       return 0
