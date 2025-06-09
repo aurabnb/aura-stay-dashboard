@@ -198,9 +198,13 @@ export default function VolcanoHousePage() {
                   <PlayCircle className="h-5 w-5 mr-2" />
                   Virtual Tour
                 </Button>
-                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-green-600">
+                <Button 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white hover:text-green-600"
+                  onClick={() => setActiveTab('overview')}
+                >
                   <Camera className="h-5 w-5 mr-2" />
-                  Photo Gallery
+                  View Gallery
                 </Button>
                 <Link href="/">
                   <Button variant="outline" className="border-white text-white hover:bg-white hover:text-green-600">
@@ -321,6 +325,52 @@ export default function VolcanoHousePage() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
+            {/* Featured Image Gallery */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Camera className="h-5 w-5" />
+                  Property Gallery
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <img 
+                      src="https://aura-stay-dashboard.vercel.app/lovable-uploads/376d858b-71fc-454d-9450-826650b45f5c.png"
+                      alt="Volcano House - Sustainable Eco-Lodge in Costa Rica"
+                      className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <Mountain className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="text-sm font-medium">Volcano Views</div>
+                      </div>
+                    </div>
+                    <div className="h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <TreePine className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                        <div className="text-sm font-medium">Natural Setting</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    🌿 Eco-Certified
+                  </Badge>
+                  <Badge variant="outline" className="text-blue-600 border-blue-600">
+                    🏔️ Mountain Views
+                  </Badge>
+                  <Badge variant="outline" className="text-purple-600 border-purple-600">
+                    ⭐ Luxury Amenities
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid lg:grid-cols-2 gap-8">
               {/* Project Details */}
               <Card>
@@ -530,6 +580,45 @@ export default function VolcanoHousePage() {
           </TabsContent>
 
           <TabsContent value="amenities" className="space-y-8">
+            {/* Property Highlight */}
+            <Card className="mb-8 bg-gradient-to-r from-green-50 to-blue-50">
+              <CardContent className="p-0">
+                <div className="grid lg:grid-cols-2 gap-0">
+                  <div className="p-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                      Experience Sustainable Luxury
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Our Volcano House represents the perfect harmony between luxury accommodation 
+                      and environmental responsibility. Built with locally sourced materials and 
+                      powered entirely by renewable energy.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm">Zero carbon footprint operations</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm">Panoramic volcano and valley views</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm">Premium eco-luxury amenities</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="lg:p-4">
+                    <img 
+                      src="https://aura-stay-dashboard.vercel.app/lovable-uploads/376d858b-71fc-454d-9450-826650b45f5c.png"
+                      alt="Volcano House - Eco-Lodge with Mountain Views"
+                      className="w-full h-full lg:h-64 object-cover rounded-lg shadow-lg"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid lg:grid-cols-2 gap-8">
               <Card>
                 <CardHeader>
