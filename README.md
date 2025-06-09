@@ -1,4 +1,4 @@
-# AURA Stay Dashboard
+# AURA Stay Dashboard 5
 
 A comprehensive Next.js dashboard for the AURA ecosystem featuring real-time staking, treasury tracking, and community analytics.
 
