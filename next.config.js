@@ -52,6 +52,18 @@ const nextConfig = {
       })
     }
 
+    // Better path resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').join(__dirname, 'src'),
+    }
+
+    // Ensure proper module resolution
+    config.resolve.modules = [
+      require('path').join(__dirname, 'src'),
+      'node_modules'
+    ]
+
     // Solana wallet adapter and web3.js configuration for client-side
     if (!isServer) {
       config.resolve.fallback = {
