@@ -51,8 +51,10 @@ function getTreasuryWallets(): TreasuryWallet[] {
   }
 }
 
-// Solana connection - FORCE MAINNET ONLY for treasury monitoring
-const solanaRpcUrl = 'https://api.mainnet-beta.solana.com'; // Always use mainnet for treasury
+// Solana connection - Use premium RPC for better rate limits
+const premiumRpcUrl = 'https://rpc.ankr.com/solana/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
+const fallbackRpcUrl = 'https://api.mainnet-beta.solana.com';
+const solanaRpcUrl = process.env.SOLANA_PREMIUM_RPC_URL || premiumRpcUrl; // Use premium by default
 console.log(`🚀 TREASURY SYSTEM: Using Solana MAINNET - ${solanaRpcUrl}`);
 
 const solanaConnection = new Connection(
@@ -151,8 +153,8 @@ async function fetchSolanaWalletBalances(address: string, prices: any) {
     try {
       console.log(`Fetching SPL token accounts for ${address}...`);
       
-      // Add a small delay to help with rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add a small delay to help with rate limiting - reduced for premium RPC
+      await new Promise(resolve => setTimeout(resolve, 50)); // Reduced delay for premium RPC
       
       const tokenAccounts = await solanaConnection.getParsedTokenAccountsByOwner(
         publicKey,
@@ -385,7 +387,7 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
 
       if (rpcResponse.ok) {
         const contentType = rpcResponse.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
+        if (contentType !== null && contentType.includes('application/json')) {
           const rpcData = await rpcResponse.json();
           
           if (rpcData.result) {
@@ -455,9 +457,9 @@ export async function getRealTreasuryData(): Promise<ConsolidatedData> {
     const walletDataPromises = treasuryWallets.map(async (wallet, index): Promise<WalletData> => {
       console.log(`Processing wallet ${index + 1}: ${wallet.name} (${wallet.blockchain}) - ${wallet.address}`);
       
-      // Add staggered delay to prevent rate limiting (100ms * index)
+      // Add staggered delay to prevent rate limiting - reduced for premium RPC
       if (index > 0) {
-        await new Promise(resolve => setTimeout(resolve, 200 * index));
+        await new Promise(resolve => setTimeout(resolve, 100 * index)); // Reduced delay for premium RPC
       }
       
       // Explicitly typed as array of balance objects
