@@ -63,25 +63,39 @@ const solanaConnection = new Connection(
   }
 );
 
-// Token mint addresses
+// Token mint addresses (Solana)
 const TOKEN_MINTS = {
   SOL: 'So11111111111111111111111111111111111111112',
   USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   AURA: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
 };
 
-// Token metadata
+// Ethereum token addresses
+const ETH_TOKEN_ADDRESSES = {
+  DCULT: '0xf0f9d895aca5c8678f706fb8216fa22957685a13', // DCULT token address
+  USDC: '0xA0b86a33E6417fBCb0b7E8B4E35E2D3a1B2f5A2a', // USDC on Ethereum
+  WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // Wrapped ETH
+};
+
+// Token metadata (Solana)
 const TOKEN_METADATA = {
   [TOKEN_MINTS.SOL]: { symbol: 'SOL', name: 'Solana', decimals: 9 },
   [TOKEN_MINTS.USDC]: { symbol: 'USDC', name: 'USD Coin', decimals: 6 },
   [TOKEN_MINTS.AURA]: { symbol: 'AURA', name: 'AURA Token', decimals: 9 },
 };
 
+// Ethereum token metadata
+const ETH_TOKEN_METADATA = {
+  [ETH_TOKEN_ADDRESSES.DCULT]: { symbol: 'DCULT', name: 'DCULT Token', decimals: 18 },
+  [ETH_TOKEN_ADDRESSES.USDC]: { symbol: 'USDC', name: 'USD Coin', decimals: 6 },
+  [ETH_TOKEN_ADDRESSES.WETH]: { symbol: 'WETH', name: 'Wrapped Ethereum', decimals: 18 },
+};
+
 // Fetch current token prices
-async function fetchTokenPrices(): Promise<{ sol: number; usdc: number; aura: number; eth: number }> {
+async function fetchTokenPrices(): Promise<{ sol: number; usdc: number; aura: number; eth: number; cult: number }> {
   // Skip internal API call in server-side context and go directly to external API
   try {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,ethereum&vs_currencies=usd');
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,ethereum,cult-dao&vs_currencies=usd');
     
     if (!response.ok) {
       throw new Error(`CoinGecko API error: ${response.status}`);
@@ -93,6 +107,7 @@ async function fetchTokenPrices(): Promise<{ sol: number; usdc: number; aura: nu
       usdc: 1.0,
       aura: 0.0002700, // Default AURA price - would need separate API for real price
       eth: data.ethereum?.usd || 3000,
+      cult: data['cult-dao']?.usd || 0.000001, // CULT token price
     };
   } catch (error) {
     console.error('Error fetching prices from CoinGecko:', error);
@@ -102,6 +117,7 @@ async function fetchTokenPrices(): Promise<{ sol: number; usdc: number; aura: nu
       usdc: 1.0,
       aura: 0.0002700,
       eth: 3000,
+      cult: 0.000001,
     };
   }
 }
@@ -151,41 +167,82 @@ async function fetchSolanaWalletBalances(address: string, prices: any) {
         const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || '0');
         const decimals = tokenInfo.tokenAmount.decimals;
         
-        if (balance > 0) {
-          let metadata, price = 0;
-          
-          // Check if we have metadata for this token
-          if (TOKEN_METADATA[mint]) {
-            metadata = TOKEN_METADATA[mint];
+                  if (balance > 0) {
+            let metadata, price = 0;
+            let isLpToken = false;
+            let lpPairInfo = null;
             
-            if (mint === TOKEN_MINTS.USDC) {
-              price = prices.usdc;
-            } else if (mint === TOKEN_MINTS.AURA) {
-              price = prices.aura;
+            // Check if we have metadata for this token
+            if (TOKEN_METADATA[mint]) {
+              metadata = TOKEN_METADATA[mint];
+              
+              if (mint === TOKEN_MINTS.USDC) {
+                price = prices.usdc;
+              } else if (mint === TOKEN_MINTS.AURA) {
+                price = prices.aura;
+              }
+            } else {
+              // Check if this might be an LP token by analyzing token accounts
+              // Common LP token patterns: very long names, contain protocol names
+              const accountData = account.account.data.parsed.info;
+              
+              // Basic LP detection heuristics
+              if (decimals <= 9 && balance < 1000000) { // LP tokens usually have smaller supply
+                console.log(`Potential LP token detected: ${mint}`);
+                
+                // Try to identify the LP protocol
+                let protocol = 'Unknown';
+                if (mint.startsWith('Ra') || mint.includes('ray')) {
+                  protocol = 'Raydium';
+                } else if (mint.includes('Orc') || mint.includes('orc')) {
+                  protocol = 'Orca';
+                } else if (mint.includes('Sab') || mint.includes('sab')) {
+                  protocol = 'Saber';
+                }
+                
+                isLpToken = true;
+                lpPairInfo = {
+                  protocol: protocol,
+                  pair: 'Unknown/Unknown', // Would need additional API calls to determine
+                  type: 'AMM LP'
+                };
+                
+                metadata = {
+                  symbol: `${protocol} LP`,
+                  name: `${protocol} Liquidity Pool Token`,
+                  decimals: decimals
+                };
+                
+                // Estimate LP value (simplified - would need pool data for accuracy)
+                price = 0; // Set to 0 for now, would need DEX API integration
+              } else {
+                // Unknown regular token
+                console.log(`Found unknown token: ${mint} with balance ${balance}`);
+                metadata = {
+                  symbol: mint.substring(0, 8) + '...',
+                  name: `Unknown Token (${mint.substring(0, 8)}...)`,
+                  decimals: decimals
+                };
+                price = 0; // No price data for unknown tokens
+              }
             }
-          } else {
-            // Unknown token - still include it but with generic info
-            console.log(`Found unknown token: ${mint} with balance ${balance}`);
-            metadata = {
-              symbol: mint.substring(0, 8) + '...',
-              name: `Unknown Token (${mint.substring(0, 8)}...)`,
-              decimals: decimals
+            
+            const tokenData = {
+              token_symbol: metadata.symbol,
+              token_name: metadata.name,
+              balance: balance,
+              usd_value: balance * price,
+              token_address: mint,
+              is_lp_token: isLpToken,
+              platform: 'Solana',
+              ...(lpPairInfo && { lp_info: lpPairInfo }), // Add LP info if available
             };
-            price = 0; // No price data for unknown tokens
+            
+            balances.push(tokenData);
+            
+            const lpLabel = isLpToken ? ' (LP Token)' : '';
+            console.log(`Added token: ${metadata.symbol}${lpLabel} - Balance: ${balance} - USD Value: $${(balance * price).toFixed(2)}`);
           }
-          
-          balances.push({
-            token_symbol: metadata.symbol,
-            token_name: metadata.name,
-            balance: balance,
-            usd_value: balance * price,
-            token_address: mint,
-            is_lp_token: false,
-            platform: 'Solana',
-          });
-          
-          console.log(`Added token: ${metadata.symbol} - Balance: ${balance} - USD Value: $${(balance * price).toFixed(2)}`);
-        }
       }
     } catch (tokenError) {
       console.error(`Error fetching SPL tokens for ${address}:`, tokenError);
@@ -212,6 +269,11 @@ async function fetchSolanaWalletBalances(address: string, prices: any) {
 // Fetch Ethereum wallet balances
 async function fetchEthereumWalletBalances(address: string, prices: any) {
   try {
+    const balances = [];
+    
+    // First, fetch ETH balance
+    console.log(`Fetching ETH balance for ${address}...`);
+    
     // Try multiple Ethereum balance APIs in order of preference
     const apiEndpoints = [
       // Blockscout API (free, no API key required)
@@ -220,6 +282,7 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
       `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest`,
     ];
 
+    let ethBalance = 0;
     for (const endpoint of apiEndpoints) {
       try {
         console.log(`Trying Ethereum API: ${endpoint}`);
@@ -236,21 +299,10 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
           if (data.status === '1' && data.result) {
             // Convert Wei to ETH
             const balanceWei = BigInt(data.result);
-            const balanceETH = Number(balanceWei) / Math.pow(10, 18);
+            ethBalance = Number(balanceWei) / Math.pow(10, 18);
             
-            console.log(`Successfully fetched Ethereum balance: ${balanceETH} ETH`);
-            
-            return [
-              {
-                token_symbol: 'ETH',
-                token_name: 'Ethereum',
-                balance: balanceETH,
-                usd_value: balanceETH * prices.eth,
-                token_address: '0x0000000000000000000000000000000000000000',
-                is_lp_token: false,
-                platform: 'Ethereum',
-              }
-            ];
+            console.log(`Successfully fetched Ethereum balance: ${ethBalance} ETH`);
+            break;
           }
         }
       } catch (apiError) {
@@ -258,6 +310,62 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
         continue;
       }
     }
+    
+    // Add ETH balance
+    balances.push({
+      token_symbol: 'ETH',
+      token_name: 'Ethereum',
+      balance: ethBalance,
+      usd_value: ethBalance * prices.eth,
+      token_address: '0x0000000000000000000000000000000000000000',
+      is_lp_token: false,
+      platform: 'Ethereum',
+    });
+
+    // Now fetch ERC-20 token balances (DCULT, etc.)
+    console.log(`Fetching ERC-20 tokens for ${address}...`);
+    
+    try {
+      // Fetch DCULT token balance using Blockscout API
+      const dcultEndpoint = `https://eth.blockscout.com/api?module=account&action=tokenbalance&contractaddress=${ETH_TOKEN_ADDRESSES.DCULT}&address=${address}`;
+      
+      const dcultResponse = await fetch(dcultEndpoint, {
+        headers: {
+          'User-Agent': 'AURA-Treasury-Monitor/1.0',
+        },
+      });
+      
+      if (dcultResponse.ok) {
+        const dcultData = await dcultResponse.json();
+        console.log(`DCULT API response:`, dcultData);
+        
+        if (dcultData.status === '1' && dcultData.result && dcultData.result !== '0') {
+          // Convert from Wei (18 decimals) to DCULT tokens
+          const dcultBalanceWei = BigInt(dcultData.result);
+          const dcultBalance = Number(dcultBalanceWei) / Math.pow(10, 18);
+          
+          console.log(`Found DCULT balance: ${dcultBalance} DCULT`);
+          
+          balances.push({
+            token_symbol: 'DCULT',
+            token_name: 'DCULT Token',
+            balance: dcultBalance,
+            usd_value: dcultBalance * prices.cult, // Using CULT price for DCULT
+            token_address: ETH_TOKEN_ADDRESSES.DCULT,
+            is_lp_token: false,
+            platform: 'Ethereum',
+          });
+        }
+      }
+    } catch (tokenError) {
+      console.log(`Error fetching DCULT balance:`, tokenError);
+    }
+
+    // TODO: Add LP token detection here
+    // This would involve detecting Uniswap/Sushiswap LP tokens
+    // and calculating their underlying asset values
+
+    return balances;
     
     // Final fallback: Use a simple RPC call
     try {
