@@ -131,37 +131,65 @@ async function fetchSolanaWalletBalances(address: string, prices: any) {
       }
     ];
 
-    // Fetch SPL token accounts
-    const tokenAccounts = await solanaConnection.getParsedTokenAccountsByOwner(
-      publicKey,
-      { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
-    );
-
-    for (const account of tokenAccounts.value) {
-      const tokenInfo = account.account.data.parsed.info;
-      const mint = tokenInfo.mint;
-      const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || '0');
+    // Fetch SPL token accounts with rate limiting handling
+    try {
+      console.log(`Fetching SPL token accounts for ${address}...`);
       
-      if (balance > 0 && TOKEN_METADATA[mint]) {
-        const metadata = TOKEN_METADATA[mint];
-        let price = 0;
+      // Add a small delay to help with rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const tokenAccounts = await solanaConnection.getParsedTokenAccountsByOwner(
+        publicKey,
+        { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+      );
+
+      console.log(`Found ${tokenAccounts.value.length} token accounts for ${address}`);
+
+      for (const account of tokenAccounts.value) {
+        const tokenInfo = account.account.data.parsed.info;
+        const mint = tokenInfo.mint;
+        const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || '0');
+        const decimals = tokenInfo.tokenAmount.decimals;
         
-        if (mint === TOKEN_MINTS.USDC) {
-          price = prices.usdc;
-        } else if (mint === TOKEN_MINTS.AURA) {
-          price = prices.aura;
+        if (balance > 0) {
+          let metadata, price = 0;
+          
+          // Check if we have metadata for this token
+          if (TOKEN_METADATA[mint]) {
+            metadata = TOKEN_METADATA[mint];
+            
+            if (mint === TOKEN_MINTS.USDC) {
+              price = prices.usdc;
+            } else if (mint === TOKEN_MINTS.AURA) {
+              price = prices.aura;
+            }
+          } else {
+            // Unknown token - still include it but with generic info
+            console.log(`Found unknown token: ${mint} with balance ${balance}`);
+            metadata = {
+              symbol: mint.substring(0, 8) + '...',
+              name: `Unknown Token (${mint.substring(0, 8)}...)`,
+              decimals: decimals
+            };
+            price = 0; // No price data for unknown tokens
+          }
+          
+          balances.push({
+            token_symbol: metadata.symbol,
+            token_name: metadata.name,
+            balance: balance,
+            usd_value: balance * price,
+            token_address: mint,
+            is_lp_token: false,
+            platform: 'Solana',
+          });
+          
+          console.log(`Added token: ${metadata.symbol} - Balance: ${balance} - USD Value: $${(balance * price).toFixed(2)}`);
         }
-        
-        balances.push({
-          token_symbol: metadata.symbol,
-          token_name: metadata.name,
-          balance: balance,
-          usd_value: balance * price,
-          token_address: mint,
-          is_lp_token: false,
-          platform: 'Solana',
-        });
       }
+    } catch (tokenError) {
+      console.error(`Error fetching SPL tokens for ${address}:`, tokenError);
+      // Continue without failing completely
     }
 
     return balances;
@@ -318,6 +346,11 @@ export async function getRealTreasuryData(): Promise<ConsolidatedData> {
     
     const walletDataPromises = treasuryWallets.map(async (wallet, index): Promise<WalletData> => {
       console.log(`Processing wallet ${index + 1}: ${wallet.name} (${wallet.blockchain}) - ${wallet.address}`);
+      
+      // Add staggered delay to prevent rate limiting (100ms * index)
+      if (index > 0) {
+        await new Promise(resolve => setTimeout(resolve, 200 * index));
+      }
       
       // Explicitly typed as array of balance objects
       let balances: Array<{
