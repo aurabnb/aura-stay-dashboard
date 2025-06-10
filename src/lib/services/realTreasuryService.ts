@@ -81,7 +81,7 @@ const TOKEN_MINTS = {
 
 // Ethereum token addresses
 const ETH_TOKEN_ADDRESSES = {
-  DCULT: '0xf0f9d895aca5c8678f706fb8216fa22957685a13', // DCULT token address
+  DCULT: '0x2d77B594B9BBaED03221F7c63Af8C4307432daF1', // DCULT token address (correct)
   USDC: '0xA0b86a33E6417fBCb0b7E8B4E35E2D3a1B2f5A2a', // USDC on Ethereum
   WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // Wrapped ETH
 };
@@ -420,12 +420,13 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
               const balanceWei = BigInt(balanceHex);
               const balance = Number(balanceWei) / Math.pow(10, token.decimals);
               
-              if (balance > 0) {
+                              if (balance > 0) {
                 console.log(`Found ${token.symbol} balance: ${balance}`);
                 
                 let price = 0;
                 if (token.symbol === 'DCULT') {
                   price = prices.cult;
+                  console.log(`DCULT Price: ${price}, USD Value: ${balance * price}`);
                 } else if (token.symbol === 'USDC' || token.symbol === 'USDT') {
                   price = 1;
                 }
