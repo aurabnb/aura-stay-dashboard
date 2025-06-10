@@ -101,9 +101,12 @@ class GoogleSheetsService {
 
     } catch (error) {
       console.error('Error fetching treasury expenses from Google Sheets:', error)
-      console.error('Error details:', error.message)
       
-      if (error.message && error.message.includes('403')) {
+      // Type guard to safely access error properties
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error('Error details:', errorMessage)
+      
+      if (errorMessage.includes('403')) {
         console.log('❌ Permission denied. To fix this:')
         console.log('1. Open your Google Sheet')
         console.log('2. Click "Share" button')
