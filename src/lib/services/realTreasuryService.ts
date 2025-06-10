@@ -51,18 +51,20 @@ function getTreasuryWallets(): TreasuryWallet[] {
   }
 }
 
-// Solana connection - Use premium RPC for better rate limits
+// Solana connection - FORCE MAINNET ONLY (no devnet)
 const premiumRpcUrl = 'https://rpc.ankr.com/solana/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
 const fallbackRpcUrl = 'https://api.mainnet-beta.solana.com';
-const solanaRpcUrl = process.env.SOLANA_PREMIUM_RPC_URL || premiumRpcUrl; // Use premium by default
+// FORCE MAINNET: Override any env vars that might point to devnet
+const solanaRpcUrl = premiumRpcUrl; // Always use premium mainnet, ignore env vars
 
 // Ethereum RPC configuration - Define before console.log
 const premiumEthRpcUrl = 'https://rpc.ankr.com/eth/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
 const fallbackEthRpcUrl = 'https://eth.llamarpc.com';
 const ethRpcUrl = process.env.ETH_PREMIUM_RPC_URL || premiumEthRpcUrl;
 
-console.log(`🚀 TREASURY SYSTEM: Using Solana MAINNET - ${solanaRpcUrl}`);
-console.log(`🔗 TREASURY SYSTEM: Using Ethereum MAINNET - ${ethRpcUrl}`);
+console.log(`🚀 TREASURY SYSTEM: FORCED MAINNET ONLY - Solana: ${solanaRpcUrl}`);
+console.log(`🔗 TREASURY SYSTEM: FORCED MAINNET ONLY - Ethereum: ${ethRpcUrl}`);
+console.log(`⚠️  TREASURY WARNING: All devnet connections are BLOCKED for treasury operations`);
 
 const solanaConnection = new Connection(
   solanaRpcUrl,
