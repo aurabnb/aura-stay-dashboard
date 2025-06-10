@@ -22,30 +22,47 @@ const MonitoredWallets: React.FC = () => {
   };
 
   const renderLPDetails = (lpDetails: any) => (
-    <div className="mt-2 bg-blue-50 p-3 rounded-lg">
-      <div className="text-sm font-medium text-blue-900 mb-2">LP Position Details</div>
+    <div className="mt-2 bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg border border-blue-200">
+      <div className="text-sm font-medium text-blue-900 mb-2 flex items-center gap-2">
+        <TrendingUp className="h-4 w-4" />
+        LP Position Details
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-white p-2 rounded">
-          <div className="text-xs font-medium text-gray-700">{lpDetails.token1.symbol}</div>
+        <div className="bg-white p-2 rounded border-l-2 border-blue-400">
+          <div className="text-xs font-medium text-gray-700">{lpDetails.token1?.symbol || 'Token A'}</div>
           <div className="text-xs text-gray-600">
-            {lpDetails.token1.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
-            (${lpDetails.token1.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+            {lpDetails.token1?.amount?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'} 
+            <span className="text-green-600 font-medium">
+              {lpDetails.token1?.usdValue ? ` ($${lpDetails.token1.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : ''}
+            </span>
           </div>
         </div>
-        <div className="bg-white p-2 rounded">
-          <div className="text-xs font-medium text-gray-700">{lpDetails.token2.symbol}</div>
+        <div className="bg-white p-2 rounded border-l-2 border-purple-400">
+          <div className="text-xs font-medium text-gray-700">{lpDetails.token2?.symbol || 'Token B'}</div>
           <div className="text-xs text-gray-600">
-            {lpDetails.token2.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
-            (${lpDetails.token2.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+            {lpDetails.token2?.amount?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'} 
+            <span className="text-green-600 font-medium">
+              {lpDetails.token2?.usdValue ? ` ($${lpDetails.token2.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : ''}
+            </span>
           </div>
         </div>
       </div>
-      <div className="mt-2 bg-white p-2 rounded">
-        <div className="text-xs font-medium text-gray-700">Price Range</div>
-        <div className="text-xs text-gray-600">
-          ${lpDetails.priceRange.min.toFixed(4)} - ${lpDetails.priceRange.max.toFixed(4)}
+      {lpDetails.priceRange && (
+        <div className="mt-2 bg-white p-2 rounded border-l-2 border-yellow-400">
+          <div className="text-xs font-medium text-gray-700">Price Range</div>
+          <div className="text-xs text-gray-600">
+            ${lpDetails.priceRange.min?.toFixed(4) || '0'} - ${lpDetails.priceRange.max?.toFixed(4) || '0'}
+          </div>
         </div>
-      </div>
+      )}
+      {lpDetails.totalUsdValue && (
+        <div className="mt-2 bg-gradient-to-r from-green-50 to-emerald-50 p-2 rounded border border-green-200">
+          <div className="text-xs font-medium text-green-700">Total Position Value</div>
+          <div className="text-sm font-bold text-green-800">
+            ${lpDetails.totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -151,20 +168,28 @@ const MonitoredWallets: React.FC = () => {
                             <div className="text-sm font-medium flex items-center gap-2">
                               {balance.token_symbol}
                               {balance.is_lp_token && (
-                                <Badge variant="secondary" className="text-xs">
-                                  LP
+                                <Badge variant="secondary" className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                  🔗 LP
                                 </Badge>
                               )}
                             </div>
                             <div className="text-xs text-gray-600">{balance.token_name}</div>
-                            <div className="text-xs text-gray-500 capitalize">{balance.platform}</div>
+                            <div className="text-xs text-gray-500 capitalize flex items-center gap-1">
+                              {balance.platform}
+                              {balance.is_lp_token && (
+                                <span className="text-blue-600 font-medium">• Liquidity Position</span>
+                              )}
+                            </div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm font-medium">
                               {balance.balance.toLocaleString(undefined, { maximumFractionDigits: 6 })}
                             </div>
-                            <div className="text-xs text-gray-600">
+                            <div className={`text-xs ${balance.is_lp_token ? 'text-blue-600 font-semibold' : 'text-gray-600'}`}>
                               {formatUsd(balance.usd_value || 0)}
+                              {balance.is_lp_token && balance.usd_value > 0 && (
+                                <span className="ml-1 text-green-600">💰</span>
+                              )}
                             </div>
                           </div>
                         </div>
