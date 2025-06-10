@@ -180,7 +180,7 @@ export default function Home() {
                 {
                   num: "3",
                   title: "Shared Returns",
-                  desc: "Revenue flows back to token holders transparently, creating real ownership value",
+                  desc: "Revenue flows transparently, creating real ownership value decentralized trust democratization",
                   bg: "bg-gray-800",
                 },
               ].map((step) => (

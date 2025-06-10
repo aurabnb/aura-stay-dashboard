@@ -39,7 +39,7 @@ const MOCK_PROPERTIES: Property[] = [
     amenities: ['Infinity Pool', 'Yoga Deck', 'Organic Garden', 'Spa'],
     features: ['Solar Powered', 'Rainwater Harvesting', 'Local Materials'],
     sustainability: ['Zero Waste', 'Farm to Table', 'Community Support'],
-    images: ['/properties/placeholders/overwater-bungalows.jpg', '/properties/placeholders/overwater-bungalows.jpg']
+    images: ['/A_digital_photograph_captures_an_overwater_bungalo.png', '/A_digital_photograph_captures_an_overwater_bungalo.png']
   },
   {
     id: 'samsara-costa-rica',
@@ -55,7 +55,7 @@ const MOCK_PROPERTIES: Property[] = [
     amenities: ['Private Deck', 'Outdoor Shower', 'Telescope', 'Mini Kitchen'],
     features: ['Sustainable Wood', 'Green Energy', 'Minimal Impact'],
     sustainability: ['Wildlife Protection', 'Local Employment', 'Eco Tours'],
-    images: ['/properties/placeholders/safari-lodge.jpg', '/properties/placeholders/safari-lodge.jpg']
+    images: ['/A_high-resolution_digital_photograph_captures_an_A.png', '/A_high-resolution_digital_photograph_captures_an_A.png']
   },
   {
     id: 'airscape-greece',
@@ -71,7 +71,7 @@ const MOCK_PROPERTIES: Property[] = [
     amenities: ['Private Pool', 'Wine Cellar', 'Sunset Terrace', 'Chef\'s Kitchen'],
     features: ['Smart Home', 'Energy Efficient', 'Local Design'],
     sustainability: ['Solar Power', 'Water Conservation', 'Waste Reduction'],
-    images: ['/properties/placeholders/vineyard-villa.jpg', '/properties/placeholders/vineyard-villa.jpg']
+    images: ['/A_digital_painting_depicts_a_vineyard_at_sunset_du.png', '/A_digital_painting_depicts_a_vineyard_at_sunset_du.png']
   }
 ];
 

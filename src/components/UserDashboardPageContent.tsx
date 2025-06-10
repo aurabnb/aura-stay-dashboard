@@ -232,8 +232,8 @@ function useTreasuryData() {
             treasuryHealth: data.health || 98,
             activeStakers: data.activeStakers || 0,
             loading: false
-          })
-        } else {
+  })
+} else {
           // Fallback to calculating from available data
           setTreasuryData({
             totalValueLocked: 2.5, // Million USD
@@ -457,7 +457,7 @@ export default function UserDashboardPageContent() {
     }
   ]
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* DevNet Warning Banner */}
       {mounted && !isContractIntegrated && (
@@ -545,7 +545,7 @@ export default function UserDashboardPageContent() {
                     <span className="text-sm text-gray-600">AURA Balance</span>
                   </div>
                   <div className="text-xl font-bold">{aura}</div>
-                </div>
+      </div>
 
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-2">
@@ -559,7 +559,7 @@ export default function UserDashboardPageContent() {
                     <Badge variant="secondary" className="text-xs">Inactive</Badge>
                   </div>
                 </div>
-              </div>
+            </div>
             </CardContent>
           </Card>
         )}
@@ -614,10 +614,10 @@ export default function UserDashboardPageContent() {
 
           <TabsContent value="overview" className="space-y-6">
             {/* Token Holdings Section */}
-            <Card>
+    <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
+        <div className="flex items-center justify-between">
+          <div>
                     <CardTitle>Token Holdings</CardTitle>
                     <CardDescription>Your current token balances and values</CardDescription>
                   </div>
@@ -663,7 +663,7 @@ export default function UserDashboardPageContent() {
                         <div className="font-medium">
                           {balanceVisible ? formatCurrency(token.value) : '••••'}
                         </div>
-                      </div>
+          </div>
                       
                       <div>
                         {token.hasStakeAction && (
@@ -676,8 +676,8 @@ export default function UserDashboardPageContent() {
                             Stake AURA
                           </Button>
                         )}
-                      </div>
-                    </div>
+          </div>
+        </div>
                   ))}
                 </div>
               </CardContent>
@@ -691,14 +691,14 @@ export default function UserDashboardPageContent() {
                   <h3 className="text-xl font-semibold mb-2">Connect Your Wallet</h3>
                   <p className="text-gray-600 mb-6">Connect your Solana wallet to access all dashboard features</p>
                   <WalletMultiButton className="!bg-blue-600 hover:!bg-blue-700" />
-                </CardContent>
-              </Card>
+      </CardContent>
+    </Card>
             )}
           </TabsContent>
 
           <TabsContent value="portfolio" className="space-y-6">
-            <Card>
-              <CardHeader>
+    <Card>
+      <CardHeader>
                 <CardTitle>Portfolio Overview</CardTitle>
                 <CardDescription>Manage your digital asset portfolio</CardDescription>
               </CardHeader>
@@ -734,7 +734,7 @@ export default function UserDashboardPageContent() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Rewards Available</CardTitle>
                   <Award className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
+      </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
                     {mounted && userStake ? '125.5' : '0'} AURA
@@ -745,16 +745,16 @@ export default function UserDashboardPageContent() {
                     size="sm"
                     disabled={!connected || loading}
                   >
-                    Claim Rewards
-                  </Button>
-                </CardContent>
-              </Card>
+          Claim Rewards
+        </Button>
+      </CardContent>
+    </Card>
 
-              <Card>
+    <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Current APY</CardTitle>
                   <Percent className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
+      </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">
                     {stakingStats.apy || '12.5'}%
@@ -785,7 +785,7 @@ export default function UserDashboardPageContent() {
                       value={stakeAmount}
                       onChange={(e) => setStakeAmount(e.target.value)}
                     />
-                  </div>
+          </div>
                   
                   {mounted && (
                     <div className="flex justify-center">
@@ -805,19 +805,19 @@ export default function UserDashboardPageContent() {
                           ) : (
                             'Stake AURA'
                           )}
-                        </Button>
+        </Button>
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+      </CardContent>
+    </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
                     <TrendingDown className="h-5 w-5" />
                     <span>Unstake AURA</span>
-                  </CardTitle>
+        </CardTitle>
                   <CardDescription>Withdraw your staked tokens</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -856,8 +856,8 @@ export default function UserDashboardPageContent() {
               <CardHeader>
                 <CardTitle>Wallet Management</CardTitle>
                 <CardDescription>Manage your wallet connection and view transaction history</CardDescription>
-              </CardHeader>
-              <CardContent>
+      </CardHeader>
+      <CardContent>
                 {mounted && connected ? (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 border rounded-lg">
@@ -867,19 +867,19 @@ export default function UserDashboardPageContent() {
                           <div className="font-medium">Wallet Connected</div>
                           <div className="text-sm text-gray-500">{formatAddress(publicKey!.toString())}</div>
                         </div>
-                      </div>
+          </div>
                       <Button variant="outline" onClick={disconnect}>
                         Disconnect Wallet
                       </Button>
-                    </div>
+          </div>
                     
                     <Separator />
                     
                     <div className="text-center py-8">
                       <Activity className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground">Transaction history and wallet tools coming soon</p>
-                    </div>
-                  </div>
+          </div>
+        </div>
                 ) : (
                   <div className="text-center py-8">
                     <Wallet className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -932,7 +932,7 @@ export default function UserDashboardPageContent() {
                   </p>
                 </CardContent>
               </Card>
-            </div>
+          </div>
 
             <Card>
               <CardHeader>
@@ -951,9 +951,9 @@ export default function UserDashboardPageContent() {
                     <Settings className="mr-2 h-4 w-4" />
                     Treasury Settings (Admin Only)
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
+        </div>
+      </CardContent>
+    </Card>
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-6">

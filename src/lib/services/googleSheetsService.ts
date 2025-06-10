@@ -1,8 +1,8 @@
 import { google } from 'googleapis'
 
 // Google Sheets configuration
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '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'
 const GOOGLE_SHEETS_SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || '1CzTl1xO9fIEaV0MePMBWnUYaj9rp1i85l7_DtA8SLnk'
 
 // Treasury data interface
@@ -38,89 +38,148 @@ class GoogleSheetsService {
 
   private async initializeAuth() {
     try {
-      // Create OAuth2 client
-      const oauth2Client = new google.auth.OAuth2(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
-        'http://localhost:3000/api/auth/google/callback'
-      )
-
-      // For now, we'll work without authentication and use fallback data
-      // To enable Google Sheets access, you need to:
-      // 1. Complete OAuth flow to get access tokens
-      // 2. Store tokens securely and refresh them
-      // 3. Set credentials: oauth2Client.setCredentials({ access_token, refresh_token })
-      
-      this.auth = oauth2Client
-      
-      // Only create sheets client if we have credentials
-      // For development, this will be null and fallback to mock data
-      this.sheets = null
-      
-      console.log('Google Sheets service initialized (using fallback data until OAuth is configured)')
+      // Try different authentication methods
+      if (GOOGLE_API_KEY) {
+        // Method 1: Using API Key (for public sheets)
+        this.auth = GOOGLE_API_KEY
+        this.sheets = google.sheets({ version: 'v4', auth: GOOGLE_API_KEY })
+        console.log('Google Sheets service initialized with API key')
+      } else {
+        // Method 2: Try to access public sheet without auth
+        // This requires the sheet to be publicly readable
+        this.sheets = google.sheets({ version: 'v4' })
+        console.log('Google Sheets service initialized without authentication (public access)')
+      }
     } catch (error) {
       console.error('Error initializing Google Sheets auth:', error)
+      this.sheets = null
     }
   }
 
   // Fetch treasury expense data from Google Sheets
   async fetchTreasuryExpenses(): Promise<TreasuryExpense[]> {
     try {
-      if (!this.sheets) {
-        await this.initializeAuth()
-      }
+      // First try the API method
+      if (this.sheets) {
+        console.log('Fetching data from Google Sheets API...')
+        console.log('Spreadsheet ID:', GOOGLE_SHEETS_SPREADSHEET_ID)
+        
+        try {
+          const response = await this.sheets.spreadsheets.values.get({
+            spreadsheetId: GOOGLE_SHEETS_SPREADSHEET_ID,
+            range: 'Sheet1!A:J', // Fetch all columns A through J
+          })
 
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: GOOGLE_SHEETS_SPREADSHEET_ID,
-        range: 'Sheet1!A:J', // Adjust range based on your sheet structure
-      })
-
-      const rows = response.data.values
-      if (!rows || rows.length === 0) {
-        console.log('No data found in Google Sheets')
-        return []
-      }
-
-      // Skip header row and parse data
-      const expenses: TreasuryExpense[] = rows.slice(1).map((row: any[], index: number) => {
-        const [
-          date,
-          description,
-          category,
-          amount,
-          currency,
-          solPrice,
-          wallet,
-          transactionHash,
-          status
-        ] = row
-
-        const expenseAmount = parseFloat(amount) || 0
-        const solPriceValue = parseFloat(solPrice) || 0
-        const usdValue = currency === 'SOL' ? expenseAmount * solPriceValue : expenseAmount
-
-        return {
-          id: `expense-${index + 1}`,
-          date: date || new Date().toISOString().split('T')[0],
-          description: description || 'Unknown expense',
-          category: category || 'Other',
-          amount: expenseAmount,
-          currency: currency || 'USD',
-          solPrice: solPriceValue > 0 ? solPriceValue : undefined,
-          usdValue,
-          wallet: wallet || undefined,
-          transactionHash: transactionHash || undefined,
-          status: (status as 'pending' | 'confirmed' | 'failed') || 'confirmed'
+          const rows = response.data.values
+          if (rows && rows.length > 0) {
+            return this.parseRowsToExpenses(rows)
+          }
+        } catch (apiError) {
+          console.log('API method failed, trying CSV export method...')
         }
-      })
+      }
 
-      return expenses.filter(expense => expense.amount > 0) // Filter out invalid entries
+      // Fallback to CSV export method (works with public sheets)
+      console.log('Fetching data from Google Sheets CSV export...')
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_SPREADSHEET_ID}/export?format=csv&gid=0`
+      
+      const response = await fetch(csvUrl)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const csvText = await response.text()
+      const rows = this.parseCSV(csvText)
+      
+      if (!rows || rows.length === 0) {
+        console.log('No data found in Google Sheets CSV')
+        return this.getFallbackExpenses()
+      }
+
+      console.log(`Found ${rows.length} rows in Google Sheets CSV`)
+      return this.parseRowsToExpenses(rows)
+
     } catch (error) {
       console.error('Error fetching treasury expenses from Google Sheets:', error)
+      console.error('Error details:', error.message)
       
-      // Return fallback mock data if API fails
+      if (error.message && error.message.includes('403')) {
+        console.log('❌ Permission denied. To fix this:')
+        console.log('1. Open your Google Sheet')
+        console.log('2. Click "Share" button')
+        console.log('3. Change access to "Anyone with the link can view"')
+        console.log('4. Make sure "General access" is set to "Viewer"')
+      }
+      
+      // Return fallback mock data if all methods fail
       return this.getFallbackExpenses()
     }
+  }
+
+  // Parse CSV text into rows
+  private parseCSV(csvText: string): string[][] {
+    const lines = csvText.split('\n')
+    const rows: string[][] = []
+    
+    for (const line of lines) {
+      if (line.trim()) {
+        // Simple CSV parsing - this could be improved for complex CSV
+        const row = line.split(',').map(cell => cell.replace(/"/g, '').trim())
+        rows.push(row)
+      }
+    }
+    
+    return rows
+  }
+
+  // Parse rows data into TreasuryExpense objects
+  private parseRowsToExpenses(rows: string[][]): TreasuryExpense[] {
+    console.log('First few rows:', rows.slice(0, 3))
+
+    const expenses: TreasuryExpense[] = []
+    
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i] || []
+      const [
+        date,
+        description,
+        category,
+        amount,
+        currency,
+        solPrice,
+        wallet,
+        transactionHash,
+        status
+      ] = row
+
+      // Skip empty rows
+      if (!date && !description && !amount) {
+        continue
+      }
+
+      const expenseAmount = parseFloat(amount) || 0
+      const solPriceValue = parseFloat(solPrice) || 0
+      const usdValue = currency === 'SOL' ? expenseAmount * solPriceValue : expenseAmount
+
+      const expense: TreasuryExpense = {
+        id: `expense-${i}`,
+        date: date || new Date().toISOString().split('T')[0],
+        description: description || 'Unknown expense',
+        category: category || 'Other',
+        amount: expenseAmount,
+        currency: currency || 'USD',
+        solPrice: solPriceValue > 0 ? solPriceValue : undefined,
+        usdValue,
+        wallet: wallet || undefined,
+        transactionHash: transactionHash || undefined,
+        status: (status as 'pending' | 'confirmed' | 'failed') || 'confirmed'
+      }
+
+      expenses.push(expense)
+    }
+
+    console.log(`✅ Successfully parsed ${expenses.length} expenses from Google Sheets`)
+    return expenses
   }
 
   // Calculate treasury summary from expenses

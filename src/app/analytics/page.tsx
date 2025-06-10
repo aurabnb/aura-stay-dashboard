@@ -3,6 +3,8 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { AdvancedAnalytics } from '@/components/analytics/AdvancedAnalytics'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Clock } from 'lucide-react'
 
 function AnalyticsLoadingSkeleton() {
   return (
@@ -28,6 +30,21 @@ export default function AnalyticsPage() {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+        {/* Coming with v1.2 Notice */}
+        <div className="mb-8">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Clock className="h-5 w-5 text-blue-600 mr-2" />
+              <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                Coming with v1.2
+              </Badge>
+            </div>
+            <p className="text-blue-700 text-sm">
+              Enhanced analytics features and real-time data insights will be available in the next version
+            </p>
+          </div>
+        </div>
+        
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Analytics Dashboard
