@@ -55,6 +55,12 @@ function getTreasuryWallets(): TreasuryWallet[] {
 const premiumRpcUrl = 'https://rpc.ankr.com/solana/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
 const fallbackRpcUrl = 'https://api.mainnet-beta.solana.com';
 const solanaRpcUrl = process.env.SOLANA_PREMIUM_RPC_URL || premiumRpcUrl; // Use premium by default
+
+// Ethereum RPC configuration - Define before console.log
+const premiumEthRpcUrl = 'https://rpc.ankr.com/eth/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
+const fallbackEthRpcUrl = 'https://eth.llamarpc.com';
+const ethRpcUrl = process.env.ETH_PREMIUM_RPC_URL || premiumEthRpcUrl;
+
 console.log(`🚀 TREASURY SYSTEM: Using Solana MAINNET - ${solanaRpcUrl}`);
 console.log(`🔗 TREASURY SYSTEM: Using Ethereum MAINNET - ${ethRpcUrl}`);
 
@@ -79,11 +85,6 @@ const ETH_TOKEN_ADDRESSES = {
   USDC: '0xA0b86a33E6417fBCb0b7E8B4E35E2D3a1B2f5A2a', // USDC on Ethereum
   WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // Wrapped ETH
 };
-
-// Ethereum RPC configuration
-const premiumEthRpcUrl = 'https://rpc.ankr.com/eth/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
-const fallbackEthRpcUrl = 'https://eth.llamarpc.com';
-const ethRpcUrl = process.env.ETH_PREMIUM_RPC_URL || premiumEthRpcUrl;
 
 // Token metadata (Solana)
 const TOKEN_METADATA = {
