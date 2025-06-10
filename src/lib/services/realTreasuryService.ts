@@ -51,10 +51,16 @@ function getTreasuryWallets(): TreasuryWallet[] {
   }
 }
 
-// Solana connection
+// Solana connection - FORCE MAINNET ONLY for treasury monitoring
+const solanaRpcUrl = 'https://api.mainnet-beta.solana.com'; // Always use mainnet for treasury
+console.log(`🚀 TREASURY SYSTEM: Using Solana MAINNET - ${solanaRpcUrl}`);
+
 const solanaConnection = new Connection(
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-  'confirmed'
+  solanaRpcUrl,
+  {
+    commitment: 'confirmed',
+    wsEndpoint: undefined,
+  }
 );
 
 // Token mint addresses
@@ -105,9 +111,13 @@ async function fetchSolanaWalletBalances(address: string, prices: any) {
   try {
     const publicKey = new PublicKey(address);
     
-    // Fetch SOL balance
+    // Fetch SOL balance with detailed logging
+    console.log(`Fetching SOL balance for ${address}...`);
     const solBalance = await solanaConnection.getBalance(publicKey);
     const solBalanceFormatted = solBalance / LAMPORTS_PER_SOL;
+    
+    console.log(`SOL balance raw: ${solBalance} lamports`);
+    console.log(`SOL balance formatted: ${solBalanceFormatted} SOL`);
     
     const balances = [
       {
