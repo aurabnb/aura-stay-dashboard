@@ -75,7 +75,7 @@ const solanaConnection = new Connection(
 );
 
 // Known LP token mint addresses and their associated DEXs
-const KNOWN_LP_TOKENS = {
+const KNOWN_LP_TOKENS: Record<string, { protocol: string; pair: string }> = {
   // Raydium LP tokens (common pairs)
   'Ra8u31dUH31dHJZ7UHZ7qP5L3F3L3F3L3F3L3F3L3F3L': { protocol: 'Raydium', pair: 'SOL/USDC' },
   'RayLP1111111111111111111111111111111111111111': { protocol: 'Raydium', pair: 'RAY/SOL' },
@@ -107,7 +107,7 @@ const ETH_TOKEN_ADDRESSES = {
 };
 
 // Known Ethereum LP token addresses
-const KNOWN_ETH_LP_TOKENS = {
+const KNOWN_ETH_LP_TOKENS: Record<string, { protocol: string; pair: string }> = {
   // Uniswap V2 LP tokens
   '0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11': { protocol: 'Uniswap V2', pair: 'DAI/WETH' },
   '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc': { protocol: 'Uniswap V2', pair: 'USDC/WETH' },
@@ -175,7 +175,7 @@ async function detectAndValueLPToken(mint: string, balance: number, decimals: nu
   lpDetails?: any;
 }> {
   // Check if it's a known LP token
-  if (KNOWN_LP_TOKENS[mint]) {
+  if (mint in KNOWN_LP_TOKENS) {
     const lpInfo = KNOWN_LP_TOKENS[mint];
     
     // Try to fetch real LP position data from DEX APIs
@@ -481,7 +481,7 @@ async function detectEthereumLPToken(address: string, balance: number): Promise<
   lpDetails?: any;
 }> {
   // Check if it's a known Ethereum LP token
-  if (KNOWN_ETH_LP_TOKENS[address]) {
+  if (address in KNOWN_ETH_LP_TOKENS) {
     const lpInfo = KNOWN_ETH_LP_TOKENS[address];
     
     const lpValue = await fetchEthereumLPValue(address, balance, lpInfo.protocol, lpInfo.pair);
