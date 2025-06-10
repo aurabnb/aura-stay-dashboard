@@ -56,6 +56,7 @@ const premiumRpcUrl = 'https://rpc.ankr.com/solana/6f286d63d463674394f138b2b0226
 const fallbackRpcUrl = 'https://api.mainnet-beta.solana.com';
 const solanaRpcUrl = process.env.SOLANA_PREMIUM_RPC_URL || premiumRpcUrl; // Use premium by default
 console.log(`🚀 TREASURY SYSTEM: Using Solana MAINNET - ${solanaRpcUrl}`);
+console.log(`🔗 TREASURY SYSTEM: Using Ethereum MAINNET - ${ethRpcUrl}`);
 
 const solanaConnection = new Connection(
   solanaRpcUrl,
@@ -78,6 +79,11 @@ const ETH_TOKEN_ADDRESSES = {
   USDC: '0xA0b86a33E6417fBCb0b7E8B4E35E2D3a1B2f5A2a', // USDC on Ethereum
   WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // Wrapped ETH
 };
+
+// Ethereum RPC configuration
+const premiumEthRpcUrl = 'https://rpc.ankr.com/eth/6f286d63d463674394f138b2b02265c2cd807147e2c945d6d136246ae8961245';
+const fallbackEthRpcUrl = 'https://eth.llamarpc.com';
+const ethRpcUrl = process.env.ETH_PREMIUM_RPC_URL || premiumEthRpcUrl;
 
 // Token metadata (Solana)
 const TOKEN_METADATA = {
@@ -324,55 +330,14 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
       platform: 'Ethereum',
     });
 
-    // Now fetch ERC-20 token balances (DCULT, etc.)
-    console.log(`Fetching ERC-20 tokens for ${address}...`);
+    // Continue with premium RPC comprehensive token detection below...
     
+    // Use premium Ethereum RPC for better reliability
     try {
-      // Fetch DCULT token balance using Blockscout API
-      const dcultEndpoint = `https://eth.blockscout.com/api?module=account&action=tokenbalance&contractaddress=${ETH_TOKEN_ADDRESSES.DCULT}&address=${address}`;
+      console.log(`Using premium Ethereum RPC: ${ethRpcUrl}`);
       
-      const dcultResponse = await fetch(dcultEndpoint, {
-        headers: {
-          'User-Agent': 'AURA-Treasury-Monitor/1.0',
-        },
-      });
-      
-      if (dcultResponse.ok) {
-        const dcultData = await dcultResponse.json();
-        console.log(`DCULT API response:`, dcultData);
-        
-        if (dcultData.status === '1' && dcultData.result && dcultData.result !== '0') {
-          // Convert from Wei (18 decimals) to DCULT tokens
-          const dcultBalanceWei = BigInt(dcultData.result);
-          const dcultBalance = Number(dcultBalanceWei) / Math.pow(10, 18);
-          
-          console.log(`Found DCULT balance: ${dcultBalance} DCULT`);
-          
-          balances.push({
-            token_symbol: 'DCULT',
-            token_name: 'DCULT Token',
-            balance: dcultBalance,
-            usd_value: dcultBalance * prices.cult, // Using CULT price for DCULT
-            token_address: ETH_TOKEN_ADDRESSES.DCULT,
-            is_lp_token: false,
-            platform: 'Ethereum',
-          });
-        }
-      }
-    } catch (tokenError) {
-      console.log(`Error fetching DCULT balance:`, tokenError);
-    }
-
-    // TODO: Add LP token detection here
-    // This would involve detecting Uniswap/Sushiswap LP tokens
-    // and calculating their underlying asset values
-
-    return balances;
-    
-    // Final fallback: Use a simple RPC call
-    try {
-      console.log('Trying direct RPC call to Ethereum...');
-      const rpcResponse = await fetch('https://eth.llamarpc.com', {
+      // Get ETH balance via premium RPC
+      const ethBalanceResponse = await fetch(ethRpcUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -385,34 +350,111 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
         }),
       });
 
-      if (rpcResponse.ok) {
-        const contentType = rpcResponse.headers.get('content-type');
+      if (ethBalanceResponse.ok) {
+        const contentType = ethBalanceResponse.headers.get('content-type');
         if (contentType !== null && contentType.includes('application/json')) {
-          const rpcData = await rpcResponse.json();
+          const ethData = await ethBalanceResponse.json();
           
-          if (rpcData.result) {
+          if (ethData.result) {
             // Convert hex balance to ETH (Wei to ETH)
-            const balanceWei = parseInt(rpcData.result, 16);
+            const balanceWei = parseInt(ethData.result, 16);
             const balanceETH = balanceWei / Math.pow(10, 18);
             
-            console.log(`RPC call successful: ${balanceETH} ETH`);
+            console.log(`Premium RPC ETH balance: ${balanceETH} ETH`);
             
-            return [
-              {
+            // If we didn't get ETH balance from other APIs, add it here
+            if (ethBalance === 0) {
+              ethBalance = balanceETH;
+              balances[0] = {
                 token_symbol: 'ETH',
                 token_name: 'Ethereum',
-                balance: balanceETH,
-                usd_value: balanceETH * prices.eth,
+                balance: ethBalance,
+                usd_value: ethBalance * prices.eth,
                 token_address: '0x0000000000000000000000000000000000000000',
                 is_lp_token: false,
                 platform: 'Ethereum',
-              }
-            ];
+              };
+            }
           }
         }
       }
+
+      // Now try to get comprehensive ERC-20 token list using premium RPC
+      console.log('Fetching ERC-20 token balances via premium RPC...');
+      
+      // Get transaction logs to find token interactions (simplified approach)
+      // This would normally require more complex analysis, but we'll use known token addresses for now
+      const knownTokens = [
+        { address: ETH_TOKEN_ADDRESSES.DCULT, symbol: 'DCULT', decimals: 18 },
+        { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', decimals: 6 },
+        { address: '0xA0b86a33E6417fBCb0b7E8B4E35E2D3a1B2f5A2a', symbol: 'USDC', decimals: 6 },
+        { address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', symbol: 'UNI', decimals: 18 },
+        // Add more known tokens as needed
+      ];
+
+      for (const token of knownTokens) {
+        try {
+          // Call balanceOf function for each token
+          const tokenBalanceResponse = await fetch(ethRpcUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'eth_call',
+              params: [{
+                to: token.address,
+                data: `0x70a08231000000000000000000000000${address.slice(2)}` // balanceOf(address) function call
+              }, 'latest'],
+              id: 1,
+            }),
+          });
+
+          if (tokenBalanceResponse.ok) {
+            const tokenData = await tokenBalanceResponse.json();
+            
+            if (tokenData.result && tokenData.result !== '0x') {
+              const balanceHex = tokenData.result;
+              const balanceWei = BigInt(balanceHex);
+              const balance = Number(balanceWei) / Math.pow(10, token.decimals);
+              
+              if (balance > 0) {
+                console.log(`Found ${token.symbol} balance: ${balance}`);
+                
+                let price = 0;
+                if (token.symbol === 'DCULT') {
+                  price = prices.cult;
+                } else if (token.symbol === 'USDC' || token.symbol === 'USDT') {
+                  price = 1;
+                }
+                
+                balances.push({
+                  token_symbol: token.symbol,
+                  token_name: `${token.symbol} Token`,
+                  balance: balance,
+                  usd_value: balance * price,
+                  token_address: token.address,
+                  is_lp_token: false,
+                  platform: 'Ethereum',
+                });
+              }
+            }
+          }
+        } catch (tokenError) {
+          console.log(`Error fetching ${token.symbol} balance:`, tokenError);
+        }
+        
+        // Small delay between token calls
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      // TODO: Add Ethereum LP token detection here
+      // This would involve detecting Uniswap V2/V3, SushiSwap, Curve LP tokens
+      console.log('Ethereum LP token detection: Coming soon...');
+
     } catch (rpcError) {
-      console.log('RPC call failed:', rpcError);
+      console.log('Premium RPC call failed:', rpcError);
     }
     
     console.log(`Could not fetch Ethereum balance for ${address} from any source, using zero balance`);
