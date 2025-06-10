@@ -319,7 +319,7 @@ export async function getRealTreasuryData(): Promise<ConsolidatedData> {
     const walletDataPromises = treasuryWallets.map(async (wallet, index): Promise<WalletData> => {
       console.log(`Processing wallet ${index + 1}: ${wallet.name} (${wallet.blockchain}) - ${wallet.address}`);
       
-      let balances;
+      let balances: any[] = [];
       
       try {
         if (wallet.blockchain === 'Solana') {
