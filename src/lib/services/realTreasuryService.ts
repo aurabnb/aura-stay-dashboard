@@ -458,18 +458,8 @@ async function fetchEthereumWalletBalances(address: string, prices: any) {
       console.log('Premium RPC call failed:', rpcError);
     }
     
-    console.log(`Could not fetch Ethereum balance for ${address} from any source, using zero balance`);
-    return [
-      {
-        token_symbol: 'ETH',
-        token_name: 'Ethereum',
-        balance: 0,
-        usd_value: 0,
-        token_address: '0x0000000000000000000000000000000000000000',
-        is_lp_token: false,
-        platform: 'Ethereum',
-      }
-    ];
+    // Return the balances array which includes ETH and any detected tokens (like DCULT)
+    return balances;
   } catch (error) {
     console.error(`Error fetching Ethereum balances for ${address}:`, error);
     return [
