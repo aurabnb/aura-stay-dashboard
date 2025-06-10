@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { walletService } from '@/lib/services/walletService'
+import { getRealTreasuryData, getRealTreasuryOverview } from '@/lib/services/realTreasuryService'
 
 // Required for static export compatibility - only in non-static mode
 // export const dynamic = 'force-dynamic'
@@ -80,9 +81,17 @@ async function fetchAuraPrice(): Promise<number> {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const type = searchParams.get('type') // 'balances', 'transactions', 'overview'
+    const type = searchParams.get('type') // 'balances', 'transactions', 'overview', 'real'
     
     switch (type) {
+      case 'real':
+        // Return real blockchain data from all treasury wallets
+        const realData = await getRealTreasuryData()
+        return NextResponse.json(realData)
+      case 'real-overview':
+        // Return real treasury overview data
+        const realOverview = await getRealTreasuryOverview()
+        return NextResponse.json(realOverview)
       case 'balances':
         return await getTreasuryBalances()
       case 'transactions':
@@ -98,8 +107,8 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch treasury data' },
       { status: 500 }
     )
-        }
-      }
+  }
+}
 
 async function getTreasuryBalances() {
   try {
