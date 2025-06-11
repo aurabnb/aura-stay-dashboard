@@ -34,6 +34,7 @@ const routeNames: Record<string, string> = {
   'wallet': 'Wallet',
   'burn-tracking': 'Burn Tracking',
   'expense-tracker': 'Expense Tracker',
+  'expenses': 'Project Expenses',
   'admin': 'Admin',
   'blog': 'Blog',
   'contact': 'Contact',
@@ -158,7 +159,7 @@ export const breadcrumbConfigs = {
   ],
   dashboardStaking: [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Staking', href: '/dashboard/staking' }
+          { label: 'Staking', href: '/user-dashboard#staking' }
   ],
   dashboardGovernance: [
     { label: 'Dashboard', href: '/dashboard' },

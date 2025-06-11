@@ -38,44 +38,15 @@ const TOKEN_METADATA = {
 // Fetch current token prices from DexScreener and CoinGecko
 async function fetchTokenPrices(): Promise<{ sol: number; aura: number; usdc: number; auraLogo?: string }> {
   try {
-    // Fetch SOL price from CoinGecko
-    const solResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-    const solData = await solResponse.json();
-    const solPrice = solData.solana?.usd || 180;
-
-    // Fetch AURA price and logo from DexScreener
-    const auraResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_MINT}`);
-    const auraData = await auraResponse.json();
-    let auraPrice = 0.0002700; // Fallback price
-    let auraLogo = '/aura-logo.png'; // Fallback logo
+    // Use our server-side API route instead of direct external calls
+    const response = await fetch('/api/token-prices?tokens=sol,aura');
+    const data = await response.json();
     
-    if (auraData.pairs && auraData.pairs.length > 0) {
-      const pair = auraData.pairs[0];
-      const price = parseFloat(pair.priceUsd);
-      if (price && price > 0) {
-        auraPrice = price;
-      }
-      
-      // Extract AURA logo from DexScreener
-      if (pair.baseToken && pair.baseToken.address === AURA_TOKEN_MINT) {
-        auraLogo = pair.baseToken.logoURI || auraLogo;
-        console.log('AURA logo found in baseToken:', auraLogo);
-      } else if (pair.quoteToken && pair.quoteToken.address === AURA_TOKEN_MINT) {
-        auraLogo = pair.quoteToken.logoURI || auraLogo;
-        console.log('AURA logo found in quoteToken:', auraLogo);
-      }
-      
-      console.log('DexScreener AURA data:', { price: auraPrice, logo: auraLogo });
-    }
-
-    // Update TOKEN_METADATA with fetched logo
-    TOKEN_METADATA[AURA_TOKEN_MINT].logo = auraLogo;
-
     return {
-      sol: solPrice,
-      aura: auraPrice,
+      sol: data.sol || 180,
+      aura: data.aura || 0.0002700,
       usdc: 1.0, // USDC is stable
-      auraLogo
+      auraLogo: data.auraLogo || '/aura-logo.png'
     };
   } catch (error) {
     console.error('Error fetching token prices:', error);
@@ -285,58 +256,49 @@ export async function getWalletBalances(walletAddress: string): Promise<WalletBa
 function parseTransaction(
   transaction: ParsedTransactionWithMeta, 
   walletAddress: string
-): { type: string; amount: number; token: string; fee: number } {
-  const walletPubkey = walletAddress;
-  let type = 'unknown';
+): { type: 'send' | 'receive' | 'stake' | 'unstake' | 'swap' | 'other'; amount: number; token: string; fee: number } {
+  let type: 'send' | 'receive' | 'stake' | 'unstake' | 'swap' | 'other' = 'other';
   let amount = 0;
   let token = 'SOL';
-  const fee = (transaction.meta?.fee || 0) / LAMPORTS_PER_SOL;
+  let fee = (transaction.meta?.fee || 5000) / LAMPORTS_PER_SOL;
 
   try {
-    // Check for SOL transfers
-    if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
-      // Find the account index for our wallet
-      let accountIndex = -1;
-      
-      // Handle both parsed and regular account keys
-      if (transaction.transaction.message.accountKeys) {
-        accountIndex = transaction.transaction.message.accountKeys.findIndex(
-          (key) => {
-            // Handle both string and PublicKey object formats
-            const keyString = typeof key === 'string' ? key : 
-                             key.pubkey ? key.pubkey.toString() : 
-                             key.toString();
-            return keyString === walletPubkey;
-          }
-        );
-      }
-      
-      if (accountIndex !== -1) {
-        const preBalance = transaction.meta.preBalances[accountIndex] || 0;
-        const postBalance = transaction.meta.postBalances[accountIndex] || 0;
-        const balanceChange = (postBalance - preBalance) / LAMPORTS_PER_SOL;
-        
-        // Only consider significant balance changes (excluding fees)
-        if (Math.abs(balanceChange) > 0.001) {
-          amount = Math.abs(balanceChange);
-          type = balanceChange > 0 ? 'receive' : 'send';
-          token = 'SOL';
-          return { type, amount, token, fee };
-        }
+    // Check SOL balance changes first
+    const preBalances = transaction.meta?.preBalances || [];
+    const postBalances = transaction.meta?.postBalances || [];
+    const accountKeys = transaction.transaction.message.accountKeys || [];
+    
+    // Find the user's account index
+    let userAccountIndex = -1;
+    for (let i = 0; i < accountKeys.length; i++) {
+      if (accountKeys[i].pubkey.toString() === walletAddress) {
+        userAccountIndex = i;
+        break;
       }
     }
-
-    // Check for SPL token transfers
+    
+    if (userAccountIndex !== -1 && userAccountIndex < preBalances.length && userAccountIndex < postBalances.length) {
+      const solChange = (postBalances[userAccountIndex] - preBalances[userAccountIndex]) / LAMPORTS_PER_SOL;
+      
+      if (Math.abs(solChange) > fee * 2) { // Ignore small changes that might just be fees
+        amount = Math.abs(solChange);
+        type = solChange > 0 ? 'receive' : 'send';
+        token = 'SOL';
+        return { type, amount, token, fee };
+      }
+    }
+    
+    // Check for token balance changes
     if (transaction.meta?.preTokenBalances && transaction.meta?.postTokenBalances) {
       for (let i = 0; i < transaction.meta.preTokenBalances.length; i++) {
         const preTokenBalance = transaction.meta.preTokenBalances[i];
         const postTokenBalance = transaction.meta.postTokenBalances.find(
-          (post) => post.accountIndex === preTokenBalance.accountIndex
+          post => post.accountIndex === preTokenBalance.accountIndex
         );
         
-        if (preTokenBalance && postTokenBalance) {
-          const preAmount = parseFloat(preTokenBalance.uiTokenAmount.uiAmountString || '0');
-          const postAmount = parseFloat(postTokenBalance.uiTokenAmount.uiAmountString || '0');
+        if (postTokenBalance && preTokenBalance.uiTokenAmount && postTokenBalance.uiTokenAmount) {
+          const preAmount = preTokenBalance.uiTokenAmount.uiAmount || 0;
+          const postAmount = postTokenBalance.uiTokenAmount.uiAmount || 0;
           const tokenChange = postAmount - preAmount;
           
           if (Math.abs(tokenChange) > 0) {
@@ -442,10 +404,10 @@ export async function getWalletTransactions(
           // Fallback for transactions that couldn't be parsed
           transactions.push({
             signature: sigInfo.signature,
-            type: 'unknown',
+            type: 'other',
             amount: 0,
             token: 'SOL',
-            fee: (sigInfo.fee || 5000) / LAMPORTS_PER_SOL,
+            fee: 0.000005, // Default SOL transaction fee
             blockTime: sigInfo.blockTime || Math.floor(Date.now() / 1000),
             status: sigInfo.err ? 'failed' : 'success'
           });
@@ -462,22 +424,16 @@ export async function getWalletTransactions(
 
 export async function getTokenMetrics(): Promise<TokenMetrics> {
   try {
-    // Fetch AURA token metrics from DexScreener
-    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${AURA_TOKEN_MINT}`);
+    // Use our server-side API route instead of direct external calls
+    const response = await fetch('/api/token-prices?tokens=aura');
     const data = await response.json();
     
-    if (data.pairs && data.pairs.length > 0) {
-      const pair = data.pairs[0];
-      const price = parseFloat(pair.priceUsd) || 0.0002700;
-      const priceChange24h = parseFloat(pair.priceChange?.h24) || 0;
-      const volume24h = parseFloat(pair.volume?.h24) || 0;
-      const marketCap = parseFloat(pair.marketCap) || 0;
-      
+    if (data.auraMetrics) {
       return {
-        price,
-        priceChange24h,
-        marketCap,
-        volume24h,
+        price: data.auraMetrics.price,
+        priceChange24h: data.auraMetrics.priceChange24h,
+        marketCap: data.auraMetrics.marketCap,
+        volume24h: data.auraMetrics.volume24h,
         holders: 5000, // Estimate - would need additional API
         symbol: 'AURA',
         name: 'AURA Token'

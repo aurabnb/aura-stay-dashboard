@@ -7,4 +7,7 @@ export interface ExpenseEntry {
   solPriceAtTime?: number
   usdValueAtTime?: number
   transactionDate?: Date
+  status?: 'pending' | 'confirmed' | 'failed'
+  wallet?: string
+  transactionHash?: string
 } 

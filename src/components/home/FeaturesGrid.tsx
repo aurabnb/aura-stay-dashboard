@@ -44,7 +44,7 @@ const features = [
   {
     icon: Lock,
     title: 'Burn Mechanism',
-    description: 'Deflationary tokenomics with 2% automatic burn on transactions',
+    description: 'Deflationary tokenomics with 0.8% automatic burn on transactions',
     color: 'from-indigo-500 to-indigo-600'
   },
   {

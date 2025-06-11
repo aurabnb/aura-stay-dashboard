@@ -682,7 +682,7 @@ export function useMemoryMonitor() {
   return memoryInfo
 }
 
-export default {
+const enhancedHooks = {
   useLocalStorage,
   useDebounce,
   usePrevious,
@@ -701,4 +701,6 @@ export default {
   useFormState,
   usePerformanceMonitor,
   useMemoryMonitor,
-} 
+}
+
+export default enhancedHooks 

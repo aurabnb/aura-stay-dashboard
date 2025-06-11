@@ -483,7 +483,7 @@ export function validateEnvironment(): { isValid: boolean; missing: string[] } {
   }
 }
 
-export default {
+const security = {
   // Schemas
   walletAddressSchema,
   tokenAmountSchema,
@@ -527,4 +527,6 @@ export default {
   isLocalhost,
   getClientIP,
   validateEnvironment,
-} 
+}
+
+export default security 

@@ -265,4 +265,96 @@ enum StakingStatus {
   ACTIVE
   UNSTAKED
   PENDING_UNSTAKE
+}
+
+// Cache model for API responses to reduce external calls and improve performance
+model ApiCache {
+  id          String   @id @default(cuid())
+  key         String   @unique // Cache key (e.g., "token_prices", "aura_metrics")
+  data        Json     // Cached response data
+  expiresAt   DateTime // When the cache expires
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("api_cache")
+}
+
+// Blog and CMS system
+model Admin {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String   @unique
+  password    String   // Hashed password
+  name        String
+  avatar      String?
+  role        AdminRole @default(EDITOR)
+  isActive    Boolean  @default(true)
+  lastLogin   DateTime?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  blogPosts   BlogPost[]
+  
+  @@map("admins")
+}
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  color       String?    // Hex color for category display
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  // Relationships
+  blogPosts   BlogPost[]
+  
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  excerpt       String?
+  content       String        @db.Text
+  featuredImage String?       @map("featured_image")
+  status        PostStatus    @default(DRAFT)
+  authorId      String        @map("author_id")
+  categoryId    String?       @map("category_id")
+  tags          String[]      // Array of tag strings
+  metaTitle     String?       @map("meta_title")
+  metaDescription String?     @map("meta_description")
+  readTime      Int?          @map("read_time") // Estimated read time in minutes
+  views         Int           @default(0)
+  publishedAt   DateTime?     @map("published_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  
+  // Relationships
+  author        Admin         @relation(fields: [authorId], references: [id])
+  category      BlogCategory? @relation(fields: [categoryId], references: [id])
+  
+  @@index([status])
+  @@index([publishedAt])
+  @@index([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@map("blog_posts")
+}
+
+// Blog-related enums
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
 } 

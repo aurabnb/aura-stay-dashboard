@@ -67,7 +67,7 @@ export function OnboardingFlow({ onComplete, onClose }: OnboardingFlowProps) {
           <div className="grid grid-cols-2 gap-4 mt-6">
             <div className="bg-blue-50 p-4 rounded-lg text-center">
               <Coins className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <p className="text-sm font-medium">2% Burn Mechanism</p>
+              <p className="text-sm font-medium">0.8% Burn Mechanism</p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg text-center">
               <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
@@ -182,7 +182,7 @@ export function OnboardingFlow({ onComplete, onClose }: OnboardingFlowProps) {
             <TrendingUp className="h-16 w-16 text-green-600 mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">Stake Your AURA Tokens</h3>
             <p className="text-gray-600">
-              Stake your AURA tokens to earn passive rewards from the 2% burn mechanism 
+              Stake your AURA tokens to earn passive rewards from the 0.8% burn mechanism 
               and participate in governance decisions.
             </p>
           </div>
@@ -202,8 +202,8 @@ export function OnboardingFlow({ onComplete, onClose }: OnboardingFlowProps) {
             <h4 className="font-medium text-green-800 mb-2">How It Works</h4>
             <ul className="text-sm text-green-700 space-y-1">
               <li>• Stake AURA tokens with no lock-up period</li>
-              <li>• Earn proportional rewards from 2% burns</li>
-              <li>• Claim rewards 4 times daily</li>
+              <li>• Earn proportional rewards from 0.8% burns</li>
+              <li>• Claim rewards when claimed</li>
               <li>• Unstake anytime without penalties</li>
             </ul>
           </div>
@@ -211,7 +211,7 @@ export function OnboardingFlow({ onComplete, onClose }: OnboardingFlowProps) {
       ),
       action: {
         label: 'Start Staking',
-        href: '/dashboard/staking'
+        href: '/user-dashboard#staking'
       },
       completable: false
     },

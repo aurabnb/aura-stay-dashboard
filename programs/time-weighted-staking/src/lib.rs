@@ -824,7 +824,7 @@ pub struct TransferAuthority<'info> {
     
     pub admin: Signer<'info>,
 }
-
+ 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
     #[account(mut)]

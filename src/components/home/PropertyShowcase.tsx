@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Star, Wifi, Car, Coffee, Leaf, Mountain, Waves, Users, Calendar, ExternalLink } from 'lucide-react';
+import { MapPin, Star, Wifi, Car, Coffee, Leaf, Mountain, Waves, Users, Calendar, ExternalLink, Clock } from 'lucide-react';
 
 interface Property {
   id: string;
@@ -39,7 +39,7 @@ const MOCK_PROPERTIES: Property[] = [
     amenities: ['Infinity Pool', 'Yoga Deck', 'Organic Garden', 'Spa'],
     features: ['Solar Powered', 'Rainwater Harvesting', 'Local Materials'],
     sustainability: ['Zero Waste', 'Farm to Table', 'Community Support'],
-    images: ['/properties/aura-bali-1.jpg', '/properties/aura-bali-2.jpg']
+    images: ['/A_digital_photograph_captures_an_overwater_bungalo.png', '/A_digital_photograph_captures_an_overwater_bungalo.png']
   },
   {
     id: 'samsara-costa-rica',
@@ -55,7 +55,7 @@ const MOCK_PROPERTIES: Property[] = [
     amenities: ['Private Deck', 'Outdoor Shower', 'Telescope', 'Mini Kitchen'],
     features: ['Sustainable Wood', 'Green Energy', 'Minimal Impact'],
     sustainability: ['Wildlife Protection', 'Local Employment', 'Eco Tours'],
-    images: ['/properties/samsara-cr-1.jpg', '/properties/samsara-cr-2.jpg']
+    images: ['/A_high-resolution_digital_photograph_captures_an_A.png', '/A_high-resolution_digital_photograph_captures_an_A.png']
   },
   {
     id: 'airscape-greece',
@@ -71,7 +71,7 @@ const MOCK_PROPERTIES: Property[] = [
     amenities: ['Private Pool', 'Wine Cellar', 'Sunset Terrace', 'Chef\'s Kitchen'],
     features: ['Smart Home', 'Energy Efficient', 'Local Design'],
     sustainability: ['Solar Power', 'Water Conservation', 'Waste Reduction'],
-    images: ['/properties/airscape-gr-1.jpg', '/properties/airscape-gr-2.jpg']
+    images: ['/A_digital_painting_depicts_a_vineyard_at_sunset_du.png', '/A_digital_painting_depicts_a_vineyard_at_sunset_du.png']
   }
 ];
 
@@ -171,6 +171,34 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
+const CategoryButton: React.FC<{ 
+  type: 'all' | 'aura' | 'samsara' | 'airscape', 
+  isActive: boolean, 
+  onClick: () => void,
+  isComingSoon?: boolean 
+}> = ({ type, isActive, onClick, isComingSoon = false }) => {
+  return (
+    <div className="relative">
+      <Button
+        variant={isActive ? 'default' : 'outline'}
+        onClick={onClick}
+        className={`capitalize relative ${isComingSoon ? 'opacity-75' : ''}`}
+        disabled={isComingSoon}
+      >
+        {type === 'all' ? 'All Properties' : `${type} Properties`}
+      </Button>
+      {isComingSoon && (
+        <div className="absolute -top-2 -right-2">
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs px-2 py-1">
+            <Clock className="h-3 w-3 mr-1" />
+            Coming Soon
+          </Badge>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export function PropertyShowcase() {
   const [filter, setFilter] = useState<'all' | 'aura' | 'samsara' | 'airscape'>('all');
   
@@ -180,24 +208,65 @@ export function PropertyShowcase() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-center gap-4">
-        {(['all', 'aura', 'samsara', 'airscape'] as const).map((type) => (
-          <Button
-            key={type}
-            variant={filter === type ? 'default' : 'outline'}
-            onClick={() => setFilter(type)}
-            className="capitalize"
-          >
-            {type === 'all' ? 'All Properties' : `${type} Properties`}
-          </Button>
-        ))}
+      <div className="flex justify-center gap-4 flex-wrap">
+        <CategoryButton
+          type="all"
+          isActive={filter === 'all'}
+          onClick={() => setFilter('all')}
+        />
+        <CategoryButton
+          type="aura"
+          isActive={filter === 'aura'}
+          onClick={() => setFilter('aura')}
+          isComingSoon={true}
+        />
+        <CategoryButton
+          type="samsara"
+          isActive={filter === 'samsara'}
+          onClick={() => setFilter('samsara')}
+          isComingSoon={true}
+        />
+        <CategoryButton
+          type="airscape"
+          isActive={filter === 'airscape'}
+          onClick={() => setFilter('airscape')}
+          isComingSoon={true}
+        />
       </div>
+      
+      {/* Coming Soon Notice */}
+      {(filter === 'aura' || filter === 'samsara' || filter === 'airscape') && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+          <div className="flex items-center justify-center mb-2">
+            <Clock className="h-5 w-5 text-yellow-600 mr-2" />
+            <h3 className="text-lg font-semibold text-yellow-800 capitalize">
+              {filter} Properties Coming Soon
+            </h3>
+          </div>
+          <p className="text-yellow-700">
+            We're working on bringing you amazing {filter} properties. Stay tuned for updates!
+          </p>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredProperties.map((property) => (
           <PropertyCard key={property.id} property={property} />
         ))}
       </div>
+      
+      {filteredProperties.length === 0 && filter !== 'all' && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No properties available yet for this category.</p>
+          <Button 
+            variant="outline" 
+            onClick={() => setFilter('all')} 
+            className="mt-4"
+          >
+            View All Properties
+          </Button>
+        </div>
+      )}
     </div>
   );
 } 

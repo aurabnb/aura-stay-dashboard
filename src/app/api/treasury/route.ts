@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { walletService } from '@/lib/services/walletService'
+import { getRealTreasuryData, getRealTreasuryOverview } from '@/lib/services/realTreasuryService'
 
 // Required for static export compatibility - only in non-static mode
 // export const dynamic = 'force-dynamic'
@@ -47,14 +48,12 @@ async function fetchAuraMarketCap(): Promise<number> {
   }
 }
 
-// Fetch current SOL price
+// Fetch current SOL price from our API route
 async function fetchCoinGeckoPrice(): Promise<number> {
   try {
-    const response = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
-    )
+    const response = await fetch(`${process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000'}/api/sol-price`)
     const data = await response.json()
-    return data.solana?.usd || 245.67
+    return data.price || 245.67
   } catch (error) {
     console.error('Error fetching SOL price:', error)
     return 245.67 // Fallback SOL price
@@ -82,9 +81,17 @@ async function fetchAuraPrice(): Promise<number> {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const type = searchParams.get('type') // 'balances', 'transactions', 'overview'
+    const type = searchParams.get('type') // 'balances', 'transactions', 'overview', 'real'
     
     switch (type) {
+      case 'real':
+        // Return real blockchain data from all treasury wallets
+        const realData = await getRealTreasuryData()
+        return NextResponse.json(realData)
+      case 'real-overview':
+        // Return real treasury overview data
+        const realOverview = await getRealTreasuryOverview()
+        return NextResponse.json(realOverview)
       case 'balances':
         return await getTreasuryBalances()
       case 'transactions':
@@ -100,8 +107,8 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch treasury data' },
       { status: 500 }
     )
-        }
-      }
+  }
+}
 
 async function getTreasuryBalances() {
   try {

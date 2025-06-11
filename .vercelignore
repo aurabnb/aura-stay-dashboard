@@ -1,0 +1,49 @@
+# Development files
+.next/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test files
+tests/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+jest.setup.js
+playwright.config.ts
+
+# Build artifacts
+out/
+dist/
+backup/
+target/
+
+# Programs (Anchor/Solana)
+programs/
+scripts/
+
+# Database
+prisma/migrations/dev_*.sql
+
+# Documentation
+README.md
+LICENSE
+
+# CI/CD
+.github/
+.husky/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log* 

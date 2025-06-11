@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { useRealTreasuryData } from '@/hooks/useRealTreasuryData'
 import { 
   DollarSign, 
   TrendingUp, 
@@ -16,95 +17,29 @@ import {
   Activity,
   PieChart,
   BarChart3,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 
-interface WalletBalance {
-  tokenSymbol: string
-  tokenName: string
-  balance: number
-  usdValue: number
-  isLpToken?: boolean
-}
-
-interface TreasuryWallet {
-  id: string
-  address: string
-  name: string
-  description: string
-  balances: WalletBalance[]
-}
-
-interface TreasuryData {
-  wallets: TreasuryWallet[]
-  solPrice: number
-  totalValue: number
-  liquidAssets: number
-  stakedAssets: number
-}
-
 export function TreasuryDashboard() {
-  const [treasuryData, setTreasuryData] = useState<TreasuryData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d')
+  
+  // Use the real treasury data hook
+  const {
+    data: treasuryData,
+    loading,
+    error,
+    totalValue,
+    volatileAssets,
+    hardAssets,
+    wallets,
+    solPrice,
+    lastUpdated,
+    refetch
+  } = useRealTreasuryData()
 
   // Constants
   const VOLCANO_FUNDING_GOAL = 600000 // $600k goal
-  const FUNDING_WALLET_ADDRESS = 'HK2vSfMd8o9pFwJKKL8kGdCkWfFJX6FzJ7aWsVZyBnkK'
-
-  useEffect(() => {
-    fetchTreasuryData()
-  }, [selectedTimeframe])
-
-  const fetchTreasuryData = async () => {
-    setLoading(true)
-    
-    // Mock treasury data - replace with real API calls
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const mockTreasuryData: TreasuryData = {
-      solPrice: 105.23,
-      totalValue: 2450000,
-      liquidAssets: 1850000,
-      stakedAssets: 600000,
-      wallets: [
-        {
-          id: '1',
-          address: FUNDING_WALLET_ADDRESS,
-          name: 'Project Funding Wallet',
-          description: 'Main funding wallet for Volcano Stay project',
-          balances: [
-            { tokenSymbol: 'SOL', tokenName: 'Solana', balance: 12450.5, usdValue: 1310000 },
-            { tokenSymbol: 'USDC', tokenName: 'USD Coin', balance: 425000, usdValue: 425000 },
-            { tokenSymbol: 'AURA', tokenName: 'Aura Token', balance: 2500000, usdValue: 115000 }
-          ]
-        },
-        {
-          id: '2', 
-          address: 'ABC123def456',
-          name: 'Staking Rewards Pool',
-          description: 'Pool for staking rewards distribution',
-          balances: [
-            { tokenSymbol: 'SOL', tokenName: 'Solana', balance: 5420.2, usdValue: 570000 },
-            { tokenSymbol: 'AURA', tokenName: 'Aura Token', balance: 1250000, usdValue: 57500 }
-          ]
-        },
-        {
-          id: '3',
-          address: 'XYZ789ghi012',
-          name: 'Operational Treasury',
-          description: 'Treasury for operational expenses',
-          balances: [
-            { tokenSymbol: 'USDC', tokenName: 'USD Coin', balance: 125000, usdValue: 125000 },
-            { tokenSymbol: 'SOL', tokenName: 'Solana', balance: 2100.8, usdValue: 221000 }
-          ]
-        }
-      ]
-    }
-
-    setTreasuryData(mockTreasuryData)
-    setLoading(false)
-  }
 
   const formatUsd = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
@@ -118,7 +53,7 @@ export function TreasuryDashboard() {
   const calculateFundingProgress = () => {
     if (!treasuryData) return { percentage: 0, raised: 0, remaining: VOLCANO_FUNDING_GOAL }
     
-    const raised = treasuryData.liquidAssets
+    const raised = hardAssets + volatileAssets // Total liquid assets
     const percentage = (raised / VOLCANO_FUNDING_GOAL) * 100
     const remaining = Math.max(0, VOLCANO_FUNDING_GOAL - raised)
     
@@ -151,6 +86,32 @@ export function TreasuryDashboard() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Treasury Dashboard</h1>
+            <p className="text-muted-foreground">Monitor treasury health and funding progress</p>
+          </div>
+        </div>
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              <span className="font-medium">Error loading treasury data</span>
+            </div>
+            <p className="text-red-600 text-sm mt-2">{error}</p>
+            <Button onClick={refetch} variant="outline" className="mt-4">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -170,7 +131,7 @@ export function TreasuryDashboard() {
             <option value="30d">30 Days</option>
             <option value="90d">90 Days</option>
           </select>
-          <Button onClick={fetchTreasuryData} variant="outline" size="sm">
+          <Button onClick={refetch} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -185,9 +146,11 @@ export function TreasuryDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatUsd(treasuryData?.totalValue || 0)}</div>
+            <div className="text-2xl font-bold">{formatUsd(totalValue)}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+8.2%</span> from last month
+              {lastUpdated && (
+                <span>Updated: {new Date(lastUpdated).toLocaleString()}</span>
+              )}
             </p>
           </CardContent>
         </Card>
@@ -198,9 +161,9 @@ export function TreasuryDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatUsd(treasuryData?.liquidAssets || 0)}</div>
+            <div className="text-2xl font-bold">{formatUsd(hardAssets)}</div>
             <p className="text-xs text-muted-foreground">
-              Available for deployment
+              Stablecoins & liquid assets
             </p>
           </CardContent>
         </Card>
@@ -211,9 +174,9 @@ export function TreasuryDashboard() {
             <Coins className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatUsd(treasuryData?.stakedAssets || 0)}</div>
+            <div className="text-2xl font-bold">{formatUsd(volatileAssets)}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">12.5%</span> APY earning
+              Crypto holdings
             </p>
           </CardContent>
         </Card>
@@ -323,14 +286,16 @@ export function TreasuryDashboard() {
 
         <TabsContent value="wallets" className="space-y-4">
           <div className="grid grid-cols-1 gap-6">
-            {treasuryData?.wallets.map((wallet) => (
-              <Card key={wallet.id}>
+            {wallets.map((wallet) => (
+              <Card key={wallet.wallet_id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     {wallet.name}
                     <Badge variant="secondary">{wallet.balances.length} tokens</Badge>
                   </CardTitle>
-                  <CardDescription>{wallet.description}</CardDescription>
+                  <CardDescription>
+                    {wallet.blockchain} blockchain wallet
+                  </CardDescription>
                   <p className="text-xs text-muted-foreground font-mono">{wallet.address}</p>
                 </CardHeader>
                 <CardContent>
@@ -339,19 +304,25 @@ export function TreasuryDashboard() {
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                            {balance.tokenSymbol.charAt(0)}
+                            {balance.token_symbol.charAt(0)}
                           </div>
                           <div>
-                            <div className="font-medium">{balance.tokenName}</div>
-                            <div className="text-sm text-muted-foreground">{balance.tokenSymbol}</div>
+                            <div className="font-medium">{balance.token_name}</div>
+                            <div className="text-sm text-muted-foreground">{balance.token_symbol}</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-medium">{balance.balance.toLocaleString()} {balance.tokenSymbol}</div>
-                          <div className="text-sm text-muted-foreground">{formatUsd(balance.usdValue)}</div>
+                          <div className="font-medium">{balance.balance.toLocaleString()} {balance.token_symbol}</div>
+                          <div className="text-sm text-muted-foreground">{formatUsd(balance.usd_value)}</div>
                         </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex justify-between items-center font-semibold">
+                      <span>Total Value:</span>
+                      <span>{formatUsd(wallet.totalUsdValue)}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -88,7 +88,7 @@ const LiveBurnMetrics: React.FC = () => {
           <div>
             <CardTitle className="flex items-center gap-2 text-red-900">
               <Flame className="h-6 w-6" />
-              2% Burn & Redistribution
+              0.8% Burn & Redistribution (through internal app)
             </CardTitle>
             <CardDescription className="text-red-700">
               Live token burning and staking rewards system
@@ -96,7 +96,7 @@ const LiveBurnMetrics: React.FC = () => {
           </div>
           <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
             <Zap className="h-3 w-3 mr-1" />
-            LIVE
+            SOON
           </Badge>
         </div>
       </CardHeader>
@@ -154,9 +154,9 @@ const LiveBurnMetrics: React.FC = () => {
         <div className="bg-white/60 p-4 rounded-lg border border-red-200">
           <h4 className="font-semibold text-red-900 mb-2">How It Works</h4>
           <ul className="text-sm text-red-800 space-y-1">
-            <li>• 2% of every transaction is automatically burned</li>
+            <li>• 0.8% of every transaction is automatically burned</li>
             <li>• Burned tokens are redistributed to stakers</li>
-            <li>• Rewards distributed 4 times daily</li>
+            <li>• Rewards distributed when claimed</li>
             <li>• Proportional to your staking amount</li>
           </ul>
         </div>
@@ -164,7 +164,7 @@ const LiveBurnMetrics: React.FC = () => {
         {/* CTA Buttons */}
         <div className="flex gap-3">
           <Button asChild className="flex-1 bg-red-600 hover:bg-red-700">
-            <Link href="/dashboard/staking">
+                          <Link href="/user-dashboard#staking">
               Start Staking
             </Link>
           </Button>
