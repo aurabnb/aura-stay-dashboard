@@ -42,7 +42,7 @@ async function fetchWalletData(apiKey: string, walletAddress: string): Promise<S
   return response.json()
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
