@@ -68,8 +68,11 @@
     "preinstall": "npx only-allow npm",
     "postinstall": "prisma generate",
     "prepare": "echo 'Skipping husky setup'"
+    "preview": "vite preview",
     "build:dev": "vite build --mode development"
 
+
+    
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
