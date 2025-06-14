@@ -1,33 +1,18 @@
 
 import { apiFetch } from "./_client";
-import { SOLSCAN_API, SOLSCAN_API_KEY, hasSolscanApiKey } from "@/config";
 import type { SolAccountResp, TokenAccountResp } from "@/types";
 
-/* ------------------------ Solscan endpoints ------------------------ */
+/* ------------------------ Solscan endpoints (deprecated) ------------------------ */
 
-const BASE_HEADERS = hasSolscanApiKey() 
-  ? { Authorization: `Bearer ${SOLSCAN_API_KEY}` }
-  : {};
+// Note: This file is kept for backward compatibility but is no longer actively used
+// The application now uses Shyft API through the sync-shyft-wallets edge function
 
 export const fetchSol = (account: string) => {
-  if (!hasSolscanApiKey()) {
-    console.warn("Solscan API key not configured, using fallback data");
-    return Promise.resolve({ lamports: 0 });
-  }
-  
-  return apiFetch<SolAccountResp>(`${SOLSCAN_API}/account/${account}`, {
-    headers: BASE_HEADERS,
-  });
+  console.warn("Solscan API is deprecated, using Shyft API instead");
+  return Promise.resolve({ lamports: 0 });
 };
 
 export const fetchSplTokens = (account: string) => {
-  if (!hasSolscanApiKey()) {
-    console.warn("Solscan API key not configured, returning empty token list");
-    return Promise.resolve([]);
-  }
-  
-  return apiFetch<{ data: TokenAccountResp[] }>(
-    `${SOLSCAN_API}/account/tokens?address=${account}`,
-    { headers: BASE_HEADERS },
-  ).then(r => r.data ?? []);
+  console.warn("Solscan API is deprecated, using Shyft API instead");
+  return Promise.resolve([]);
 };
