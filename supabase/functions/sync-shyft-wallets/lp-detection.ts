@@ -4,7 +4,7 @@
 
 import { fetchWethCultLpData, fetchERC20Balance, fetchEthBalance } from "./ethereum-api.ts";
 import { getTokensWithAura, fetchWalletFromShyft, ShyftTokenBasic } from "./shyft-api.ts";
-import { fetchAllMeteoraPoolsForWallet } from "../../fetch-wallet-balances/meteora-service.ts";
+import { fetchAllMeteoraPoolsForWallet } from "../fetch-wallet-balances/meteora-service.ts";
 
 // Solana: fetch Meteora LP positions via Shyft + Meteora API
 export async function getSolanaWalletLps(walletAddress: string) {
