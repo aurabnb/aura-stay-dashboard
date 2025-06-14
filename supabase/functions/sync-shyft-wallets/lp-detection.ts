@@ -1,8 +1,9 @@
+
 /**
  * Shared helper for detection and value calculation of LP tokens (Solana Meteora and ETH UniswapV2)
  */
 
-import { fetchWethCultLpData, fetchERC20Balance, fetchEthBalance } from "./ethereum-api.ts";
+import { fetchERC20Balance, fetchEthBalance, UNISWAPV2_LP_CONTRACTS, fetchUniV2LpData } from "./ethereum-api.ts";
 import { getTokensWithAura, fetchWalletFromShyft, ShyftTokenBasic } from "./shyft-api.ts";
 import { fetchAllMeteoraPoolsForWallet } from "./meteora-service.ts";
 console.log('[lp-detection] Using fetchAllMeteoraPoolsForWallet from local meteora-service.ts!');

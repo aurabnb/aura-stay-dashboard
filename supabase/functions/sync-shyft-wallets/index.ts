@@ -10,10 +10,10 @@ const corsHeaders = {
 
 // Updated wallet configs (Solana + Ethereum)
 const MONITORED_WALLETS = [
-  { name: "Operations", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg", blockchain: "Solana" },
+  { name: "Operations", address: "fa1ra81T7g5DzSn7XT6z36zNqupHpG1Eh7omB2F6GTh", blockchain: "Solana" },
   { name: "Business Costs", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg", blockchain: "Solana" },
   { name: "Marketing", address: "7QpFeyM5VPGMuycCCdaYUeez9c8EzaDkJYBDKKFr4DN2", blockchain: "Solana" },
-  { name: "Project Funding", address: "Aftv2wFpusiKHfHWdkiFNPsmrFEgrBheHX6ejS4LkM8i", blockchain: "Solana" },
+  { name: "Project Funding - Solana", address: "Aftv2wFpusiKHfHWdkiFNPsmrFEgrBheHX6ejS4LkM8i", blockchain: "Solana" },
   // New Ethereum Project Funding
   { name: "Project Funding - Ethereum", address: "0xf05fc9a3c6011c76eb6fe4cbb956eeac8750306d", blockchain: "Ethereum" }
 ];
@@ -24,6 +24,7 @@ const TOKEN_PRICES: Record<string, number> = {
   'WBTC': 105000,
   'ETH': 3500,
   'CULT': 0.00001,
+  'WETH': 3500,
 };
 
 serve(async (req) => {
@@ -51,15 +52,17 @@ serve(async (req) => {
 
     for (const wallet of MONITORED_WALLETS) {
       try {
+        console.log(`[sync-shyft-wallets] Processing wallet: ${wallet.name} (${wallet.address})`);
         const walletData = await getLiveWalletData(wallet, shyftApiKey);
         totalVolatileAssets += walletData.totalUsdValue;
 
-        // Fix: Provide dummy value for raw_data to satisfy NOT NULL constraint, or exclude from upsert
+        console.log(`[sync-shyft-wallets] ${wallet.name} processed successfully with $${walletData.totalUsdValue} total value`);
+
+        // Fix: Provide dummy value for raw_data to satisfy NOT NULL constraint
         const upsertPayload = {
           wallet_address: wallet.address,
           wallet_name: wallet.name,
-          // raw_data now set to a dummy JSON if live only.
-          raw_data: {},
+          raw_data: {}, // Empty object to satisfy NOT NULL constraint
           sol_balance: walletData.balances.find(b => b.token_symbol === 'SOL')?.balance ?? 0,
           total_usd_value: walletData.totalUsdValue,
           token_count: walletData.balances.length,
@@ -82,7 +85,6 @@ serve(async (req) => {
           blockchain: wallet.blockchain || 'Solana'
         });
       } catch (err) {
-        // improved: log details for why this wallet failed
         console.error(`[sync-shyft-wallets] Wallet fetch failed: ${wallet.name} (${wallet.address}) | ${err?.message || err}`);
         walletResults.push({
           name: wallet.name,
@@ -97,7 +99,7 @@ serve(async (req) => {
     const auraMarketCap = 115651; // TODO: Dynamically fetch if required
     const hardAssets = 607.87;
 
-    console.log(`[sync-shyft-wallets] Finished processing all wallets. Returning results...`);
+    console.log(`[sync-shyft-wallets] Finished processing all wallets. Total volatile assets: $${totalVolatileAssets}`);
     return new Response(JSON.stringify({
       treasury: {
         totalMarketCap: auraMarketCap,

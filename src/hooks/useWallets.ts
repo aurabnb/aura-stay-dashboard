@@ -21,27 +21,26 @@ export function useWallets() {
         setLoading(true);
         setError(null);
 
-        console.log('Fetching wallet data via Shyft API through Supabase...');
+        console.log('Fetching wallet data via fetch-wallet-balances edge function...');
 
-        // Use the Shyft edge function instead of direct API calls
-        const { data: responseData, error: fetchError } = await supabase.functions.invoke('sync-shyft-wallets');
+        // Use the fetch-wallet-balances edge function instead of sync-shyft-wallets
+        const { data: responseData, error: fetchError } = await supabase.functions.invoke('fetch-wallet-balances');
 
         // DEBUG LOG
         console.log("[useWallets] Full edge function response:", responseData, fetchError);
 
         if (fetchError) {
-          throw new Error(`Shyft API error: ${fetchError.message}`);
+          throw new Error(`Wallet balance API error: ${fetchError.message}`);
         }
 
         if (!responseData || !responseData.wallets) {
           console.error("[useWallets] Invalid response structure:", responseData);
-          throw new Error('Invalid response structure from Shyft sync');
+          throw new Error('Invalid response structure from wallet balance fetch');
         }
 
         if (cancelled) return;
 
-        // Do not filter balances; keep all as returned
-        // Map the Shyft response to our wallet format
+        // Map the response to our wallet format
         const mapped: WalletData[] = responseData.wallets.map((wallet: any) => ({
           wallet_id: wallet.address,
           name: wallet.name,
@@ -54,7 +53,7 @@ export function useWallets() {
         // LOG which wallets have non-zero balances
         mapped.forEach((w) => {
           if (!w.balances?.length) {
-            console.warn(`[useWallets] Wallet "${w.name}" has NO balances in the edge response.`);
+            console.warn(`[useWallets] Wallet "${w.name}" has NO balances in the response.`);
           } else {
             w.balances.forEach(b => {
               if (b.usd_value > 0) {
