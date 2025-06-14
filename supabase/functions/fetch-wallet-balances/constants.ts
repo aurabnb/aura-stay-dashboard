@@ -1,5 +1,5 @@
 
-import { TokenInfo } from "./types";
+import { TokenInfo } from "./types.ts";
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
