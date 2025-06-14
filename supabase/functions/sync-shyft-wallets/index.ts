@@ -1,5 +1,5 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,8 +42,8 @@ async function fetchWalletData(apiKey: string, walletAddress: string): Promise<S
   return response.json()
 }
 
-// Handle CORS preflight requests
-export default async function handler(req: Request) {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -184,4 +184,4 @@ export default async function handler(req: Request) {
       }
     )
   }
-}
+})
