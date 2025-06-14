@@ -5,6 +5,35 @@ import { getTokenInfo, getTokenPrice } from './token-service.ts';
 import { getLPTokenDetails } from './lp-service.ts';
 import { getSolanaPrice } from './price-service.ts';
 
+async function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`Attempt ${attempt + 1} failed:`, error);
+      
+      if (attempt < maxRetries - 1) {
+        const delayMs = baseDelay * Math.pow(2, attempt);
+        console.log(`Waiting ${delayMs}ms before retry...`);
+        await delay(delayMs);
+      }
+    }
+  }
+  
+  throw lastError!;
+}
+
 export async function getWalletBalances(address: string, blockchain: string = 'Solana'): Promise<WalletBalance[]> {
   const balances: WalletBalance[] = [];
 
@@ -12,75 +41,77 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
     if (blockchain === 'Solana') {
       console.log(`Fetching Solana balances for: ${address}`);
       
-      const response = await fetch(`https://api.mainnet-beta.solana.com`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getBalance',
-          params: [address]
-        }),
-        signal: AbortSignal.timeout(8000)
-      });
-
-      const data = await response.json();
-      
-      if (data.result) {
-        const solBalance = data.result.value / 1e9;
-        const solPrice = await getSolanaPrice();
-        
-        balances.push({
-          symbol: 'SOL',
-          name: 'Solana',
-          balance: solBalance,
-          usdValue: solBalance * solPrice,
-          isLpToken: false,
-          platform: 'native'
-        });
-      }
-
-      // Fetch token accounts - try both with and without commitment level
-      let tokenResponse;
+      // Get SOL balance with retry
       try {
-        tokenResponse = await fetch(`https://api.mainnet-beta.solana.com`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'getTokenAccountsByOwner',
-            params: [
-              address,
-              { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
-              { encoding: 'jsonParsed', commitment: 'confirmed' }
-            ]
-          }),
-          signal: AbortSignal.timeout(10000)
+        const response = await retryWithBackoff(async () => {
+          return await fetch(`https://api.mainnet-beta.solana.com`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getBalance',
+              params: [address]
+            }),
+            signal: AbortSignal.timeout(8000)
+          });
         });
+
+        const data = await response.json();
+        
+        if (data.result) {
+          const solBalance = data.result.value / 1e9;
+          const solPrice = await getSolanaPrice();
+          
+          balances.push({
+            symbol: 'SOL',
+            name: 'Solana',
+            balance: solBalance,
+            usdValue: solBalance * solPrice,
+            isLpToken: false,
+            platform: 'native'
+          });
+        }
       } catch (error) {
-        console.warn(`First token account fetch failed for ${address}, trying without commitment:`, error);
-        tokenResponse = await fetch(`https://api.mainnet-beta.solana.com`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'getTokenAccountsByOwner',
-            params: [
-              address,
-              { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
-              { encoding: 'jsonParsed' }
-            ]
-          }),
-          signal: AbortSignal.timeout(10000)
-        });
+        console.warn(`Failed to fetch SOL balance for ${address}:`, error);
       }
 
-      const tokenData = await tokenResponse.json();
+      // Fetch token accounts with improved retry logic
+      let tokenData = null;
+      try {
+        const tokenResponse = await retryWithBackoff(async () => {
+          const response = await fetch(`https://api.mainnet-beta.solana.com`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getTokenAccountsByOwner',
+              params: [
+                address,
+                { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
+                { encoding: 'jsonParsed', commitment: 'confirmed' }
+              ]
+            }),
+            signal: AbortSignal.timeout(12000)
+          });
+
+          const data = await response.json();
+          if (data.error) {
+            throw new Error(`RPC Error: ${data.error.message}`);
+          }
+          return data;
+        }, 4, 2000); // More retries and longer delays for token accounts
+
+        tokenData = tokenResponse;
+      } catch (error) {
+        console.warn(`Failed to fetch token accounts for ${address} after retries:`, error);
+        // Continue execution to ensure AURA is added even if token fetch fails
+      }
+
       console.log(`Token account response for ${address}:`, tokenData);
       
-      if (tokenData.result?.value) {
+      if (tokenData?.result?.value) {
         console.log(`Found ${tokenData.result.value.length} token accounts for ${address}`);
         
         for (const account of tokenData.result.value) {
@@ -91,7 +122,6 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             
             console.log(`Processing token ${mint} with balance: ${balance}`);
             
-            // Process all tokens, including zero balance ones for important tokens like AURA
             const tokenMeta = await getTokenInfo(mint);
             const isLpToken = METEORA_LP_TOKENS.has(mint);
             
@@ -120,7 +150,6 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             
             console.log(`Adding token: ${tokenMeta.symbol}, balance: ${balance}, price: $${tokenPrice}, USD value: $${finalUsdValue}`);
             
-            // Include all tokens, even with zero balance for important ones
             if (balance > 0 || tokenMeta.symbol === 'AURA' || isLpToken) {
               balances.push({
                 symbol: isLpToken ? `${poolConfig?.name || tokenMeta.symbol} LP` : tokenMeta.symbol,
@@ -138,23 +167,28 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
           }
         }
       } else {
-        console.log(`No token accounts found for ${address}`);
+        console.log(`No token accounts found for ${address} (possibly due to rate limiting or RPC issues)`);
       }
 
-      // Always ensure AURA token is included even if no token account exists yet
+      // CRITICAL: Always ensure AURA token is included, even if token account fetch failed
       const auraExists = balances.find(b => b.tokenAddress === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
       if (!auraExists) {
-        console.log(`Adding AURA token with zero balance for ${address}`);
-        const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
-        balances.push({
-          symbol: 'AURA',
-          name: 'AURA Token',
-          balance: 0,
-          usdValue: 0,
-          tokenAddress: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
-          isLpToken: false,
-          platform: 'spl-token'
-        });
+        console.log(`Adding AURA token with zero balance for ${address} (fallback due to missing token account data)`);
+        try {
+          const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
+          balances.push({
+            symbol: 'AURA',
+            name: 'AURA Token',
+            balance: 0,
+            usdValue: 0,
+            tokenAddress: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
+            isLpToken: false,
+            platform: 'spl-token'
+          });
+          console.log(`Successfully added AURA fallback token for ${address}`);
+        } catch (error) {
+          console.error(`Failed to add AURA fallback token for ${address}:`, error);
+        }
       }
 
     } else if (blockchain === 'Ethereum') {
