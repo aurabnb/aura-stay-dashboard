@@ -1,7 +1,4 @@
 
-/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -45,7 +42,7 @@ async function fetchWalletData(apiKey: string, walletAddress: string): Promise<S
   return response.json()
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -76,6 +73,14 @@ serve(async (req: Request) => {
     }
 
     const results = []
+    let totalUsdValue = 0
+    let volatileAssets = 0
+    let hardAssets = 0
+
+    // Fetch current SOL price from Jupiter API
+    const solPriceResponse = await fetch('https://price.jup.ag/v4/price?ids=So11111111111111111111111111111111111111112')
+    const solPriceData = await solPriceResponse.json()
+    const solPrice = solPriceData.data?.So11111111111111111111111111111111111111112?.price || 100
 
     for (const wallet of wallets || []) {
       try {
@@ -84,10 +89,7 @@ serve(async (req: Request) => {
         const walletData = await fetchWalletData(shyftApiKey, wallet.address)
         const result = walletData.result
 
-        // Calculate total USD value (this would need price data from another API)
-        // For now, we'll just use SOL balance * estimated price
-        const estimatedSolPrice = 100 // This should come from a price API
-        const totalUsdValue = result.native_balance.ui_amount * estimatedSolPrice
+        const walletTotalUsd = result.native_balance.ui_amount * solPrice
 
         // Upsert wallet cache data
         const { error: cacheError } = await supabase
@@ -97,7 +99,7 @@ serve(async (req: Request) => {
             wallet_name: wallet.name,
             raw_data: walletData,
             sol_balance: result.native_balance.ui_amount,
-            total_usd_value: totalUsdValue,
+            total_usd_value: walletTotalUsd,
             token_count: result.token_balances.length + 1, // +1 for SOL
             last_updated: new Date().toISOString(),
           })
@@ -114,6 +116,7 @@ serve(async (req: Request) => {
           .eq('wallet_address', wallet.address)
 
         // Insert SOL balance
+        const solUsdValue = result.native_balance.ui_amount * solPrice
         await supabase
           .from('shyft_token_balances')
           .insert({
@@ -124,13 +127,19 @@ serve(async (req: Request) => {
             balance: result.native_balance.balance,
             ui_amount: result.native_balance.ui_amount,
             decimals: 9,
-            usd_value: result.native_balance.ui_amount * estimatedSolPrice,
+            usd_value: solUsdValue,
             is_native: true,
             metadata: {},
           })
 
+        // Add to totals
+        totalUsdValue += walletTotalUsd
+        volatileAssets += solUsdValue // SOL is volatile
+
         // Insert token balances
         for (const token of result.token_balances) {
+          const tokenUsdValue = 0 // Would need price data for other tokens
+          
           await supabase
             .from('shyft_token_balances')
             .insert({
@@ -141,12 +150,19 @@ serve(async (req: Request) => {
               balance: token.balance,
               ui_amount: token.ui_amount,
               decimals: token.info.decimals,
-              usd_value: 0, // Would need price data
+              usd_value: tokenUsdValue,
               is_native: false,
               metadata: {
                 image: token.info.image,
               },
             })
+
+          // Categorize assets
+          if (['USDC', 'USDT'].includes(token.info.symbol)) {
+            hardAssets += tokenUsdValue
+          } else {
+            volatileAssets += tokenUsdValue
+          }
         }
 
         results.push({
@@ -154,6 +170,7 @@ serve(async (req: Request) => {
           status: 'success',
           tokenCount: result.token_balances.length + 1,
           solBalance: result.native_balance.ui_amount,
+          usdValue: walletTotalUsd,
         })
 
       } catch (error) {
@@ -170,6 +187,13 @@ serve(async (req: Request) => {
       JSON.stringify({ 
         message: 'Wallet sync completed',
         results,
+        summary: {
+          totalUsdValue,
+          volatileAssets,
+          hardAssets,
+          solPrice,
+          totalMarketCap: totalUsdValue,
+        },
         syncedAt: new Date().toISOString(),
       }),
       { 
