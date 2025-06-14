@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from "react";
 import { MONITORED_WALLETS, SOL_MINT } from "@/constants";
-import { fetchSol, fetchSplTokens, fetchJupiterPrices } from "@/api";
-import { hasSolscanApiKey } from "@/config";
+import { fetchJupiterPrices } from "@/api";
+import { supabase } from "@/integrations/supabase/client";
 import {
   WalletData,
   WalletBalance,
@@ -25,86 +25,47 @@ export function useWallets() {
         setLoading(true);
         setError(null);
 
-        if (!hasSolscanApiKey()) {
-          setError("Solscan API key not configured. Please add REACT_APP_SOLSCAN_API_KEY to environment variables.");
-          return;
+        console.log('Fetching wallet data via Shyft API through Supabase...');
+        
+        // Use the Shyft edge function instead of direct API calls
+        const { data: responseData, error: fetchError } = await supabase.functions.invoke('sync-shyft-wallets');
+
+        if (fetchError) {
+          throw new Error(`Shyft API error: ${fetchError.message}`);
         }
 
-        /* -------- 1️⃣  Pull raw balances for every wallet in parallel ---- */
-        const raw = await Promise.all(
-          MONITORED_WALLETS.map(async (w) => {
-            try {
-              const [sol, tokens] = await Promise.all([
-                fetchSol(w.address),
-                fetchSplTokens(w.address),
-              ]);
-              return { cfg: w, sol, tokens };
-            } catch (error) {
-              console.error(`Error fetching data for wallet ${w.name}:`, error);
-              return { 
-                cfg: w, 
-                sol: { lamports: 0 }, 
-                tokens: [] 
-              };
-            }
-          }),
-        );
+        if (!responseData || !responseData.wallets) {
+          throw new Error('Invalid response structure from Shyft sync');
+        }
+
         if (cancelled) return;
 
-        /* -------- 2️⃣  Fetch prices once for ALL unique mints ------------ */
-        const mints = new Set<string>([SOL_MINT]);
-        raw.forEach(({ tokens }) =>
-          tokens.forEach((t) => mints.add(t.tokenAddress)),
-        );
-        const prices = await fetchJupiterPrices([...mints]);
-        if (cancelled) return;
-
-        /* -------- 3️⃣  Map into *WalletCard-compatible* objects ---------- */
-        const mapped: WalletData[] = raw.map(({ cfg, sol, tokens }) => {
-          /* SOL row */
-          const solBal = sol.lamports / 1e9;
-          const solUsd = solBal * (prices[SOL_MINT]?.price ?? 0);
-
-          const balances: WalletBalance[] = [
-            {
-              token_symbol: "SOL",
-              token_name: "Solana",
-              balance: solBal,
-              usd_value: solUsd,
-              token_address: SOL_MINT,
-              is_lp_token: false,
-              platform: "native",
-            },
-            /* SPL tokens */
-            ...tokens.map<WalletBalance>((t) => {
-              const p = prices[t.tokenAddress]?.price ?? 0;
-              return {
-                token_symbol: t.tokenSymbol ?? t.tokenName ?? t.tokenAddress,
-                token_name: t.tokenName ?? t.tokenSymbol ?? t.tokenAddress,
-                balance: t.tokenAmount.uiAmount,
-                usd_value: t.tokenAmount.uiAmount * p,
-                token_address: t.tokenAddress,
-                is_lp_token: false,
-                platform: "spl",
-              };
-            }),
-          ];
-
-          const total = balances.reduce((sum, b) => sum + b.usd_value, 0);
-
-          return {
-            wallet_id: cfg.address,
-            name: cfg.name,
-            address: cfg.address,
-            blockchain: "Solana",
-            balances,
-            totalUsdValue: total,
-          };
-        });
+        // Map the Shyft response to our wallet format
+        const mapped: WalletData[] = responseData.wallets.map((wallet: any) => ({
+          wallet_id: wallet.address,
+          name: wallet.name,
+          address: wallet.address,
+          blockchain: wallet.blockchain || "Solana",
+          balances: wallet.balances || [],
+          totalUsdValue: wallet.totalUsdValue || 0,
+        }));
 
         setWallets(mapped);
       } catch (e) {
-        if (!cancelled) setError((e as Error).message);
+        if (!cancelled) {
+          console.error('Error fetching wallet data:', e);
+          setError((e as Error).message);
+          
+          // Provide fallback data
+          setWallets(MONITORED_WALLETS.map(w => ({
+            wallet_id: w.address,
+            name: w.name,
+            address: w.address,
+            blockchain: "Solana",
+            balances: [],
+            totalUsdValue: 0,
+          })));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -116,4 +77,5 @@ export function useWallets() {
 
   return { wallets, loading, error };
 }
+
 export default useWallets;
