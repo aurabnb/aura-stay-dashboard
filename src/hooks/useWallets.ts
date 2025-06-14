@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { MONITORED_WALLETS, SOL_MINT } from "@/constants";
 import { fetchSol, fetchSplTokens, fetchJupiterPrices } from "@/api";
+import { hasSolscanApiKey } from "@/config";
 import {
   WalletData,
   WalletBalance,
@@ -23,14 +25,28 @@ export function useWallets() {
         setLoading(true);
         setError(null);
 
+        if (!hasSolscanApiKey()) {
+          setError("Solscan API key not configured. Please add REACT_APP_SOLSCAN_API_KEY to environment variables.");
+          return;
+        }
+
         /* -------- 1️⃣  Pull raw balances for every wallet in parallel ---- */
         const raw = await Promise.all(
           MONITORED_WALLETS.map(async (w) => {
-            const [sol, tokens] = await Promise.all([
-              fetchSol(w.address),
-              fetchSplTokens(w.address),
-            ]);
-            return { cfg: w, sol, tokens };
+            try {
+              const [sol, tokens] = await Promise.all([
+                fetchSol(w.address),
+                fetchSplTokens(w.address),
+              ]);
+              return { cfg: w, sol, tokens };
+            } catch (error) {
+              console.error(`Error fetching data for wallet ${w.name}:`, error);
+              return { 
+                cfg: w, 
+                sol: { lamports: 0 }, 
+                tokens: [] 
+              };
+            }
           }),
         );
         if (cancelled) return;
@@ -68,7 +84,7 @@ export function useWallets() {
                 balance: t.tokenAmount.uiAmount,
                 usd_value: t.tokenAmount.uiAmount * p,
                 token_address: t.tokenAddress,
-                is_lp_token: false,            // 🔸 call your LP-detection here
+                is_lp_token: false,
                 platform: "spl",
               };
             }),
