@@ -40,23 +40,45 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
         });
       }
 
-      const tokenResponse = await fetch(`https://api.mainnet-beta.solana.com`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getTokenAccountsByOwner',
-          params: [
-            address,
-            { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
-            { encoding: 'jsonParsed' }
-          ]
-        }),
-        signal: AbortSignal.timeout(8000)
-      });
+      // Fetch token accounts - try both with and without commitment level
+      let tokenResponse;
+      try {
+        tokenResponse = await fetch(`https://api.mainnet-beta.solana.com`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'getTokenAccountsByOwner',
+            params: [
+              address,
+              { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
+              { encoding: 'jsonParsed', commitment: 'confirmed' }
+            ]
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+      } catch (error) {
+        console.warn(`First token account fetch failed for ${address}, trying without commitment:`, error);
+        tokenResponse = await fetch(`https://api.mainnet-beta.solana.com`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'getTokenAccountsByOwner',
+            params: [
+              address,
+              { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
+              { encoding: 'jsonParsed' }
+            ]
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+      }
 
       const tokenData = await tokenResponse.json();
+      console.log(`Token account response for ${address}:`, tokenData);
       
       if (tokenData.result?.value) {
         console.log(`Found ${tokenData.result.value.length} token accounts for ${address}`);
@@ -69,35 +91,37 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             
             console.log(`Processing token ${mint} with balance: ${balance}`);
             
-            if (balance > 0) {
-              const tokenMeta = await getTokenInfo(mint);
-              const isLpToken = METEORA_LP_TOKENS.has(mint);
+            // Process all tokens, including zero balance ones for important tokens like AURA
+            const tokenMeta = await getTokenInfo(mint);
+            const isLpToken = METEORA_LP_TOKENS.has(mint);
+            
+            console.log(`Token ${mint}: symbol=${tokenMeta.symbol}, isLP=${isLpToken}, balance=${balance}`);
+            
+            let tokenPrice = 0;
+            let lpDetails = null;
+            
+            if (isLpToken) {
+              console.log(`Processing LP token: ${mint} with balance: ${balance}`);
+              lpDetails = await getLPTokenDetails(mint, balance);
               
-              console.log(`Token ${mint}: symbol=${tokenMeta.symbol}, isLP=${isLpToken}, balance=${balance}`);
-              
-              let tokenPrice = 0;
-              let lpDetails = null;
-              
-              if (isLpToken) {
-                console.log(`Processing LP token: ${mint} with balance: ${balance}`);
-                lpDetails = await getLPTokenDetails(mint, balance);
-                
-                if (lpDetails && lpDetails.totalUsdValue > 0) {
-                  tokenPrice = lpDetails.totalUsdValue / balance;
-                  console.log(`LP Token ${mint}: calculated price per token=$${tokenPrice}, total value=$${lpDetails.totalUsdValue}`);
-                } else {
-                  console.warn(`LP Token ${mint}: failed to calculate details or got 0 value`);
-                  tokenPrice = await getTokenPrice(mint);
-                }
+              if (lpDetails && lpDetails.totalUsdValue > 0) {
+                tokenPrice = lpDetails.totalUsdValue / balance;
+                console.log(`LP Token ${mint}: calculated price per token=$${tokenPrice}, total value=$${lpDetails.totalUsdValue}`);
               } else {
+                console.warn(`LP Token ${mint}: failed to calculate details or got 0 value`);
                 tokenPrice = await getTokenPrice(mint);
               }
-              
-              const poolConfig = METEORA_LP_TOKENS.get(mint);
-              const finalUsdValue = balance * tokenPrice;
-              
-              console.log(`Adding token: ${tokenMeta.symbol}, balance: ${balance}, price: $${tokenPrice}, USD value: $${finalUsdValue}`);
-              
+            } else {
+              tokenPrice = await getTokenPrice(mint);
+            }
+            
+            const poolConfig = METEORA_LP_TOKENS.get(mint);
+            const finalUsdValue = balance * tokenPrice;
+            
+            console.log(`Adding token: ${tokenMeta.symbol}, balance: ${balance}, price: $${tokenPrice}, USD value: $${finalUsdValue}`);
+            
+            // Include all tokens, even with zero balance for important ones
+            if (balance > 0 || tokenMeta.symbol === 'AURA' || isLpToken) {
               balances.push({
                 symbol: isLpToken ? `${poolConfig?.name || tokenMeta.symbol} LP` : tokenMeta.symbol,
                 name: isLpToken ? `${poolConfig?.name || tokenMeta.name} LP Token` : tokenMeta.name,
@@ -115,6 +139,22 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
         }
       } else {
         console.log(`No token accounts found for ${address}`);
+      }
+
+      // Always ensure AURA token is included even if no token account exists yet
+      const auraExists = balances.find(b => b.tokenAddress === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
+      if (!auraExists) {
+        console.log(`Adding AURA token with zero balance for ${address}`);
+        const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
+        balances.push({
+          symbol: 'AURA',
+          name: 'AURA Token',
+          balance: 0,
+          usdValue: 0,
+          tokenAddress: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
+          isLpToken: false,
+          platform: 'spl-token'
+        });
       }
 
     } else if (blockchain === 'Ethereum') {
