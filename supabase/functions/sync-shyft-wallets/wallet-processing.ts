@@ -15,11 +15,14 @@ const TOKEN_PRICES: Record<string, number> = {
  */
 export async function getLiveWalletData(walletCfg: { name: string; address: string; blockchain?: string }, apiKey: string) {
   if (walletCfg.blockchain === "Ethereum") {
-    // ETH and ERC-20 balances (WETH + CULT + LP)
+    // ETH and ERC-20 balances (dynamic/expandable)
     const ethPrice = TOKEN_PRICES.ETH ?? 3500;
-    const cultPrice = 0.00001; // FIXME: Fetch from coingecko if needed
-    const wethPrice = ethPrice;
+    const auraPrice = TOKEN_PRICES.AURA ?? 0.00011566;
+    const cultPrice = TOKEN_PRICES.CULT ?? 0.00001;
+    // Add more tokens as needed
+    const prices = { "ETH": ethPrice, "CULT": cultPrice, "AURA": auraPrice, "WETH": ethPrice };
     const balances = [];
+    // Native ETH
     const ethBal = await fetchEthBalance(walletCfg.address);
     if (ethBal > 0) {
       balances.push({
@@ -32,7 +35,7 @@ export async function getLiveWalletData(walletCfg: { name: string; address: stri
         platform: "Native"
       });
     }
-    // CULT ERC20 balance
+    // CULT ERC20
     const cultBal = await fetchERC20Balance("0xf0f9d895aca5c8678f706fb8216fa22957685a13", walletCfg.address);
     if (cultBal > 0) {
       balances.push({
@@ -45,11 +48,23 @@ export async function getLiveWalletData(walletCfg: { name: string; address: stri
         platform: "ERC20"
       });
     }
-    // (Optional) DCULT ERC20 balance...
-    // WETH-CULT LP (UniswapV2)
-    const ethLps = await getEthereumLpBalances(walletCfg.address, ethPrice, cultPrice, wethPrice);
+    // AURA ERC20 (if any)
+    const auraBal = await fetchERC20Balance("0x7BA6e12fb618Ba75917cD48a2b54f1bCeFD20429", walletCfg.address);
+    if (auraBal > 0) {
+      balances.push({
+        token_symbol: "AURA",
+        token_name: "Aura Token",
+        balance: auraBal,
+        usd_value: auraBal * auraPrice,
+        token_address: "0x7BA6e12fb618Ba75917cD48a2b54f1bCeFD20429",
+        is_lp_token: false,
+        platform: "ERC20"
+      });
+    }
+    // More tokens (e.g. DCULT ERC20) could be added here...
+    // All LPs, including AURA LPs
+    const ethLps = await getEthereumLpBalances(walletCfg.address, prices);
     for (const lp of ethLps) balances.push(lp);
-
     return {
       ...walletCfg,
       balances,

@@ -47,34 +47,42 @@ export async function getSolanaWalletLps(walletAddress: string) {
   return lpBalancesDetailed;
 }
 
-// Ethereum: fetch the WETH-CULT LP and calculate its value
-export async function getEthereumLpBalances(wallet: string, ethPrice: number, cultPrice: number, wethPrice: number) {
-  // Fetch WETH-CULT UNI-V2 position
-  const { lpBalance, reserve0, reserve1, totalSupply, userShare } = await fetchWethCultLpData(wallet);
-
-  // Value the pool (assume reserve0 WETH, reserve1 CULT; supply is in LP tokens)
-  const userWeth = reserve0 * userShare;
-  const userCult = reserve1 * userShare;
-  const usdValue = userWeth * wethPrice + userCult * cultPrice;
-
+// Ethereum: fetch any UniswapV2 LP supported and calculate its value
+export async function getEthereumLpBalances(wallet: string, prices: Record<string, number>) {
   const out = [];
-  if (lpBalance > 0) {
-    out.push({
-      token_symbol: "WETH-CULT LP",
-      token_name: "WETH-CULT UniV2 LP",
-      balance: lpBalance,
-      usd_value: usdValue,
-      token_address: "0x63F659b6a154b2bB88B501eEcA62141883b8bEe8", // LP token mint
-      is_lp_token: true,
-      platform: "UniswapV2",
-      lp_details: {
-        poolAddress: "0x63F659b6a154b2bB88B501eEcA62141883b8bEe8",
-        token1: { symbol: "WETH", amount: userWeth, usdValue: userWeth * wethPrice },
-        token2: { symbol: "CULT", amount: userCult, usdValue: userCult * cultPrice },
-        priceRange: { min: 0, max: 0 },
-        totalUsdValue: usdValue,
+  for (const lpContract of UNISWAPV2_LP_CONTRACTS) {
+    try {
+      const {
+        lpBalance, totalSupply, reserve0, reserve1, userShare, symbol, name, token0, token1
+      } = await fetchUniV2LpData(lpContract, wallet);
+      // Underlying prices
+      const token0Price = prices[token0] || 0; // e.g. WETH, AURA, CULT
+      const token1Price = prices[token1] || 0;
+      const userToken0 = reserve0 * userShare;
+      const userToken1 = reserve1 * userShare;
+      const usdValue = userToken0 * token0Price + userToken1 * token1Price;
+
+      if (lpBalance > 0) {
+        out.push({
+          token_symbol: `${symbol} LP`,
+          token_name: name,
+          balance: lpBalance,
+          usd_value: usdValue,
+          token_address: lpContract,
+          is_lp_token: true,
+          platform: "UniswapV2",
+          lp_details: {
+            poolAddress: lpContract,
+            token1: { symbol: token0, amount: userToken0, usdValue: userToken0 * token0Price },
+            token2: { symbol: token1, amount: userToken1, usdValue: userToken1 * token1Price },
+            priceRange: { min: 0, max: 0 },
+            totalUsdValue: usdValue,
+          }
+        });
       }
-    });
+    } catch (err) {
+      console.warn('Error fetching/unpacking LP', lpContract, err);
+    }
   }
   return out;
 }
