@@ -55,13 +55,21 @@ export async function getEthereumLpBalances(wallet: string, prices: Record<strin
       const {
         lpBalance, totalSupply, reserve0, reserve1, userShare, symbol, name, token0, token1
       } = await fetchUniV2LpData(lpContract, wallet);
+
       // Underlying prices
-      const token0Price = prices[token0] || 0; // e.g. WETH, AURA, CULT
-      const token1Price = prices[token1] || 0;
+      const token0Price = prices[token0] ?? 0; // e.g. WETH, AURA, CULT
+      const token1Price = prices[token1] ?? 0;
       const userToken0 = reserve0 * userShare;
       const userToken1 = reserve1 * userShare;
       const usdValue = userToken0 * token0Price + userToken1 * token1Price;
 
+      // Log debug info per pool
+      console.log(
+        `[getEthereumLpBalances] wallet=${wallet} pool=${lpContract} balance=${lpBalance} ` + 
+        `userShare=${userShare} reserves=(${reserve0},${reserve1}) prices=(${token0Price},${token1Price}) usdValue=${usdValue}`
+      );
+
+      // Always push LPs with any balance, even if usd_value is 0.
       if (lpBalance > 0) {
         out.push({
           token_symbol: `${symbol} LP`,
@@ -84,5 +92,7 @@ export async function getEthereumLpBalances(wallet: string, prices: Record<strin
       console.warn('Error fetching/unpacking LP', lpContract, err);
     }
   }
+  // Log what LPs will be returned
+  console.log("[getEthereumLpBalances] Out:", out);
   return out;
 }
