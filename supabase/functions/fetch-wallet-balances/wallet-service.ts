@@ -145,6 +145,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
       const auraBalance = await getSpecificTokenBalance(address, '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
       const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
       
+      // Always add AURA token, even if balance is 0
       balances.push({
         symbol: 'AURA',
         name: 'AURA Token',
@@ -237,6 +238,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             
             console.log(`Adding token: ${tokenMeta.symbol}, balance: ${balance}, price: $${tokenPrice}, USD value: $${finalUsdValue}`);
             
+            // Include tokens with balance > 0 OR LP tokens (always show LPs even if 0)
             if (balance > 0 || isLpToken) {
               balances.push({
                 symbol: isLpToken ? `${poolConfig?.name || tokenMeta.symbol} LP` : tokenMeta.symbol,
