@@ -1,8 +1,10 @@
+
 import { Suspense } from 'react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { TreasuryDashboard } from '@/components/TreasuryDashboard'
 import { MultisigDashboard } from '@/components/multisig/MultisigDashboard'
+import { LiveTreasuryIndicator } from '@/components/treasury/LiveTreasuryIndicator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2 } from 'lucide-react'
 
@@ -43,6 +45,11 @@ export default function TreasuryPage() {
           </p>
         </div>
         
+        {/* Live Treasury Indicator */}
+        <div className="mb-8">
+          <LiveTreasuryIndicator />
+        </div>
+        
         <Suspense fallback={<TreasuryLoadingSkeleton />}>
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -64,4 +71,4 @@ export default function TreasuryPage() {
       <Footer />
     </div>
   )
-} 
+}
