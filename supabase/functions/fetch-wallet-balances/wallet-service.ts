@@ -1,9 +1,9 @@
-
 import { WalletBalance } from './types.ts';
 import { METEORA_LP_TOKENS, FIXED_PRICES } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
 import { getLPTokenDetails } from './lp-service.ts';
 import { getSolanaPrice } from './price-service.ts';
+import { getEthereumWalletBalances } from './ethereum-service.ts';
 
 async function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -38,7 +38,26 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
   const balances: WalletBalance[] = [];
 
   try {
-    if (blockchain === 'Solana') {
+    if (blockchain === 'Ethereum') {
+      console.log(`Fetching Ethereum balances for: ${address}`);
+      
+      const ethBalances = await getEthereumWalletBalances(address);
+      
+      // Convert to our standard format
+      for (const balance of ethBalances) {
+        balances.push({
+          symbol: balance.symbol,
+          name: balance.name,
+          balance: balance.balance,
+          usdValue: balance.usdValue,
+          tokenAddress: balance.tokenAddress,
+          isLpToken: balance.isLpToken,
+          platform: balance.platform,
+          lpDetails: balance.lpDetails
+        });
+      }
+      
+    } else if (blockchain === 'Solana') {
       console.log(`Fetching Solana balances for: ${address}`);
       
       // Get SOL balance with retry
@@ -188,99 +207,6 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
           console.log(`Successfully added AURA fallback token for ${address}`);
         } catch (error) {
           console.error(`Failed to add AURA fallback token for ${address}:`, error);
-        }
-      }
-
-    } else if (blockchain === 'Ethereum') {
-      console.log(`Fetching Ethereum balance for: ${address}`);
-      
-      const infuraKey = Deno.env.get('INFURA_API_KEY');
-      if (!infuraKey) {
-        console.warn('INFURA_API_KEY not configured');
-        return balances;
-      }
-
-      // Get ETH balance
-      const response = await fetch(`https://mainnet.infura.io/v3/${infuraKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'eth_getBalance',
-          params: [address, 'latest']
-        }),
-        signal: AbortSignal.timeout(8000)
-      });
-
-      const data = await response.json();
-      
-      if (data.result) {
-        const ethBalance = parseInt(data.result, 16) / 1e18;
-        const ethPrice = FIXED_PRICES['ETH'] || 3500;
-        
-        balances.push({
-          symbol: 'ETH',
-          name: 'Ethereum',
-          balance: ethBalance,
-          usdValue: ethBalance * ethPrice,
-          isLpToken: false,
-          platform: 'native'
-        });
-      }
-
-      // Check for both CULT and DCULT tokens
-      const tokenAddresses = [
-        { address: '0xf0f9d895aca5c8678f706fb8216fa22957685a13', name: 'CULT' },
-        { address: '0x2d77b594b9bbaed03221f7c63af8c4307432daf1', name: 'DCULT' }
-      ];
-
-      for (const token of tokenAddresses) {
-        try {
-          const tokenResponse = await fetch(`https://mainnet.infura.io/v3/${infuraKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 2,
-              method: 'eth_call',
-              params: [
-                {
-                  to: token.address,
-                  data: `0x70a08231000000000000000000000000${address.slice(2)}`
-                },
-                'latest'
-              ]
-            }),
-            signal: AbortSignal.timeout(8000)
-          });
-
-          const tokenData = await tokenResponse.json();
-          
-          if (tokenData.result && tokenData.result !== '0x' && tokenData.result !== '0x0') {
-            const tokenBalance = parseInt(tokenData.result, 16) / 1e18;
-            const tokenPrice = await getTokenPrice(token.address);
-            
-            console.log(`Fetched price for ${token.name}: $${tokenPrice}`);
-            console.log(`${token.name} balance found: ${tokenBalance}, price: $${tokenPrice}, USD value: $${tokenBalance * tokenPrice}`);
-            
-            if (tokenBalance > 0) {
-              const tokenInfo = await getTokenInfo(token.address);
-              balances.push({
-                symbol: tokenInfo.symbol,
-                name: tokenInfo.name,
-                balance: tokenBalance,
-                usdValue: tokenBalance * tokenPrice,
-                tokenAddress: token.address,
-                isLpToken: false,
-                platform: 'erc20'
-              });
-            }
-          } else {
-            console.log(`No ${token.name} balance found or balance is zero`);
-          }
-        } catch (error) {
-          console.warn(`Error fetching ${token.name} balance:`, error);
         }
       }
     }
