@@ -1,4 +1,3 @@
-
 import { WalletBalance } from './types.ts';
 import { METEORA_LP_TOKENS, FIXED_PRICES } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
@@ -35,7 +34,7 @@ async function retryWithBackoff<T>(
   throw lastError!;
 }
 
-// Helper function to get specific token balance directly
+// Helper function to get specific token balance directly with improved retry logic
 async function getSpecificTokenBalance(walletAddress: string, tokenMint: string): Promise<number> {
   try {
     console.log(`Fetching specific token balance for ${tokenMint} in wallet ${walletAddress}`);
@@ -54,9 +53,9 @@ async function getSpecificTokenBalance(walletAddress: string, tokenMint: string)
             { encoding: 'jsonParsed', commitment: 'confirmed' }
           ]
         }),
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(15000) // Increased timeout
       });
-    }, 2, 1500);
+    }, 5, 2000); // More retries with longer delays
 
     const data = await response.json();
     
@@ -141,11 +140,12 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
         console.warn(`Failed to fetch SOL balance for ${address}:`, error);
       }
 
-      // Always try to get AURA balance specifically, even if general token fetch fails
+      // Get AURA balance specifically with enhanced retry
+      console.log(`Attempting to fetch AURA balance for ${address}...`);
       const auraBalance = await getSpecificTokenBalance(address, '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
       const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
       
-      // Always add AURA token, even if balance is 0
+      // Always add AURA token to track it across all wallets
       balances.push({
         symbol: 'AURA',
         name: 'AURA Token',
@@ -158,7 +158,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
 
       console.log(`AURA balance for ${address}: ${auraBalance} tokens, USD value: $${(auraBalance * auraPrice).toFixed(6)}`);
 
-      // Fetch token accounts with improved retry logic
+      // Fetch token accounts with improved retry logic - but don't let this block AURA
       let tokenData = null;
       try {
         const tokenResponse = await retryWithBackoff(async () => {
@@ -175,7 +175,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
                 { encoding: 'jsonParsed', commitment: 'confirmed' }
               ]
             }),
-            signal: AbortSignal.timeout(12000)
+            signal: AbortSignal.timeout(15000)
           });
 
           const data = await response.json();
@@ -183,12 +183,12 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             throw new Error(`RPC Error: ${data.error.message}`);
           }
           return data;
-        }, 4, 2000); // More retries and longer delays for token accounts
+        }, 3, 3000); // Reduced retries since AURA is already handled
 
         tokenData = tokenResponse;
       } catch (error) {
         console.warn(`Failed to fetch token accounts for ${address} after retries:`, error);
-        // Continue execution since we already have AURA balance
+        console.log(`Continuing with AURA balance already fetched: ${auraBalance}`);
       }
 
       console.log(`Token account response for ${address}:`, tokenData);
@@ -202,9 +202,9 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             const mint = tokenInfo.mint;
             const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || '0');
             
-            // Skip AURA since we already added it specifically
+            // Skip AURA since we already added it specifically above
             if (mint === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') {
-              console.log(`Skipping AURA token ${mint} since already added specifically`);
+              console.log(`Skipping AURA token ${mint} since already added specifically with balance ${auraBalance}`);
               continue;
             }
             
@@ -256,7 +256,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
           }
         }
       } else {
-        console.log(`No additional token accounts found for ${address} (AURA already added specifically)`);
+        console.log(`No additional token accounts found for ${address} beyond AURA (balance: ${auraBalance})`);
       }
     }
 
