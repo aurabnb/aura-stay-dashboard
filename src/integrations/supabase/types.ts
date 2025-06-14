@@ -9,6 +9,114 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      shyft_config: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string
+          id: string
+          network: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string
+          id?: string
+          network?: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string
+          id?: string
+          network?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shyft_token_balances: {
+        Row: {
+          balance: number
+          created_at: string
+          decimals: number
+          id: string
+          is_native: boolean | null
+          last_updated: string
+          metadata: Json | null
+          token_address: string
+          token_name: string | null
+          token_symbol: string | null
+          ui_amount: number
+          usd_value: number | null
+          wallet_address: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          decimals?: number
+          id?: string
+          is_native?: boolean | null
+          last_updated?: string
+          metadata?: Json | null
+          token_address: string
+          token_name?: string | null
+          token_symbol?: string | null
+          ui_amount?: number
+          usd_value?: number | null
+          wallet_address: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          decimals?: number
+          id?: string
+          is_native?: boolean | null
+          last_updated?: string
+          metadata?: Json | null
+          token_address?: string
+          token_name?: string | null
+          token_symbol?: string | null
+          ui_amount?: number
+          usd_value?: number | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      shyft_wallet_cache: {
+        Row: {
+          created_at: string
+          id: string
+          last_updated: string
+          raw_data: Json
+          sol_balance: number | null
+          token_count: number | null
+          total_usd_value: number | null
+          wallet_address: string
+          wallet_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          raw_data: Json
+          sol_balance?: number | null
+          token_count?: number | null
+          total_usd_value?: number | null
+          wallet_address: string
+          wallet_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          raw_data?: Json
+          sol_balance?: number | null
+          token_count?: number | null
+          total_usd_value?: number | null
+          wallet_address?: string
+          wallet_name?: string | null
+        }
+        Relationships: []
+      }
       wallet_balances: {
         Row: {
           balance: number
@@ -100,7 +208,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_monitored_wallets_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          wallet_address: string
+          wallet_name: string
+          sol_balance: number
+          total_usd_value: number
+          token_count: number
+          last_updated: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

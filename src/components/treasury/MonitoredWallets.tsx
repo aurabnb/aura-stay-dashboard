@@ -1,17 +1,16 @@
+
 'use client';
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Wallet, ExternalLink, TrendingUp, DollarSign } from 'lucide-react';
-import { useTreasuryData } from '@/hooks/useTreasuryData';
-import { MONITORED_WALLETS } from '@/lib/constants';
+import { Wallet, ExternalLink, TrendingUp, DollarSign, RefreshCw, Clock } from 'lucide-react';
+import { useShyftData } from '@/hooks/useShyftData';
 import { formatUsd } from '@/lib/utils';
-import type { WalletData } from '@/types/treasury';
 
 const MonitoredWallets: React.FC = () => {
-  const { data, loading, error } = useTreasuryData();
+  const { data, loading, error, syncing, lastSyncTime, refetch, syncWallets } = useShyftData();
 
   const openWallet = (address: string) => {
     window.open(`https://solscan.io/account/${address}`, '_blank', 'noopener,noreferrer');
@@ -21,47 +20,33 @@ const MonitoredWallets: React.FC = () => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const renderLPDetails = (lpDetails: any) => (
-    <div className="mt-2 bg-blue-50 p-3 rounded-lg">
-      <div className="text-sm font-medium text-blue-900 mb-2">LP Position Details</div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-white p-2 rounded">
-          <div className="text-xs font-medium text-gray-700">{lpDetails.token1.symbol}</div>
-          <div className="text-xs text-gray-600">
-            {lpDetails.token1.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
-            (${lpDetails.token1.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
-          </div>
-        </div>
-        <div className="bg-white p-2 rounded">
-          <div className="text-xs font-medium text-gray-700">{lpDetails.token2.symbol}</div>
-          <div className="text-xs text-gray-600">
-            {lpDetails.token2.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
-            (${lpDetails.token2.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
-          </div>
-        </div>
-      </div>
-      <div className="mt-2 bg-white p-2 rounded">
-        <div className="text-xs font-medium text-gray-700">Price Range</div>
-        <div className="text-xs text-gray-600">
-          ${lpDetails.priceRange.min.toFixed(4)} - ${lpDetails.priceRange.max.toFixed(4)}
-        </div>
-      </div>
-    </div>
-  );
+  const formatLastSync = (date: Date | null) => {
+    if (!date) return 'Never';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  };
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <Wallet className="h-5 w-5" />
-            Monitored Wallets
+            Monitored Wallets (Shyft API)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {MONITORED_WALLETS.map((wallet, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg p-4 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-50 rounded-lg p-4 animate-pulse">
                 <div className="h-6 bg-gray-200 rounded mb-2"></div>
                 <div className="h-4 bg-gray-200 rounded mb-2"></div>
                 <div className="h-8 bg-gray-200 rounded"></div>
@@ -79,12 +64,22 @@ const MonitoredWallets: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <Wallet className="h-5 w-5" />
-            Monitored Wallets
+            Monitored Wallets (Shyft API)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-red-600 text-center py-8">
-            Failed to load wallet data: {error}
+            <p className="mb-4">Failed to load wallet data: {error}</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={refetch} variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+              <Button onClick={syncWallets} variant="default" size="sm" disabled={syncing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                Sync from Shyft
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -96,18 +91,44 @@ const MonitoredWallets: React.FC = () => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-3">
-          <Wallet className="h-5 w-5" />
-          Monitored Wallets
-          <Badge variant="outline" className="ml-auto">
-            {wallets.length} Active
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-3">
+            <Wallet className="h-5 w-5" />
+            Monitored Wallets (Shyft API)
+            <Badge variant="outline" className="ml-auto">
+              {wallets.length} Active
+            </Badge>
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {lastSyncTime && (
+              <div className="flex items-center gap-1 text-sm text-gray-500">
+                <Clock className="h-3 w-3" />
+                {formatLastSync(lastSyncTime)}
+              </div>
+            )}
+            <Button 
+              onClick={syncWallets} 
+              variant="outline" 
+              size="sm" 
+              disabled={syncing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              Sync
+            </Button>
+            <Button onClick={refetch} variant="ghost" size="sm">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {wallets.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            No wallet data available
+            <p className="mb-4">No wallet data available</p>
+            <Button onClick={syncWallets} variant="default" disabled={syncing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              Sync Wallets from Shyft
+            </Button>
           </div>
         ) : (
           wallets.map((wallet) => (
@@ -116,7 +137,7 @@ const MonitoredWallets: React.FC = () => {
                 <div>
                   <h3 className="text-xl font-semibold">{wallet.name}</h3>
                   <p className="text-gray-600 text-sm">
-                    {wallet.blockchain} - {formatAddress(wallet.address)}
+                    Solana - {formatAddress(wallet.address)}
                   </p>
                 </div>
                 <Button
@@ -150,9 +171,9 @@ const MonitoredWallets: React.FC = () => {
                           <div>
                             <div className="text-sm font-medium flex items-center gap-2">
                               {balance.token_symbol}
-                              {balance.is_lp_token && (
+                              {balance.platform === 'native' && (
                                 <Badge variant="secondary" className="text-xs">
-                                  LP
+                                  Native
                                 </Badge>
                               )}
                             </div>
@@ -168,8 +189,6 @@ const MonitoredWallets: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        
-                        {balance.is_lp_token && balance.lp_details && renderLPDetails(balance.lp_details)}
                       </div>
                     ))}
                   </div>
@@ -183,4 +202,4 @@ const MonitoredWallets: React.FC = () => {
   );
 };
 
-export default MonitoredWallets; 
+export default MonitoredWallets;
