@@ -37,6 +37,14 @@ const WalletCard = ({ wallet }: WalletCardProps) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  const formatTokenAmount = (symbol: string, amount: number) => {
+    // Format CULT as whole number, others with decimals
+    if (symbol === 'CULT') {
+      return amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+    return amount.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  };
+
   const renderLPDetails = (lpDetails: LPDetails) => (
     <div className="mt-2 bg-blue-50 p-3 rounded-lg">
       <div className="text-sm font-medium text-blue-900 mb-2">LP Position Details</div>
@@ -44,14 +52,14 @@ const WalletCard = ({ wallet }: WalletCardProps) => {
         <div className="bg-white p-2 rounded">
           <div className="text-xs font-medium text-gray-700">{lpDetails.token1.symbol}</div>
           <div className="text-xs text-gray-600">
-            {lpDetails.token1.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
+            {formatTokenAmount(lpDetails.token1.symbol, lpDetails.token1.amount)}
             (${lpDetails.token1.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
           </div>
         </div>
         <div className="bg-white p-2 rounded">
           <div className="text-xs font-medium text-gray-700">{lpDetails.token2.symbol}</div>
           <div className="text-xs text-gray-600">
-            {lpDetails.token2.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} 
+            {formatTokenAmount(lpDetails.token2.symbol, lpDetails.token2.amount)}
             (${lpDetails.token2.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
           </div>
         </div>
