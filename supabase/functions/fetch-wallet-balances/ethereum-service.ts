@@ -16,15 +16,15 @@ interface EthereumBalance {
 
 const INFURA_URL = `https://mainnet.infura.io/v3/${Deno.env.get('INFURA_API_KEY')}`;
 
-// LP token contracts - including the CULT/WETH pair
+// LP token contracts - with corrected token order
 const ETHEREUM_LP_CONTRACTS = [
   {
     address: "0x5281e311734869c64ca60ef047fd87759397efe6",
     name: "CULT-WETH LP",
-    token0: "CULT",
-    token1: "WETH",
-    token0Address: "0xf0f9d895aca5c8678f706fb8216fa22957685a13",
-    token1Address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+    token0: "WETH", // token0 is WETH
+    token1: "CULT", // token1 is CULT  
+    token0Address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    token1Address: "0xf0f9d895aca5c8678f706fb8216fa22957685a13"
   }
 ];
 
@@ -107,35 +107,35 @@ async function getLPTokenDetails(lpContract: any, walletAddress: string) {
   
   // Parse reserves (first two uint112 values)
   const reservesHex = reservesResult.slice(2).padStart(192, '0');
-  const reserve0 = parseInt(reservesHex.slice(0, 64), 16) / 1e18;
-  const reserve1 = parseInt(reservesHex.slice(64, 128), 16) / 1e18;
+  const reserve0 = parseInt(reservesHex.slice(0, 64), 16) / 1e18; // WETH reserve
+  const reserve1 = parseInt(reservesHex.slice(64, 128), 16) / 1e18; // CULT reserve
 
   // Calculate user share
   const userShare = totalSupply > 0 ? lpBalance / totalSupply : 0;
   
-  // Calculate underlying amounts
-  const userToken0Amount = reserve0 * userShare;
-  const userToken1Amount = reserve1 * userShare;
+  // Calculate underlying amounts - user's portion of each token
+  const userWethAmount = reserve0 * userShare;  // WETH (token0)
+  const userCultAmount = reserve1 * userShare;  // CULT (token1)
   
-  // Get token prices - fix the price mapping
-  const token0Price = TOKEN_PRICES[lpContract.token0] || 0;
-  const token1Price = TOKEN_PRICES[lpContract.token1] || 0;
+  // Get token prices
+  const wethPrice = TOKEN_PRICES['WETH'] || 0;
+  const cultPrice = TOKEN_PRICES['CULT'] || 0;
   
-  // Calculate USD values correctly
-  const token0UsdValue = userToken0Amount * token0Price;
-  const token1UsdValue = userToken1Amount * token1Price;
-  const totalUsdValue = token0UsdValue + token1UsdValue;
+  // Calculate USD values
+  const wethUsdValue = userWethAmount * wethPrice;
+  const cultUsdValue = userCultAmount * cultPrice;
+  const totalUsdValue = wethUsdValue + cultUsdValue;
 
   console.log(`LP Details for ${lpContract.name}:
     - LP Balance: ${lpBalance}
     - Total Supply: ${totalSupply}
     - User Share: ${userShare}
-    - Reserve0 (${lpContract.token0}): ${reserve0}
-    - Reserve1 (${lpContract.token1}): ${reserve1}
-    - User ${lpContract.token0}: ${userToken0Amount} (Price: $${token0Price})
-    - User ${lpContract.token1}: ${userToken1Amount} (Price: $${token1Price})
-    - ${lpContract.token0} USD Value: $${token0UsdValue}
-    - ${lpContract.token1} USD Value: $${token1UsdValue}
+    - Reserve0 (WETH): ${reserve0}
+    - Reserve1 (CULT): ${reserve1}
+    - User WETH: ${userWethAmount} (Price: $${wethPrice})
+    - User CULT: ${userCultAmount} (Price: $${cultPrice})
+    - WETH USD Value: $${wethUsdValue}
+    - CULT USD Value: $${cultUsdValue}
     - Total USD Value: $${totalUsdValue}`);
 
   return {
@@ -143,14 +143,14 @@ async function getLPTokenDetails(lpContract: any, walletAddress: string) {
     totalSupply,
     userShare,
     token1: {
-      symbol: lpContract.token0,
-      amount: userToken0Amount,
-      usdValue: token0UsdValue
+      symbol: "WETH",
+      amount: userWethAmount,
+      usdValue: wethUsdValue
     },
     token2: {
-      symbol: lpContract.token1,
-      amount: userToken1Amount,
-      usdValue: token1UsdValue
+      symbol: "CULT", 
+      amount: userCultAmount,
+      usdValue: cultUsdValue
     },
     priceRange: { min: 0, max: 0 },
     totalUsdValue,
