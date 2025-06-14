@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -30,7 +31,7 @@ interface ShyftWalletResponse {
 
 // Updated wallet addresses to match the ones used in the frontend
 const MONITORED_WALLETS = [
-  { name: "Operations", address: "fa1ra81T7g5DzSn7XT6z36zNqupHpG1Eh7omB2F6GTh" },
+  { name: "Operations", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg" },
   { name: "Business Costs", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg" },
   { name: "Marketing", address: "7QpFeyM5VPGMuycCCdaYUeez9c8EzaDkJYBDKKFr4DN2" },
   { name: "Project Funding", address: "Aftv2wFpusiKHfHWdkiFNPsmrFEgrBheHX6ejS4LkM8i" }

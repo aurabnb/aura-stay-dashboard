@@ -1,3 +1,4 @@
+
 import { WalletConfig } from "./types";
 
 /** Funding goal for Volcano Stay (USD) */
@@ -9,7 +10,7 @@ export const FUNDING_WALLET_ADDRESS =
 
 /** Monitored wallets for the project */
 export const MONITORED_WALLETS: WalletConfig[] = [
-  { name: "Operations", address: "fa1ro8lT7gSdZSn7XTz6a3zNquphpGlEh7omB2f6GTh" },
+  { name: "Operations", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg" },
   { name: "Business Costs", address: "Hxa3IlrmJq2fEDmc4gETZDdAPhQ6HyWqn2Es3vVKkFg" },
   { name: "Marketing", address: "7QapFoyM5VPGMuycCCdaYUoe29c8EzadJkJYBDKKFf4DN2" },
   { name: "Project Funding – SOL", address: "Aftv2wfPusikfHFwdklFNpsmrFEgrBheHXo6jS4LkM8i" }
