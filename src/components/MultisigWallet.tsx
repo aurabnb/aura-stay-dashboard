@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet, ExternalLink } from 'lucide-react';
@@ -22,7 +21,7 @@ const MultisigWallet = () => {
     },
     {
       description: "Operations Wallet - Solana",
-      address: "AXYFBhfHh45ZGqpSYBSMEQdQVgQC4x1xRvHzph",
+      address: "AXYFBhYPhHt4SzGqdpSfBSMWEQmKdCyQScA1xjRvHzph",
       notes: "Include any LP tokens in Meteora.",
       liveValue: "Data source pending",
       status: "Error"

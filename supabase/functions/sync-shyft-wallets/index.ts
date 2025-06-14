@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getLiveWalletData } from './wallet-processing.ts'
@@ -10,7 +9,7 @@ const corsHeaders = {
 
 // Updated wallet configs (Solana + Ethereum)
 const MONITORED_WALLETS = [
-  { name: "Operations", address: "fa1ra81T7g5DzSn7XT6z36zNqupHpG1Eh7omB2F6GTh", blockchain: "Solana" },
+  { name: "Operations", address: "AXYFBhYPhHt4SzGqdpSfBSMWEQmKdCyQScA1xjRvHzph", blockchain: "Solana" },
   { name: "Business Costs", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg", blockchain: "Solana" },
   { name: "Marketing", address: "7QpFeyM5VPGMuycCCdaYUeez9c8EzaDkJYBDKKFr4DN2", blockchain: "Solana" },
   { name: "Project Funding - Solana", address: "Aftv2wFpusiKHfHWdkiFNPsmrFEgrBheHX6ejS4LkM8i", blockchain: "Solana" },
