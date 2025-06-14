@@ -115,6 +115,13 @@ interface VotingResult {
   totalVotes: number
 }
 
+interface Vote {
+  voter: string
+  choice: string
+  weight: number
+  timestamp: string
+}
+
 export async function GET() {
   try {
     // Simulate a delay to mimic real-world API latency
@@ -181,7 +188,7 @@ export async function POST(request: Request) {
     
     // Handle votes with proper typing
     if (actionType === 'vote') {
-      const votes = proposalData.votes?.map((vote: any) => ({
+      const votes: Vote[] = proposalData.votes?.map((vote: any) => ({
         voter: vote.voter,
         choice: vote.choice,
         weight: vote.weight || 1,
@@ -195,7 +202,7 @@ export async function POST(request: Request) {
       }
 
       // Process votes (mock implementation)
-      votes.forEach(vote => {
+      votes.forEach((vote: Vote) => {
         if (vote.choice === 'for') {
           proposals[proposalIndex].votesFor += vote.weight
         } else if (vote.choice === 'against') {
