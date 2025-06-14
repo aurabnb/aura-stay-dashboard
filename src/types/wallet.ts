@@ -1,3 +1,4 @@
+
 // Wallet-related type definitions
 
 export interface WalletBalance {

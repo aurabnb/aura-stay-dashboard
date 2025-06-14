@@ -1,21 +1,27 @@
-
 import { Connection, PublicKey } from '@solana/web3.js'
 
 // Define types for the wallet service
 export type WalletOverview = {
+  address: string
   totalValueUSD: number
   solBalance: number
   auraBalance: number
   tokenCount: number
   isActive: boolean
+  lastActivity?: number
 }
 
 export type WalletBalance = {
+  mint: string
   symbol: string
   name: string
   uiAmount: number
   valueUSD: number
   logo?: string
+  balance: number
+  decimals: number
+  isLpToken?: boolean
+  platform?: string
 }
 
 export type WalletTransaction = {
@@ -34,6 +40,8 @@ export type TokenMetrics = {
   marketCap: number
   volume24h: number
   holders: number
+  symbol: string
+  name: string
 }
 
 export type Transaction = {
@@ -61,11 +69,13 @@ export const calculatePortfolioValue = (wallets: any[]): number => {
 export async function getWalletOverview(walletAddress: string): Promise<WalletOverview> {
   // Mock data - replace with Shyft API later
   return {
+    address: walletAddress,
     totalValueUSD: 12750.50,
     solBalance: 45.2341,
     auraBalance: 15000,
     tokenCount: 8,
-    isActive: true
+    isActive: true,
+    lastActivity: Date.now() / 1000
   }
 }
 
@@ -73,18 +83,24 @@ export async function getWalletBalances(walletAddress: string): Promise<WalletBa
   // Mock data - replace with Shyft API later
   return [
     {
+      mint: 'So11111111111111111111111111111111111111112',
       symbol: 'SOL',
       name: 'Solana',
       uiAmount: 45.2341,
       valueUSD: 9500.25,
-      logo: '/logos/sol.png'
+      logo: '/logos/sol.png',
+      balance: 45234100000,
+      decimals: 9
     },
     {
+      mint: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
       symbol: 'AURA',
       name: 'Aura Token',
       uiAmount: 15000,
       valueUSD: 3250.25,
-      logo: '/logos/aura.png'
+      logo: '/logos/aura.png',
+      balance: 15000000000,
+      decimals: 6
     }
   ]
 }
@@ -120,7 +136,9 @@ export async function getTokenMetrics(): Promise<TokenMetrics> {
     priceChange24h: 5.2,
     marketCap: 2450000,
     volume24h: 125000,
-    holders: 1250
+    holders: 1250,
+    symbol: 'AURA',
+    name: 'Aura Token'
   }
 }
 
