@@ -8,18 +8,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Wallet configs for live processing: update as needed
+// Updated wallet configs (Solana + Ethereum)
 const MONITORED_WALLETS = [
-  { name: "Operations", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg" },
-  { name: "Business Costs", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg" },
-  { name: "Marketing", address: "7QpFeyM5VPGMuycCCdaYUeez9c8EzaDkJYBDKKFr4DN2" },
-  { name: "Project Funding", address: "Aftv2wFpusiKHfHWdkiFNPsmrFEgrBheHX6ejS4LkM8i" }
+  { name: "Operations", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg", blockchain: "Solana" },
+  { name: "Business Costs", address: "Hxa31irnLJq2fEDm64gE7ZDAcPNQ6HyWqn2sE3vVKvfg", blockchain: "Solana" },
+  { name: "Marketing", address: "7QpFeyM5VPGMuycCCdaYUeez9c8EzaDkJYBDKKFr4DN2", blockchain: "Solana" },
+  { name: "Project Funding", address: "Aftv2wFpusiKHfHWdkiFNPsmrFEgrBheHX6ejS4LkM8i", blockchain: "Solana" },
+  // New Ethereum Project Funding
+  { name: "Project Funding - Ethereum", address: "0xf05fc9a3c6011c76eb6fe4cbb956eeac8750306d", blockchain: "Ethereum" }
 ];
 
 const TOKEN_PRICES: Record<string, number> = {
   'SOL': 147.04,
   'AURA': 0.00011566,
-  // ...add new tokens as needed
+  'WBTC': 105000,
+  'ETH': 3500,
+  'CULT': 0.00001,
 };
 
 serve(async (req) => {
@@ -45,7 +49,7 @@ serve(async (req) => {
     let totalVolatileAssets = 0;
     const walletResults = [];
 
-    // Process all wallets live via the Shyft API
+    // Process all wallets live via the Shyft API and/or EVM
     for (const wallet of MONITORED_WALLETS) {
       try {
         const walletData = await getLiveWalletData(wallet, shyftApiKey);
@@ -57,7 +61,7 @@ serve(async (req) => {
           .upsert({
             wallet_address: wallet.address,
             wallet_name: wallet.name,
-            raw_data: null, // refactored: live-only, not caching Shyft response blob
+            raw_data: null, // live-only
             sol_balance: walletData.balances.find(b => b.token_symbol === 'SOL')?.balance ?? 0,
             total_usd_value: walletData.totalUsdValue,
             token_count: walletData.balances.length,
@@ -69,7 +73,7 @@ serve(async (req) => {
           address: walletData.address,
           balances: walletData.balances,
           totalUsdValue: walletData.totalUsdValue,
-          blockchain: 'Solana'
+          blockchain: wallet.blockchain || 'Solana'
         });
       } catch (err) {
         walletResults.push({
@@ -77,13 +81,12 @@ serve(async (req) => {
           address: wallet.address,
           balances: [],
           totalUsdValue: 0,
-          blockchain: 'Solana'
+          blockchain: wallet.blockchain || 'Solana'
         });
       }
     }
 
-    // Treasury/Market cap static fallback
-    const auraMarketCap = 115651; // replace with live calculation if available
+    const auraMarketCap = 115651; // TODO: Dynamically fetch if required
     const hardAssets = 607.87;
 
     return new Response(JSON.stringify({
@@ -106,4 +109,3 @@ serve(async (req) => {
     )
   }
 });
-
