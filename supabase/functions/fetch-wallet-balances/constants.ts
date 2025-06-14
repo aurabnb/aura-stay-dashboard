@@ -52,3 +52,14 @@ export const FIXED_PRICES: Record<string, number> = {
   'USDT': 1.0,
   'DCULT': 0.00001
 };
+
+export const KNOWN_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {
+  'So11111111111111111111111111111111111111112': { symbol: 'SOL', name: 'Solana', decimals: 9 },
+  '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe': { symbol: 'AURA', name: 'AURA Token', decimals: 6 },
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { symbol: 'USDC', name: 'USD Coin', decimals: 6 },
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': { symbol: 'USDT', name: 'Tether USD', decimals: 6 },
+  '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh': { symbol: 'WBTC', name: 'Wrapped Bitcoin', decimals: 8 },
+  '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': { symbol: 'ETH', name: 'Ethereum', decimals: 8 },
+  '0xf0f9d895aca5c8678f706fb8216fa22957685a13': { symbol: 'CULT', name: 'Cult DAO', decimals: 18 },
+  '0x2d77b594b9bbaed03221f7c63af8c4307432daf1': { symbol: 'DCULT', name: 'Cult DAO', decimals: 18 }
+};

@@ -1,5 +1,6 @@
+
 import { WalletBalance } from './types.ts';
-import { METEORA_LP_TOKENS } from './constants.ts';
+import { METEORA_LP_TOKENS, FIXED_PRICES } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
 import { getLPTokenDetails } from './lp-service.ts';
 import { getSolanaPrice } from './price-service.ts';
@@ -142,7 +143,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
       
       if (data.result) {
         const ethBalance = parseInt(data.result, 16) / 1e18;
-        const ethPrice = 3500;
+        const ethPrice = FIXED_PRICES['ETH'] || 3500;
         
         balances.push({
           symbol: 'ETH',
