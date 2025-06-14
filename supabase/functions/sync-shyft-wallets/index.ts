@@ -49,24 +49,30 @@ serve(async (req) => {
     let totalVolatileAssets = 0;
     const walletResults = [];
 
-    // Process all wallets live via the Shyft API and/or EVM
     for (const wallet of MONITORED_WALLETS) {
       try {
         const walletData = await getLiveWalletData(wallet, shyftApiKey);
         totalVolatileAssets += walletData.totalUsdValue;
 
-        // Upsert to db cache (for analytics)
-        await supabase
+        // Fix: Provide dummy value for raw_data to satisfy NOT NULL constraint, or exclude from upsert
+        const upsertPayload = {
+          wallet_address: wallet.address,
+          wallet_name: wallet.name,
+          // raw_data now set to a dummy JSON if live only.
+          raw_data: {},
+          sol_balance: walletData.balances.find(b => b.token_symbol === 'SOL')?.balance ?? 0,
+          total_usd_value: walletData.totalUsdValue,
+          token_count: walletData.balances.length,
+          last_updated: new Date().toISOString()
+        };
+
+        const { error: upsertErr } = await supabase
           .from('shyft_wallet_cache')
-          .upsert({
-            wallet_address: wallet.address,
-            wallet_name: wallet.name,
-            raw_data: null, // live-only
-            sol_balance: walletData.balances.find(b => b.token_symbol === 'SOL')?.balance ?? 0,
-            total_usd_value: walletData.totalUsdValue,
-            token_count: walletData.balances.length,
-            last_updated: new Date().toISOString()
-          })
+          .upsert(upsertPayload);
+
+        if (upsertErr) {
+          console.error(`[sync-shyft-wallets] Upsert error for ${wallet.address}:${wallet.name}`, upsertErr);
+        }
 
         walletResults.push({
           name: walletData.name,
@@ -76,6 +82,8 @@ serve(async (req) => {
           blockchain: wallet.blockchain || 'Solana'
         });
       } catch (err) {
+        // improved: log details for why this wallet failed
+        console.error(`[sync-shyft-wallets] Wallet fetch failed: ${wallet.name} (${wallet.address}) | ${err?.message || err}`);
         walletResults.push({
           name: wallet.name,
           address: wallet.address,
@@ -89,6 +97,7 @@ serve(async (req) => {
     const auraMarketCap = 115651; // TODO: Dynamically fetch if required
     const hardAssets = 607.87;
 
+    console.log(`[sync-shyft-wallets] Finished processing all wallets. Returning results...`);
     return new Response(JSON.stringify({
       treasury: {
         totalMarketCap: auraMarketCap,
@@ -103,6 +112,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error('[sync-shyft-wallets] Caught top-level error:', error?.message || error);
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
