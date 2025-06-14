@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { MONITORED_WALLETS, SOL_MINT } from "@/constants";
 import { fetchJupiterPrices } from "@/api";
@@ -40,6 +39,7 @@ export function useWallets() {
 
         if (cancelled) return;
 
+        // Do not filter balances; keep all as returned
         // Map the Shyft response to our wallet format
         const mapped: WalletData[] = responseData.wallets.map((wallet: any) => ({
           wallet_id: wallet.address,

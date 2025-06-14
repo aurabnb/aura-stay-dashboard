@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface LPDetails {
@@ -66,6 +65,18 @@ const WalletCard = ({ wallet }: WalletCardProps) => {
     </div>
   );
 
+  // Always show AURA and LPs, even if zero balance. Sort so LPs are shown last.
+  let balancesToShow = wallet.balances ? [...wallet.balances] : [];
+  // Remove filter for balances > 0; show all, but prioritize AURA and LPs
+  // Move AURA token and LPs to top of list for visibility
+  balancesToShow.sort((a, b) => {
+    if (a.token_symbol === "AURA") return -1;
+    if (b.token_symbol === "AURA") return 1;
+    if (a.is_lp_token && !b.is_lp_token) return -1;
+    if (!a.is_lp_token && b.is_lp_token) return 1;
+    return 0;
+  });
+
   return (
     <div className="bg-gray-50 rounded-lg p-6">
       <h3 className="text-xl font-semibold mb-2 font-urbanist">{wallet.name}</h3>
@@ -76,12 +87,12 @@ const WalletCard = ({ wallet }: WalletCardProps) => {
         ${wallet.totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
       
-      {wallet.balances && wallet.balances.length > 0 && (
+      {balancesToShow && balancesToShow.length > 0 ? (
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-700">Assets ({wallet.balances.length})</h4>
+          <h4 className="text-sm font-medium text-gray-700">Assets ({balancesToShow.length})</h4>
           <div className="max-h-48 overflow-y-auto space-y-2">
-            {wallet.balances.map((balance, index) => (
-              <div key={index} className="border-l-2 border-blue-200 pl-3">
+            {balancesToShow.map((balance, index) => (
+              <div key={`${balance.token_symbol}_${balance.token_address || index}`} className="border-l-2 border-blue-200 pl-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="text-sm font-medium">
@@ -100,15 +111,12 @@ const WalletCard = ({ wallet }: WalletCardProps) => {
                     </div>
                   </div>
                 </div>
-                
                 {balance.is_lp_token && balance.lp_details && renderLPDetails(balance.lp_details)}
               </div>
             ))}
           </div>
         </div>
-      )}
-      
-      {(!wallet.balances || wallet.balances.length === 0) && (
+      ) : (
         <div className="text-sm text-gray-500 italic">
           No balance data available - click refresh to fetch latest data
         </div>
