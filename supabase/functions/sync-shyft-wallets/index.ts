@@ -42,7 +42,7 @@ async function fetchWalletData(apiKey: string, walletAddress: string): Promise<S
   return response.json()
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
         results.push({
           wallet: wallet.address,
           status: 'error',
-          error: error.message,
+          error: (error as Error).message,
         })
       }
     }
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error in sync-shyft-wallets function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

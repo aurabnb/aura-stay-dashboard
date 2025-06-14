@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => ({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    port: 8080
+  },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },

@@ -65,7 +65,7 @@ export class ShyftService {
           continue
         }
 
-        const formattedBalances: ShyftTokenBalance[] = (balances || []).map(balance => ({
+        const formattedBalances: ShyftTokenBalance[] = (balances || []).map((balance: any) => ({
           token_symbol: balance.token_symbol || 'UNKNOWN',
           token_name: balance.token_name || 'Unknown Token',
           token_address: balance.token_address || '',
