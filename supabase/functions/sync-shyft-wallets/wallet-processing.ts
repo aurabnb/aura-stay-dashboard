@@ -95,11 +95,11 @@ export async function getLiveWalletData(walletCfg: { name: string; address: stri
     });
   }
 
-  // Dynamically add meteora LPs (live)
-  // NOTE: real implementation would expand this with robust LP pattern-matching logic:
-  // For now, just demonstrate with the shared helper (add more logic here for full coverage)
-  // Example: const meteoraLPs = await getSolanaWalletLps(walletCfg.address);
-  // for (const lp of meteoraLPs) tokenBalances.push(processMeteoraLp(lp));
+  // ==== [NEW] Dynamically add Meteora LPs (live) ====
+  const meteoraLps = await getSolanaWalletLps(walletCfg.address);
+  for (const lp of meteoraLps) tokenBalances.push(lp);
+
+  // ==== END NEW ====
 
   const totalUsdValue = tokenBalances.reduce((sum, t) => sum + (t.usd_value || 0), 0);
 
