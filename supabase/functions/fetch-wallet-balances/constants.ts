@@ -1,4 +1,3 @@
-
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -46,11 +45,11 @@ export const FIXED_PRICES: Record<string, number> = {
   'AURA': 0.00011566,
   'WBTC': 105000,
   'ETH': 3500,
-  'CULT': 0.00001,
+  'CULT': 0.003759, // Updated to match DEXScreener pricing
   'WETH': 3500,
   'USDC': 1.0,
   'USDT': 1.0,
-  'DCULT': 0.00001
+  'DCULT': 0.003759 // Updated to match DEXScreener pricing
 };
 
 export const KNOWN_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {
