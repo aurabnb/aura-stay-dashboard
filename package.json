@@ -67,7 +67,7 @@
     "health": "npm run type-check && npm run lint && echo '✅ All checks passed'",
     "preinstall": "npx only-allow npm",
     "postinstall": "prisma generate",
-    "prepare": "echo 'Skipping husky setup'"
+    "prepare": "echo 'Skipping husky setup'",
     "preview": "vite preview",
     "build:dev": "vite build --mode development"
 
