@@ -1,3 +1,4 @@
+
 /**
  * Ethereum blockchain service for wallet balance fetching
  */
@@ -30,7 +31,7 @@ const ETHEREUM_LP_CONTRACTS = [
 const TOKEN_PRICES: Record<string, number> = {
   'ETH': 3500,
   'WETH': 3500,
-  'CULT': 0.003759, // Updated to match DEXScreener pricing
+  'CULT': 0.000003759, // Updated to match DEXScreener pricing with proper decimal places
   'AURA': 0.00011566
 };
 

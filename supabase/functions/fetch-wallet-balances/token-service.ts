@@ -71,9 +71,9 @@ export async function getTokenPrice(tokenAddress: string): Promise<number> {
     return auraPrice;
   }
 
-  // Handle DCULT token (price as CULT) - updated to match DEXScreener
+  // Handle DCULT token (price as CULT) - updated to match DEXScreener with proper decimal places
   if (tokenAddress === '0x2d77b594b9bbaed03221f7c63af8c4307432daf1') {
-    const cultPrice = 0.003759;
+    const cultPrice = 0.000003759;
     priceCache.set(tokenAddress, { price: cultPrice, timestamp: Date.now() });
     console.log(`Fetched price for DCULT token (as CULT): $${cultPrice}`);
     return cultPrice;
