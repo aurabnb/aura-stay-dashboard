@@ -1,3 +1,4 @@
+
 import { WalletBalance } from './types.ts';
 import { METEORA_LP_TOKENS, FIXED_PRICES } from './constants.ts';
 import { getTokenInfo, getTokenPrice } from './token-service.ts';
@@ -32,6 +33,51 @@ async function retryWithBackoff<T>(
   }
   
   throw lastError!;
+}
+
+// Helper function to get specific token balance directly
+async function getSpecificTokenBalance(walletAddress: string, tokenMint: string): Promise<number> {
+  try {
+    console.log(`Fetching specific token balance for ${tokenMint} in wallet ${walletAddress}`);
+    
+    const response = await retryWithBackoff(async () => {
+      return await fetch(`https://api.mainnet-beta.solana.com`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getTokenAccountsByOwner',
+          params: [
+            walletAddress,
+            { mint: tokenMint },
+            { encoding: 'jsonParsed', commitment: 'confirmed' }
+          ]
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+    }, 2, 1500);
+
+    const data = await response.json();
+    
+    if (data.error) {
+      console.warn(`RPC Error for ${tokenMint}:`, data.error.message);
+      return 0;
+    }
+
+    if (data.result?.value && data.result.value.length > 0) {
+      const account = data.result.value[0];
+      const balance = parseFloat(account.account.data.parsed.info.tokenAmount.uiAmount || '0');
+      console.log(`Found ${tokenMint} balance: ${balance} for wallet ${walletAddress}`);
+      return balance;
+    }
+    
+    console.log(`No ${tokenMint} account found for wallet ${walletAddress}`);
+    return 0;
+  } catch (error) {
+    console.warn(`Failed to fetch ${tokenMint} balance for ${walletAddress}:`, error);
+    return 0;
+  }
 }
 
 export async function getWalletBalances(address: string, blockchain: string = 'Solana'): Promise<WalletBalance[]> {
@@ -95,6 +141,22 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
         console.warn(`Failed to fetch SOL balance for ${address}:`, error);
       }
 
+      // Always try to get AURA balance specifically, even if general token fetch fails
+      const auraBalance = await getSpecificTokenBalance(address, '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
+      const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
+      
+      balances.push({
+        symbol: 'AURA',
+        name: 'AURA Token',
+        balance: auraBalance,
+        usdValue: auraBalance * auraPrice,
+        tokenAddress: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
+        isLpToken: false,
+        platform: 'spl-token'
+      });
+
+      console.log(`AURA balance for ${address}: ${auraBalance} tokens, USD value: $${(auraBalance * auraPrice).toFixed(6)}`);
+
       // Fetch token accounts with improved retry logic
       let tokenData = null;
       try {
@@ -125,7 +187,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
         tokenData = tokenResponse;
       } catch (error) {
         console.warn(`Failed to fetch token accounts for ${address} after retries:`, error);
-        // Continue execution to ensure AURA is added even if token fetch fails
+        // Continue execution since we already have AURA balance
       }
 
       console.log(`Token account response for ${address}:`, tokenData);
@@ -138,6 +200,12 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             const tokenInfo = account.account.data.parsed.info;
             const mint = tokenInfo.mint;
             const balance = parseFloat(tokenInfo.tokenAmount.uiAmount || '0');
+            
+            // Skip AURA since we already added it specifically
+            if (mint === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe') {
+              console.log(`Skipping AURA token ${mint} since already added specifically`);
+              continue;
+            }
             
             console.log(`Processing token ${mint} with balance: ${balance}`);
             
@@ -169,7 +237,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
             
             console.log(`Adding token: ${tokenMeta.symbol}, balance: ${balance}, price: $${tokenPrice}, USD value: $${finalUsdValue}`);
             
-            if (balance > 0 || tokenMeta.symbol === 'AURA' || isLpToken) {
+            if (balance > 0 || isLpToken) {
               balances.push({
                 symbol: isLpToken ? `${poolConfig?.name || tokenMeta.symbol} LP` : tokenMeta.symbol,
                 name: isLpToken ? `${poolConfig?.name || tokenMeta.name} LP Token` : tokenMeta.name,
@@ -186,28 +254,7 @@ export async function getWalletBalances(address: string, blockchain: string = 'S
           }
         }
       } else {
-        console.log(`No token accounts found for ${address} (possibly due to rate limiting or RPC issues)`);
-      }
-
-      // CRITICAL: Always ensure AURA token is included, even if token account fetch failed
-      const auraExists = balances.find(b => b.tokenAddress === '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
-      if (!auraExists) {
-        console.log(`Adding AURA token with zero balance for ${address} (fallback due to missing token account data)`);
-        try {
-          const auraPrice = await getTokenPrice('3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe');
-          balances.push({
-            symbol: 'AURA',
-            name: 'AURA Token',
-            balance: 0,
-            usdValue: 0,
-            tokenAddress: '3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe',
-            isLpToken: false,
-            platform: 'spl-token'
-          });
-          console.log(`Successfully added AURA fallback token for ${address}`);
-        } catch (error) {
-          console.error(`Failed to add AURA fallback token for ${address}:`, error);
-        }
+        console.log(`No additional token accounts found for ${address} (AURA already added specifically)`);
       }
     }
 
