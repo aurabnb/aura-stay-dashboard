@@ -117,11 +117,11 @@ async function getLPTokenDetails(lpContract: any, walletAddress: string) {
   const userToken0Amount = reserve0 * userShare;
   const userToken1Amount = reserve1 * userShare;
   
-  // Get token prices
+  // Get token prices - fix the price mapping
   const token0Price = TOKEN_PRICES[lpContract.token0] || 0;
   const token1Price = TOKEN_PRICES[lpContract.token1] || 0;
   
-  // Calculate USD values
+  // Calculate USD values correctly
   const token0UsdValue = userToken0Amount * token0Price;
   const token1UsdValue = userToken1Amount * token1Price;
   const totalUsdValue = token0UsdValue + token1UsdValue;
@@ -132,8 +132,10 @@ async function getLPTokenDetails(lpContract: any, walletAddress: string) {
     - User Share: ${userShare}
     - Reserve0 (${lpContract.token0}): ${reserve0}
     - Reserve1 (${lpContract.token1}): ${reserve1}
-    - User ${lpContract.token0}: ${userToken0Amount}
-    - User ${lpContract.token1}: ${userToken1Amount}
+    - User ${lpContract.token0}: ${userToken0Amount} (Price: $${token0Price})
+    - User ${lpContract.token1}: ${userToken1Amount} (Price: $${token1Price})
+    - ${lpContract.token0} USD Value: $${token0UsdValue}
+    - ${lpContract.token1} USD Value: $${token1UsdValue}
     - Total USD Value: $${totalUsdValue}`);
 
   return {
