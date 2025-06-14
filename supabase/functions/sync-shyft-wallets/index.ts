@@ -42,7 +42,8 @@ async function fetchWalletData(apiKey: string, walletAddress: string): Promise<S
   return response.json()
 }
 
-Deno.serve(async (req: Request) => {
+// Handle CORS preflight requests
+export default async function handler(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -183,4 +184,4 @@ Deno.serve(async (req: Request) => {
       }
     )
   }
-})
+}
