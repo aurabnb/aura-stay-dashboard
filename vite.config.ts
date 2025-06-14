@@ -5,25 +5,17 @@ import path from 'path'
 import { componentTagger } from "lovable-tagger"
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }: { mode: string }) => ({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
-  define: {
-    global: 'globalThis',
-  },
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
+  optimizeDeps: {
+    exclude: ['lucide-react'],
   },
 }))
