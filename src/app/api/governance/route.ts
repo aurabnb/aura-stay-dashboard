@@ -1,347 +1,215 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
 
-// Required for static export compatibility - only in non-static mode
-// export const dynamic = 'force-dynamic'
-export const revalidate = 180 // Revalidate every 3 minutes
+// Mock data for proposals (replace with actual database calls)
+const proposals = [
+  {
+    id: '1',
+    title: 'Add USDC as Payment Method',
+    description: 'Should we allow users to pay with USDC?',
+    votesFor: 150,
+    votesAgainst: 50,
+    status: 'active',
+    startDate: '2024-06-01T12:00:00Z',
+    endDate: '2024-06-15T12:00:00Z',
+    quorum: 200,
+    type: 'payment',
+    category: 'finance',
+    author: 'DAO Initiator',
+    created_at: '2024-05-25T10:00:00Z',
+    updated_at: '2024-05-25T10:00:00Z',
+    valid: true
+  },
+  {
+    id: '2',
+    title: 'Integrate Chainlink VRF for Randomness',
+    description: 'Use Chainlink VRF for provable randomness in our NFT drops.',
+    votesFor: 300,
+    votesAgainst: 25,
+    status: 'passed',
+    startDate: '2024-05-01T12:00:00Z',
+    endDate: '2024-05-15T12:00:00Z',
+    quorum: 100,
+    type: 'feature',
+    category: 'technology',
+    author: 'Tech Lead',
+    created_at: '2024-04-25T10:00:00Z',
+    updated_at: '2024-04-25T10:00:00Z',
+    valid: true
+  },
+  {
+    id: '3',
+    title: 'Launch Referral Program - Q3 2024',
+    description: 'Incentivize user growth with a referral rewards program.',
+    votesFor: 80,
+    votesAgainst: 120,
+    status: 'rejected',
+    startDate: '2024-04-01T12:00:00Z',
+    endDate: '2024-04-15T12:00:00Z',
+    quorum: 200,
+    type: 'marketing',
+    category: 'community',
+    author: 'Marketing Manager',
+    created_at: '2024-03-25T10:00:00Z',
+    updated_at: '2024-03-25T10:00:00Z',
+    valid: true
+  },
+  {
+    id: '4',
+    title: 'Airdrop AURA to Early Adopters',
+    description: 'Reward our earliest users with an AURA token airdrop.',
+    votesFor: 500,
+    votesAgainst: 10,
+    status: 'active',
+    startDate: '2024-07-01T12:00:00Z',
+    endDate: '2024-07-15T12:00:00Z',
+    quorum: 400,
+    type: 'tokenomics',
+    category: 'community',
+    author: 'Tokenomics Expert',
+    created_at: '2024-06-25T10:00:00Z',
+    updated_at: '2024-06-25T10:00:00Z',
+    valid: true
+  },
+  {
+    id: '5',
+    title: 'Strategic Partnership with Solana Foundation',
+    description: 'Explore a strategic alliance to boost development.',
+    votesFor: 220,
+    votesAgainst: 30,
+    status: 'pending',
+    startDate: '2024-08-01T12:00:00Z',
+    endDate: '2024-08-15T12:00:00Z',
+    quorum: 250,
+    type: 'partnership',
+    category: 'business',
+    author: 'Business Development',
+    created_at: '2024-07-25T10:00:00Z',
+    updated_at: '2024-07-25T10:00:00Z',
+    valid: true
+  }
+]
 
-interface ProposalData {
+interface Proposal {
   id: string
   title: string
   description: string
-  category: string
-  status: string
-  proposerId: string
   votesFor: number
   votesAgainst: number
-  totalVotes: number
+  status: string
   startDate: string
   endDate: string
-  createdAt: string
-  proposer: {
-    username?: string
-    walletAddress?: string
-  }
+  quorum: number
+  type: string
+  category: string
+  author: string
+  created_at: string
+  updated_at: string
+  valid: boolean
 }
 
-interface VoteData {
+interface VotingResult {
   id: string
-  proposalId: string
-  userId: string
-  voteType: string
-  weight: number
-  timestamp: string
+  title: string
+  forPercentage: number
+  againstPercentage: number
+  totalVotes: number
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
-    const category = searchParams.get('category')
-    const proposalId = searchParams.get('proposalId')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    // Simulate a delay to mimic real-world API latency
+    await new Promise(resolve => setTimeout(resolve, 500))
 
-    // If requesting a specific proposal
-    if (proposalId) {
-      const proposal = await prisma.proposal.findUnique({
-        where: { id: proposalId },
-        include: {
-          proposer: {
-            select: {
-              username: true,
-              walletAddress: true
-            }
-          },
-          votes: {
-            include: {
-              user: {
-                select: {
-                  username: true,
-                  walletAddress: true
-                }
-              }
-            }
-          }
-        }
-      })
-
-      if (!proposal) {
-        return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
-      }
-
-      const formattedProposal = {
-        ...proposal,
-        startDate: proposal.startDate.toISOString(),
-        endDate: proposal.endDate.toISOString(),
-        createdAt: proposal.createdAt.toISOString(),
-        proposer: {
-          username: proposal.proposer.username || undefined,
-          walletAddress: proposal.proposer.walletAddress || undefined
-        },
-        votes: proposal.votes.map(vote => ({
-          id: vote.id,
-          proposalId: vote.proposalId,
-          userId: vote.userId,
-          voteType: vote.voteType,
-          weight: vote.weight,
-          timestamp: vote.timestamp.toISOString(),
-          user: {
-            username: vote.user.username || undefined,
-            walletAddress: vote.user.walletAddress || undefined
-          }
-        }))
-      }
-
-      return NextResponse.json(formattedProposal)
-    }
-
-    // Build where clause for filtering
-    const whereClause: any = {}
-    if (status) whereClause.status = status.toUpperCase()
-    if (category) whereClause.category = category.toUpperCase()
-
-    const proposals = await prisma.proposal.findMany({
-      where: whereClause,
-      include: {
-        proposer: {
-          select: {
-            username: true,
-            walletAddress: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: limit
-    })
-
-    const formattedProposals: ProposalData[] = proposals.map(proposal => ({
-      id: proposal.id,
-      title: proposal.title,
-      description: proposal.description,
-      category: proposal.category,
-      status: proposal.status,
-      proposerId: proposal.proposerId,
-      votesFor: proposal.votesFor,
-      votesAgainst: proposal.votesAgainst,
-      totalVotes: proposal.totalVotes,
-      startDate: proposal.startDate.toISOString(),
-      endDate: proposal.endDate.toISOString(),
-      createdAt: proposal.createdAt.toISOString(),
-      proposer: {
-        username: proposal.proposer.username || undefined,
-        walletAddress: proposal.proposer.walletAddress || undefined
-      }
-    }))
-
-    return NextResponse.json({
-      proposals: formattedProposals,
-      total: proposals.length
-    })
-  } catch (error) {
-    console.error('Governance GET error:', error)
-    return NextResponse.json({ error: 'Failed to fetch proposals' }, { status: 500 })
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { action, ...data } = body
-
-    if (action === 'create_proposal') {
-      const { title, description, category, walletAddress, endDate } = data
-
-      if (!title || !description || !category || !walletAddress || !endDate) {
-        return NextResponse.json({ 
-          error: 'Title, description, category, wallet address, and end date are required' 
-        }, { status: 400 })
-      }
-
-      // Find or create user
-      let user = await prisma.user.findUnique({
-        where: { walletAddress }
-      })
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            walletAddress,
-            username: `user_${walletAddress.slice(-6)}`
-          }
-        })
-      }
-
-      // Create proposal
-      const proposal = await prisma.proposal.create({
-        data: {
-          title,
-          description,
-          category: category.toUpperCase(),
-          proposerId: user.id,
-          endDate: new Date(endDate)
-        },
-        include: {
-          proposer: {
-            select: {
-              username: true,
-              walletAddress: true
-            }
-          }
-        }
-      })
-
-      const formattedProposal: ProposalData = {
+    // Filter out invalid proposals
+    const validProposals = proposals.filter(proposal => proposal.valid)
+    
+    // Calculate voting results
+    const totalVotes = validProposals.reduce((acc: number, proposal: any) => 
+      acc + (proposal.votesFor || 0) + (proposal.votesAgainst || 0), 0
+    )
+    
+    const votingResults = validProposals.map((proposal: any) => {
+      const totalProposalVotes = (proposal.votesFor || 0) + (proposal.votesAgainst || 0)
+      return {
         id: proposal.id,
         title: proposal.title,
-        description: proposal.description,
-        category: proposal.category,
-        status: proposal.status,
-        proposerId: proposal.proposerId,
-        votesFor: proposal.votesFor,
-        votesAgainst: proposal.votesAgainst,
-        totalVotes: proposal.totalVotes,
-        startDate: proposal.startDate.toISOString(),
-        endDate: proposal.endDate.toISOString(),
-        createdAt: proposal.createdAt.toISOString(),
-        proposer: {
-          username: proposal.proposer.username || undefined,
-          walletAddress: proposal.proposer.walletAddress || undefined
-        }
+        forPercentage: totalProposalVotes > 0 ? ((proposal.votesFor || 0) / totalProposalVotes) * 100 : 0,
+        againstPercentage: totalProposalVotes > 0 ? ((proposal.votesAgainst || 0) / totalProposalVotes) * 100 : 0,
+        totalVotes: totalProposalVotes
       }
-
-      return NextResponse.json(formattedProposal, { status: 201 })
-    }
-
-    if (action === 'vote') {
-      const { proposalId, walletAddress, voteType, stakingAmount } = data
-
-      if (!proposalId || !walletAddress || !voteType) {
-        return NextResponse.json({ 
-          error: 'Proposal ID, wallet address, and vote type are required' 
-        }, { status: 400 })
-      }
-
-      // Find user
-      const user = await prisma.user.findUnique({
-        where: { walletAddress }
-      })
-
-      if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 })
-      }
-
-      // Check if proposal exists and is active
-      const proposal = await prisma.proposal.findUnique({
-        where: { id: proposalId }
-      })
-
-      if (!proposal) {
-        return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
-      }
-
-      if (proposal.status !== 'ACTIVE') {
-        return NextResponse.json({ error: 'Proposal is not active' }, { status: 400 })
-      }
-
-      if (new Date() > proposal.endDate) {
-        return NextResponse.json({ error: 'Voting period has ended' }, { status: 400 })
-      }
-
-      // Check if user already voted
-      const existingVote = await prisma.vote.findUnique({
-        where: {
-          proposalId_userId: {
-            proposalId,
-            userId: user.id
-          }
-        }
-      })
-
-      if (existingVote) {
-        return NextResponse.json({ error: 'User has already voted' }, { status: 400 })
-      }
-
-      // Calculate voting weight based on staking amount
-      const votingWeight = Math.min(stakingAmount || 1, 2000) // Max 2% of total supply
-
-      // Create vote
-      const vote = await prisma.vote.create({
-        data: {
-          proposalId,
-          userId: user.id,
-          voteType: voteType.toUpperCase(),
-          weight: votingWeight
-        }
-      })
-
-      // Update proposal vote counts
-      const updateData = voteType.toUpperCase() === 'FOR' 
-        ? { votesFor: proposal.votesFor + votingWeight }
-        : { votesAgainst: proposal.votesAgainst + votingWeight }
-
-      const updatedProposal = await prisma.proposal.update({
-        where: { id: proposalId },
-        data: {
-          ...updateData,
-          totalVotes: proposal.totalVotes + votingWeight
-        }
-      })
-
-      const voteData: VoteData = {
-        id: vote.id,
-        proposalId: vote.proposalId,
-        userId: vote.userId,
-        voteType: vote.voteType,
-        weight: vote.weight,
-        timestamp: vote.timestamp.toISOString()
-      }
-
-      return NextResponse.json({
-        vote: voteData,
-        proposal: {
-          id: updatedProposal.id,
-          votesFor: updatedProposal.votesFor,
-          votesAgainst: updatedProposal.votesAgainst,
-          totalVotes: updatedProposal.totalVotes
-        }
-      }, { status: 201 })
-    }
-
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-  } catch (error) {
-    console.error('Governance POST error:', error)
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
-  }
-}
-
-// Admin endpoint for proposal status updates
-export async function PATCH(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { proposalId, status } = body
-
-    if (!proposalId || !status) {
-      return NextResponse.json({ error: 'Proposal ID and status are required' }, { status: 400 })
-    }
-
-    const validStatuses = ['ACTIVE', 'PASSED', 'REJECTED', 'EXPIRED']
-    if (!validStatuses.includes(status.toUpperCase())) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
-    }
-
-    const updatedProposal = await prisma.proposal.update({
-      where: { id: proposalId },
-      data: { status: status.toUpperCase() }
     })
 
     return NextResponse.json({
-      id: updatedProposal.id,
-      status: updatedProposal.status
+      proposals: validProposals,
+      votingResults
     })
   } catch (error) {
-    console.error('Governance PATCH error:', error)
-    return NextResponse.json({ error: 'Failed to update proposal' }, { status: 500 })
+    console.error('Governance API error:', error)
+    return NextResponse.json({ error: 'Failed to fetch governance data' }, { status: 500 })
   }
-} 
+}
+
+export async function POST(request: Request) {
+  try {
+    const { actionType, proposalData } = await request.json()
+
+    if (!actionType) {
+      return NextResponse.json({ error: 'Missing action type' }, { status: 400 })
+    }
+
+    if (actionType === 'create') {
+      // Validate proposal data
+      if (!proposalData.title || !proposalData.description) {
+        return NextResponse.json({ error: 'Missing proposal details' }, { status: 400 })
+      }
+
+      // Create a new proposal (mock implementation)
+      const newProposal = {
+        id: String(proposals.length + 1),
+        ...proposalData,
+        votesFor: 0,
+        votesAgainst: 0,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        valid: true
+      }
+      proposals.push(newProposal)
+
+      return NextResponse.json({ message: 'Proposal created successfully', proposal: newProposal }, { status: 201 })
+    }
+    
+    // Handle votes with proper typing
+    if (actionType === 'vote') {
+      const votes = proposalData.votes?.map((vote: any) => ({
+        voter: vote.voter,
+        choice: vote.choice,
+        weight: vote.weight || 1,
+        timestamp: vote.timestamp || new Date().toISOString()
+      })) || []
+
+      // Find the proposal
+      const proposalIndex = proposals.findIndex(p => p.id === proposalData.proposalId)
+      if (proposalIndex === -1) {
+        return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
+      }
+
+      // Process votes (mock implementation)
+      votes.forEach(vote => {
+        if (vote.choice === 'for') {
+          proposals[proposalIndex].votesFor += vote.weight
+        } else if (vote.choice === 'against') {
+          proposals[proposalIndex].votesAgainst += vote.weight
+        }
+      })
+
+      return NextResponse.json({ message: 'Votes recorded successfully' }, { status: 200 })
+    }
+
+    return NextResponse.json({ error: 'Invalid action type' }, { status: 400 })
+
+  } catch (error) {
+    console.error('Governance API error:', error)
+    return NextResponse.json({ error: 'Failed to process governance action' }, { status: 500 })
+  }
+}
