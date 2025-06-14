@@ -93,11 +93,16 @@ export async function getLiveWalletData(walletCfg: { name: string; address: stri
   }
 
   for (const t of tokens) {
-    const decimals = t.info.decimals ?? 0;
+    const decimals = (typeof t.info.decimals === 'number' && t.info.decimals >= 0) ? t.info.decimals : 0;
     const rawBalance = t.balance / Math.pow(10, decimals);
     const symbol = t.info.symbol;
     const price = TOKEN_PRICES[symbol] ?? 0.0;
     const usdValue = rawBalance * price;
+
+    // Print debug outputs for AURA
+    if (symbol === "AURA") {
+      console.log(`[wallet-processing] ${walletCfg.name} | rawBalance for AURA:`, rawBalance, `decimals:`, decimals, `inputBalance:`, t.balance);
+    }
 
     tokenBalances.push({
       token_symbol: symbol,

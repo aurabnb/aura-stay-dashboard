@@ -64,31 +64,29 @@ export async function getEthereumLpBalances(wallet: string, prices: Record<strin
       const userToken1 = reserve1 * userShare;
       const usdValue = userToken0 * token0Price + userToken1 * token1Price;
 
-      // Log debug info per pool
+      // Debug logging
       console.log(
         `[getEthereumLpBalances] wallet=${wallet} pool=${lpContract} balance=${lpBalance} ` + 
         `userShare=${userShare} reserves=(${reserve0},${reserve1}) prices=(${token0Price},${token1Price}) usdValue=${usdValue}`
       );
 
-      // Always push LPs with any balance, even if usd_value is 0.
-      if (lpBalance > 0) {
-        out.push({
-          token_symbol: `${symbol} LP`,
-          token_name: name,
-          balance: lpBalance,
-          usd_value: usdValue,
-          token_address: lpContract,
-          is_lp_token: true,
-          platform: "UniswapV2",
-          lp_details: {
-            poolAddress: lpContract,
-            token1: { symbol: token0, amount: userToken0, usdValue: userToken0 * token0Price },
-            token2: { symbol: token1, amount: userToken1, usdValue: userToken1 * token1Price },
-            priceRange: { min: 0, max: 0 },
-            totalUsdValue: usdValue,
-          }
-        });
-      }
+      // Always push output (even 0 balance for debugging).
+      out.push({
+        token_symbol: `${symbol} LP`,
+        token_name: name,
+        balance: lpBalance,
+        usd_value: usdValue,
+        token_address: lpContract,
+        is_lp_token: true,
+        platform: "UniswapV2",
+        lp_details: {
+          poolAddress: lpContract,
+          token1: { symbol: token0, amount: userToken0, usdValue: userToken0 * token0Price },
+          token2: { symbol: token1, amount: userToken1, usdValue: userToken1 * token1Price },
+          priceRange: { min: 0, max: 0 },
+          totalUsdValue: usdValue,
+        }
+      });
     } catch (err) {
       console.warn('Error fetching/unpacking LP', lpContract, err);
     }

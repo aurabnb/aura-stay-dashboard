@@ -1,4 +1,3 @@
-
 export interface ShyftTokenBasic {
   address: string;
   balance: number;
@@ -31,11 +30,10 @@ export async function fetchWalletFromShyft(apiKey: string, wallet: string) {
 
 // Helper to extract tokens, including AURA if present.
 export function getTokensWithAura(tokens: ShyftTokenBasic[]): ShyftTokenBasic[] {
-  // Ensure AURA appears even if balance is 0
+  // Ensure AURA appears even if balance is 0, but keep only one AURA entry if present.
   const auraMint = "3YmNY3Giya7AKNNQbqo35HPuqTrrcgT9KADQBM2hDWNe";
-  const hasAura = tokens.some(t => t.address === auraMint);
-
-  if (!hasAura) {
+  const foundIndex = tokens.findIndex(t => t.address === auraMint);
+  if (foundIndex === -1) {
     tokens.push({
       address: auraMint,
       balance: 0,
@@ -46,6 +44,15 @@ export function getTokensWithAura(tokens: ShyftTokenBasic[]): ShyftTokenBasic[] 
         decimals: 6
       }
     });
+    console.log(`[getTokensWithAura] Injected missing AURA token for wallet`);
+  } else {
+    // Defensive: Fix decimals if missing
+    if (!tokens[foundIndex].info.decimals) tokens[foundIndex].info.decimals = 6;
+  }
+  // LOG for debugging
+  const auraToken = tokens.find(t => t.address === auraMint);
+  if (auraToken) {
+    console.log(`[getTokensWithAura] AURA entry:`, auraToken);
   }
   return tokens;
 }
