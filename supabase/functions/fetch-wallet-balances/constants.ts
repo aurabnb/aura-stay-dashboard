@@ -36,3 +36,19 @@ export const WALLETS_CONFIG = [
     blockchain: "Ethereum"
   }
 ];
+
+export const METEORA_LP_TOKENS = new Map([
+  // Add LP token configurations here if needed
+]);
+
+export const FIXED_PRICES: Record<string, number> = {
+  'SOL': 144.21,
+  'AURA': 0.00011566,
+  'WBTC': 105000,
+  'ETH': 3500,
+  'CULT': 0.00001,
+  'WETH': 3500,
+  'USDC': 1.0,
+  'USDT': 1.0,
+  'DCULT': 0.00001
+};
