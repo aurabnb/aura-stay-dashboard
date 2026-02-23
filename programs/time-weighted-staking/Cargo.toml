@@ -1,0 +1,20 @@
+[package]
+name = "time-weighted-staking"
+version = "0.1.0"
+description = "Time-weighted staking pool with multi-token rewards"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "time_weighted_staking"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.28.0", features = ["init-if-needed"] }
+anchor-spl = "0.28.0" 

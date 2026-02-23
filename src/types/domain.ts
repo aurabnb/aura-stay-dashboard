@@ -1,57 +1,110 @@
-/* ------------------------------------------------------------------
-   Project-level (frontend) models derived from API data
--------------------------------------------------------------------*/
+// User Types
+export interface User {
+  id: string;
+  publicKey: string;
+  role: 'admin' | 'member' | 'viewer';
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export interface WalletConfig {
+// Treasury Types
+export interface Treasury {
+  id: string;
   name: string;
-  address: string;
+  totalValue: number;
+  totalStaked: number;
+  totalBurned: number;
+  totalRedistributed: number;
+  apr: number;
+  participants: number;
+  status: 'active' | 'paused' | 'closed';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-/* ---------- LP-aware wallet breakdown ---------- */
-
-export interface LPDetails {
-  poolAddress: string;
-  token1: { symbol: string; amount: number; usdValue: number };
-  token2: { symbol: string; amount: number; usdValue: number };
-  priceRange: { min: number; max: number };
-  totalUsdValue: number;
+// Transaction Types
+export interface Transaction {
+  id: string;
+  signature: string;
+  type: 'stake' | 'unstake' | 'burn' | 'redistribute' | 'vote';
+  amount: number;
+  fromAddress: string;
+  toAddress?: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  blockTime: Date;
+  slot: number;
 }
 
-export interface WalletBalance {
-  token_symbol: string;
-  token_name: string;
-  balance: number;
-  usd_value: number;
-  token_address?: string;
-  is_lp_token: boolean;
-  platform: string;
-  lp_details?: LPDetails;
+// Governance Types
+export interface Proposal {
+  id: string;
+  title: string;
+  description: string;
+  type: 'treasury' | 'protocol' | 'community';
+  status: 'draft' | 'active' | 'passed' | 'rejected' | 'executed';
+  votesFor: number;
+  votesAgainst: number;
+  quorum: number;
+  startTime: Date;
+  endTime: Date;
+  createdBy: string;
+  executedAt?: Date;
 }
 
-export interface WalletData {
-  wallet_id: string;
+export interface Vote {
+  id: string;
+  proposalId: string;
+  voterAddress: string;
+  support: boolean;
+  weight: number;
+  timestamp: Date;
+}
+
+// Property Types (for AuraBNB)
+export interface Property {
+  id: string;
   name: string;
-  address: string;
-  blockchain: string;
-  balances: WalletBalance[];
-  totalUsdValue: number;
+  description: string;
+  location: string;
+  type: 'aura' | 'samsara' | 'airscape';
+  status: 'active' | 'maintenance' | 'coming-soon';
+  pricePerNight: number;
+  amenities: string[];
+  sustainability: string[];
+  images: string[];
+  rating: number;
+  reviewCount: number;
+  hostId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-/* ---------- misc dashboard / hook helpers ---------- */
-
-export interface ApiStatus {
-  solPrice: "loading" | "success" | "error";
-  wallets: "loading" | "success" | "error";
-  auraMarketCap: "loading" | "success" | "error";
+export interface Booking {
+  id: string;
+  propertyId: string;
+  guestId: string;
+  checkIn: Date;
+  checkOut: Date;
+  totalPrice: number;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  paymentStatus: 'pending' | 'paid' | 'refunded';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface ConsolidatedData {
-  treasury: {
-    totalMarketCap: number;
-    volatileAssets: number;
-    hardAssets: number;
-    lastUpdated: string;
-  };
-  wallets: WalletData[];
-  solPrice: number;
+// Analytics Types
+export interface AnalyticsData {
+  date: string;
+  value: number;
+  change?: number;
+  changePercent?: number;
 }
+
+export interface MetricCard {
+  title: string;
+  value: string | number;
+  change?: number;
+  changeType: 'increase' | 'decrease' | 'neutral';
+  icon?: string;
+  description?: string;
+} 
